@@ -1,0 +1,319 @@
+/* assets/css/main.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --tg-theme-bg-color: #ffffff;
+  --tg-theme-text-color: #000000;
+  --tg-theme-hint-color: #999999;
+  --tg-theme-link-color: #2481cc;
+  --tg-theme-button-color: #40a7e3;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #f1f1f1;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #1E3971; /* HOHTE blue background */
+  color: #fff; /* White text for HOHTE theme */
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  transition: background-color 0.3s ease;
+}
+
+/* Telegram Mini App specific */
+body {
+  overscroll-behavior: none;
+}
+
+/* Language-specific text rendering */
+.amharic-text {
+  font-family: 'Noto Sans Ethiopic', 'Inter', sans-serif !important;
+  letter-spacing: 0.01em;
+  line-height: 1.6;
+}
+
+.amharic-text h1,
+.amharic-text h2,
+.amharic-text h3,
+.amharic-text h4,
+.amharic-text h5,
+.amharic-text h6 {
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.amharic-text p {
+  word-spacing: 0.05em;
+}
+
+.ethiopic {
+  font-family: 'Noto Sans Ethiopic', 'Inter', sans-serif;
+}
+
+/* Container styles */
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Button styles */
+.btn {
+  background: #FFC125; /* HOHTE yellow */
+  color: #1E3971; /* HOHTE blue text */
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+  opacity: 0.7;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid #FFC125; /* HOHTE yellow */
+  color: #FFC125; /* HOHTE yellow */
+}
+
+/* Card styles */
+.card {
+  background: #2b4b8f; /* Darker blue for cards */
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: #fff;
+}
+
+/* Custom scrollbar for web */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2b4b8f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FFC125;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ffd54f;
+}
+
+/* Remove focus outlines for mobile */
+:focus {
+  outline: none;
+}
+
+/* Loading spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #FFC125;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Pulsing animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Safe area for notch phones */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent text selection */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Smooth transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+}
+
+/* HOHTE specific theme overrides */
+:root {
+  --hohte-primary: #1E3971;
+  --hohte-secondary: #FFC125;
+  --hohte-light-blue: #2b4b8f;
+  --hohte-text-light: #a0b3d9;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .card {
+    padding: 20px;
+  }
+  
+  .btn {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+}
+
+/* For very small screens */
+@media (max-width: 375px) {
+  .container {
+    padding: 12px;
+  }
+  
+  .card {
+    padding: 16px;
+  }
+  
+  .btn {
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+}
+
+/* Utility classes */
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-1 { gap: 4px; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.gap-5 { gap: 20px; }
+
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+.mt-4 { margin-top: 16px; }
+.mt-5 { margin-top: 20px; }
+
+.mb-1 { margin-bottom: 4px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 12px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-5 { margin-bottom: 20px; }
+
+.p-1 { padding: 4px; }
+.p-2 { padding: 8px; }
+.p-3 { padding: 12px; }
+.p-4 { padding: 16px; }
+.p-5 { padding: 20px; }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+/* HOHTE specific components */
+.hohte-bg {
+  background: linear-gradient(135deg, #1e3971 0%, #0d1f40 100%);
+}
+
+.hohte-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hohte-button {
+  background: linear-gradient(135deg, #FFC125 0%, #ffd54f 100%);
+  color: #1E3971;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 20px rgba(255, 193, 37, 0.3);
+}
+
+.hohte-button:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 10px rgba(255, 193, 37, 0.2);
+}

@@ -25,7 +25,7 @@ import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 
 const route = useRoute()
-const { locale } = useLanguage()
+const { locale } = useLanguage() // Get locale from useLanguage
 const { isLoading } = useNavigation()
 
 // Show bottom nav on all pages except splash

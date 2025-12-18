@@ -108,5 +108,21 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success"
+  },
+  "courses": {
+    "Media Kifi": "Media Kifi",
+    "Kedamay Course": "Kedamay Course",
+    "Sunday morning": "Sunday morning",
+    "Saturday Afternoon": "Saturday Afternoon",
+    "Sunday, 10:00 AM - 12:00 PM": "Sunday, 10:00 AM - 12:00 PM",
+    "Saturday, 2:00 PM - 4:00 PM": "Saturday, 2:00 PM - 4:00 PM",
+    "Dr. Michael": "Dr. Michael",
+    "Prof. Sarah": "Prof. Sarah"
+  },
+  "permissions": {
+    "Permission for Medical Appointment": "Permission for Medical Appointment",
+    "Permission for Family Event": "Permission for Family Event",
+    "Medical appointment": "Medical appointment",
+    "Family wedding": "Family wedding"
   }
 }

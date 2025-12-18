@@ -1,17 +1,28 @@
 <template>
   <div class="permission-request">
     <div class="form-card">
-      <div class="header-section">
-        <button class="back-button" @click="goBack">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
-        <h1 class="page-title">{{ t('requestStatus.newRequest') }}</h1>
-        <div class="language-toggle" @click="toggleLanguage">
-          <span>{{ locale === 'en' ? 'አማ' : 'EN' }}</span>
+      <!-- Header with Back Button at Top Left -->
+      <header class="requests-header">
+        <div class="logo-center">
+          <img
+            src="~/assets/images/logo2-modified.png"
+            alt="HOHTE Logo"
+            class="logo-image"
+          />
         </div>
-      </div>
+
+        <div class="header-content">
+          <button class="back-button" @click="goBack">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+
+          <h1 class="page-title">{{ t('requestStatus.newRequest') }}</h1>
+
+          
+        </div>
+      </header>
 
       <div class="form-section">
         <div class="form-row">
@@ -19,28 +30,42 @@
             <div class="field-header">
               <span class="field-label">{{ t('requestStatus.class') }}</span>
             </div>
-            <select v-model="formData.course" class="select-input">
-              <option value="" disabled selected>{{ t('requestStatus.selectClass') }}</option>
-              <option
-                v-for="course in courses"
-                :key="course.id"
-                :value="course.id"
-              >
-                {{ course.name }}
-              </option>
-            </select>
+            <div class="select-wrapper">
+              <select v-model="formData.course" class="select-input">
+                <option value="" disabled selected>{{ t('requestStatus.selectClass') }}</option>
+                <option
+                  v-for="course in courses"
+                  :key="course.id"
+                  :value="course.id"
+                >
+                  {{ course.name }}
+                </option>
+              </select>
+              <div class="select-arrow">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6L8 10L12 6" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
           </div>
 
           <div class="form-field">
             <div class="field-header">
               <span class="field-label">{{ t('requestStatus.reason') }}</span>
             </div>
-            <select v-model="formData.reason" class="select-input">
-              <option value="" disabled selected>{{ t('requestStatus.selectReason') }}</option>
-              <option v-for="reason in reasons" :key="reason.value" :value="reason.value">
-                {{ locale === 'en' ? reason.en : reason.am }}
-              </option>
-            </select>
+            <div class="select-wrapper">
+              <select v-model="formData.reason" class="select-input">
+                <option value="" disabled selected>{{ t('requestStatus.selectReason') }}</option>
+                <option v-for="reason in reasons" :key="reason.value" :value="reason.value">
+                  {{ locale === 'en' ? reason.en : reason.am }}
+                </option>
+              </select>
+              <div class="select-arrow">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6L8 10L12 6" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -127,8 +152,9 @@ import { ref, onMounted } from 'vue'
 import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
+import LanguageToggle from '~/components/LanguageToggle.vue'
 
-const { locale, t, setLocale } = useLanguage()
+const { locale, t } = useLanguage()
 const { goBack } = useNavigation()
 const { courses, submitPermissionRequest } = useStudentData()
 
@@ -150,11 +176,6 @@ const reasons = [
   { value: 'travel', en: 'Travel', am: 'ጉዞ' },
   { value: 'other', en: 'Other', am: 'ሌላ' }
 ]
-
-const toggleLanguage = () => {
-  const newLocale = locale.value === 'en' ? 'am' : 'en'
-  setLocale(newLocale)
-}
 
 const submitForm = async () => {
   if (!formData.value.course || !formData.value.reason) {
@@ -225,25 +246,51 @@ onMounted(() => {
   padding: 20px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-y: auto;
+  padding-bottom: 40px;
 }
 
 .form-card {
   background-color: #1e3971;
   border-radius: 12px;
-  padding: 30px;
+  padding: 0;
   width: 100%;
   max-width: 800px;
+  margin: 0;
 }
 
-.header-section {
+/* Header Section - Matching the other page */
+.requests-header {
+  background: #1e3971;
+  padding: 20px 20px 16px;
+  color: white;
+}
+
+.logo-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.logo-image {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 35px;
+  gap: 10px;
 }
 
+/* Back button at left edge */
 .back-button {
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -257,6 +304,7 @@ onMounted(() => {
   color: white;
   transition: background 0.2s ease;
   flex-shrink: 0;
+  margin-left: 0;
 }
 
 .back-button:hover {
@@ -265,36 +313,56 @@ onMounted(() => {
 
 .page-title {
   font-size: 24px;
-  font-weight: bold;
-  color: #ffffff;
+  font-weight: 700;
   margin: 0;
+  color: white;
   text-align: center;
   flex: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.language-toggle {
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+/* Custom styling for LanguageToggle in this context */
+.header-right :deep(.language-toggle-container) {
+  position: static;
+  top: auto;
+  left: auto;
+  right: auto;
+}
+
+.header-right :deep(.language-toggle) {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 8px 12px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 20px;
-  padding: 8px 16px;
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
   color: white;
   transition: all 0.2s ease;
   backdrop-filter: blur(10px);
-  flex-shrink: 0;
+  width: auto;
+  min-width: auto;
 }
 
-.language-toggle:hover {
+.header-right :deep(.language-toggle:hover) {
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Form Content */
 .form-section {
   margin-bottom: 30px;
+  padding: 0 30px;
 }
 
 .form-row {
@@ -307,6 +375,10 @@ onMounted(() => {
   .form-row {
     flex-direction: column;
     gap: 20px;
+  }
+  
+  .form-section {
+    padding: 0 20px;
   }
 }
 
@@ -324,9 +396,15 @@ onMounted(() => {
   font-size: 16px;
 }
 
+/* Fixed Select Dropdown with Custom Arrow */
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .select-input {
   width: 100%;
-  padding: 12px 15px;
+  padding: 12px 40px 12px 15px; /* Added right padding for arrow */
   border: 2px solid #e0e0e0;
   border-radius: 6px;
   font-size: 15px;
@@ -334,6 +412,9 @@ onMounted(() => {
   background: white;
   cursor: pointer;
   transition: all 0.3s;
+  appearance: none; /* Remove default arrow */
+  -webkit-appearance: none; /* Remove default arrow for Safari */
+  -moz-appearance: none; /* Remove default arrow for Firefox */
 }
 
 .select-input:focus {
@@ -342,8 +423,29 @@ onMounted(() => {
   box-shadow: 0 0 0 3px rgba(255, 193, 37, 0.1);
 }
 
+/* Custom Arrow */
+.select-arrow {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .note-section {
   margin-bottom: 35px;
+  padding: 0 30px;
+}
+
+@media (max-width: 768px) {
+  .note-section {
+    padding: 0 20px;
+  }
 }
 
 .note-hint {
@@ -375,6 +477,13 @@ onMounted(() => {
 
 .duration-section {
   margin-bottom: 40px;
+  padding: 0 30px;
+}
+
+@media (max-width: 768px) {
+  .duration-section {
+    padding: 0 20px;
+  }
 }
 
 .duration-header {
@@ -479,6 +588,14 @@ onMounted(() => {
 .submit-section {
   text-align: center;
   margin-top: 40px;
+  margin-bottom: 60px;
+  padding: 0 30px;
+}
+
+@media (max-width: 768px) {
+  .submit-section {
+    padding: 0 20px;
+  }
 }
 
 .submit-btn {
@@ -512,13 +629,34 @@ onMounted(() => {
   transform: translateY(0);
 }
 
+/* Mobile Responsive Styles */
 @media (max-width: 480px) {
-  .form-card {
-    padding: 25px 20px;
+  .permission-request {
+    padding: 15px;
+    padding-bottom: 30px;
+  }
+
+  .requests-header {
+    padding: 16px 16px 12px;
+  }
+
+  .logo-image {
+    width: 70px;
+    height: 70px;
   }
 
   .page-title {
     font-size: 20px;
+  }
+
+  .duration-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .duration-label {
+    min-width: auto;
   }
 
   .toggle-switch {
@@ -529,6 +667,30 @@ onMounted(() => {
     flex: 1;
     min-width: auto;
     padding: 12px 15px;
+    font-size: 13px;
+  }
+
+  .submit-btn {
+    padding: 14px 40px;
+    font-size: 16px;
+    min-width: 180px;
+  }
+  
+  /* Adjust select arrow position for mobile */
+  .select-arrow {
+    right: 12px;
+  }
+}
+
+/* Tablet Responsive Styles */
+@media (max-width: 768px) and (min-width: 481px) {
+  .permission-request {
+    padding: 25px;
+  }
+
+  .logo-image {
+    width: 80px;
+    height: 80px;
   }
 }
 </style>

@@ -108,5 +108,21 @@
     "loading": "በመጫን ላይ...",
     "error": "ስህተት",
     "success": "ተሳክቷል"
+  },
+  "courses": {
+    "Media Kifi": "ሚድያ ክፍል",
+    "Kedamay Course": "ከዳማይ ኮርስ",
+    "Sunday morning": "እሑድ ጠዋት",
+    "Saturday Afternoon": "ቅዳሜ ከሰዓት በኋላ",
+    "Sunday, 10:00 AM - 12:00 PM": "እሑድ, 10:00 ጥዋት - 12:00 ቀን",
+    "Saturday, 2:00 PM - 4:00 PM": "ቅዳሜ, 2:00 ቀን - 4:00 ከሰዓት",
+    "Dr. Michael": "ዶ/ር ማይክል",
+    "Prof. Sarah": "ፕሮፌሰር ሳራ"
+  },
+  "permissions": {
+    "Permission for Medical Appointment": "ለህክምና ቀጠሮ ፈቃድ",
+    "Permission for Family Event": "ለቤተሰብ ዝግጅት ፈቃድ",
+    "Medical appointment": "ህክምና ቀጠሮ",
+    "Family wedding": "የቤተሰብ ጋብቻ"
   }
 }

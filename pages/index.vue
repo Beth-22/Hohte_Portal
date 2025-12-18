@@ -1,5 +1,5 @@
 <template>
-  <div class="splash-container">
+  <div class="splash-container" :key="forceUpdateKey">
     <!-- Loading State -->
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
@@ -8,6 +8,9 @@
 
     <!-- Splash Content -->
     <div v-else class="splash-content">
+      <!-- Language Toggle in Top Right for Index Page -->
+    
+
       <!-- Header -->
       <div class="splash-header">
         <!-- Logo -->
@@ -112,44 +115,55 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRouter } from "#app";
 import { useLanguage } from "~/composables/useLanguage";
+import LanguageToggle from '~/components/LanguageToggle.vue'
 
 const router = useRouter();
-const { t, setLocale } = useLanguage();
+const { t, setLocale, locale, updateTrigger } = useLanguage();
 
 const loading = ref(true);
-const selectedLanguage = ref("");
+const selectedLanguage = ref(locale.value);
 const imageError = ref(false);
+const forceUpdateKey = ref(0);
 
 const handleImageError = () => {
   imageError.value = true;
 };
 
+// Watch for language changes to force re-render
+watch(locale, (newLocale, oldLocale) => {
+  console.log('Language changed from', oldLocale, 'to', newLocale, 'in index.vue');
+  forceUpdateKey.value += 1;
+  
+  // Update the selected language to match the current locale
+  selectedLanguage.value = newLocale;
+});
+
+// Also watch updateTrigger for extra safety
+watch(updateTrigger, () => {
+  console.log('Update trigger changed in index.vue, forcing re-render');
+  forceUpdateKey.value += 1;
+});
+
 onMounted(() => {
   setTimeout(() => {
     loading.value = false;
-    
-    if (process.client) {
-      const saved = localStorage.getItem("preferredLanguage");
-      if (saved && ['en', 'am'].includes(saved)) {
-        selectedLanguage.value = saved;
-        setLocale(saved);
-      } else {
-        selectedLanguage.value = 'en';
-        setLocale('en');
-      }
-    }
   }, 1500);
+  
+  console.log('Index page mounted with locale:', locale.value);
+  
+  // Force initial render
+  forceUpdateKey.value += 1;
 });
 
 const selectLanguage = (lang) => {
   selectedLanguage.value = lang;
   setLocale(lang);
-  if (process.client) {
-    localStorage.setItem("preferredLanguage", lang);
-  }
+  
+  // Force immediate re-render
+  forceUpdateKey.value += 1;
 };
 
 const continueToApp = () => {
@@ -208,11 +222,13 @@ const continueToApp = () => {
   max-width: 480px;
   margin: 0 auto;
   width: 100%;
+  position: relative;
 }
 
 .splash-header {
   text-align: center;
   margin-bottom: 32px;
+  margin-top: 40px; /* Space for language toggle */
 }
 
 .logo-container {
@@ -397,5 +413,84 @@ const continueToApp = () => {
 .language-option.ethiopic .option-text h4,
 .language-option.ethiopic .option-text p {
   font-family: "Noto Sans Ethiopic", "Inter", sans-serif;
+}
+
+/* Ensure LanguageToggle is positioned correctly */
+:deep(.language-toggle-container.fixed-position) {
+  position: fixed;
+  top: 20px !important;
+  right: 20px !important;
+  left: auto !important;
+  z-index: 1000;
+}
+
+/* Responsive styles for LanguageToggle */
+@media (max-width: 375px) {
+  :deep(.language-toggle-container.fixed-position) {
+    top: 15px !important;
+    right: 15px !important;
+  }
+  
+  .splash-header {
+    margin-top: 50px; /* More space for language toggle on small screens */
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .splash-content {
+    padding: 30px 20px 20px;
+  }
+  
+  .logo-wrapper {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .app-title-main,
+  .app-title-sub {
+    font-size: 28px;
+  }
+  
+  .language-option {
+    padding: 16px 18px;
+  }
+  
+  .option-text h4 {
+    font-size: 16px;
+  }
+  
+  .option-text p {
+    font-size: 12px;
+  }
+  
+  .continue-button {
+    padding: 16px 20px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 320px) {
+  .splash-content {
+    padding: 25px 16px 16px;
+  }
+  
+  .logo-wrapper {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .app-title-main,
+  .app-title-sub {
+    font-size: 24px;
+  }
+  
+  .language-title {
+    font-size: 14px;
+  }
+  
+  .language-subtitle {
+    font-size: 12px;
+  }
 }
 </style>

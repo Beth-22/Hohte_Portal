@@ -1,45 +1,60 @@
 <template>
   <div class="course-detail-page">
-    <!-- Back Button and Language Toggle -->
+    <!-- Back Button -->
     <div class="top-bar">
       <button class="back-button" @click="goBack" @touchstart="handleTouch">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path
+            d="M15 18L9 12L15 6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
         </svg>
       </button>
-      
-      <div class="page-title">{{ t('course.classDetails') }}</div>
-      
-      <button class="language-toggle" @click="toggleLanguage" @touchstart="handleTouch">
-        <span>{{ locale === 'en' ? 'አማ' : 'EN' }}</span>
-      </button>
+
+      <div class="page-title">{{ t("course.classDetails") }}</div>
     </div>
-    
+
     <!-- Course Banner -->
-    <div class="course-banner" :style="{ backgroundImage: `url(${course.bgImage})` }">
+    <div
+      class="course-banner"
+      :style="{ backgroundImage: `url(${course.bgImage})` }"
+    >
       <div class="banner-overlay"></div>
       <div class="banner-content">
         <h1 class="course-title">{{ course.name }}</h1>
         <div class="course-meta">
           <div class="meta-item">
             <svg class="meta-icon" width="16" height="16" viewBox="0 0 16 16">
-              <path d="M8 1.333a6.667 6.667 0 1 0 0 13.334A6.667 6.667 0 0 0 8 1.333zm0 12A5.333 5.333 0 1 1 8 2.667a5.333 5.333 0 0 1 0 10.666zM8 4v4l2.667 1.333" 
-                    stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <path
+                d="M8 1.333a6.667 6.667 0 1 0 0 13.334A6.667 6.667 0 0 0 8 1.333zm0 12A5.333 5.333 0 1 1 8 2.667a5.333 5.333 0 0 1 0 10.666zM8 4v4l2.667 1.333"
+                stroke="currentColor"
+                stroke-width="1.5"
+                fill="none"
+                stroke-linecap="round"
+              />
             </svg>
             <span>{{ course.schedule }}</span>
           </div>
           <div class="meta-item">
             <svg class="meta-icon" width="16" height="16" viewBox="0 0 16 16">
-              <path d="M8 8a3.333 3.333 0 1 0 0-6.667A3.333 3.333 0 0 0 8 8zm4 1.333H4a4 4 0 0 0-4 4v.667h16v-.667a4 4 0 0 0-4-4z" 
-                    fill="currentColor"/>
+              <path
+                d="M8 8a3.333 3.333 0 1 0 0-6.667A3.333 3.333 0 0 0 8 8zm4 1.333H4a4 4 0 0 0-4 4v.667h16v-.667a4 4 0 0 0-4-4z"
+                fill="currentColor"
+              />
             </svg>
             <span>{{ course.instructor }}</span>
           </div>
           <div class="meta-item">
             <svg class="meta-icon" width="16" height="16" viewBox="0 0 16 16">
-              <path d="M2 2h12v12H2V2zm1.333 1.333v9.334h9.334V3.333H3.333z" 
-                    stroke="currentColor" stroke-width="1.5" fill="none"/>
-              <path d="M5.333 5.333h5.334v5.334H5.333z" fill="currentColor"/>
+              <path
+                d="M2 2h12v12H2V2zm1.333 1.333v9.334h9.334V3.333H3.333z"
+                stroke="currentColor"
+                stroke-width="1.5"
+                fill="none"
+              />
+              <path d="M5.333 5.333h5.334v5.334H5.333z" fill="currentColor" />
             </svg>
             <span>{{ course.room }}</span>
           </div>
@@ -53,15 +68,17 @@
       <div class="content-card">
         <h2 class="card-title">
           <svg class="title-icon" width="20" height="20" viewBox="0 0 24 24">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
+            />
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
           </svg>
-          {{ t('course.courseDescription') }}
+          {{ t("course.courseDescription") }}
         </h2>
         <div class="card-content">
           <p>{{ course.description }}</p>
-          <p>{{ t('course.descriptionText2') }}</p>
-          <p>{{ t('course.descriptionText3') }}</p>
+          <p>{{ t("course.descriptionText2") }}</p>
+          <p>{{ t("course.descriptionText3") }}</p>
         </div>
       </div>
 
@@ -69,44 +86,57 @@
       <div class="content-card">
         <h2 class="card-title">
           <svg class="title-icon" width="20" height="20" viewBox="0 0 24 24">
-            <path d="M3 3v18h18V3H3zm16 16H5V5h14v14z"/>
-            <path d="M7 17h2v-5H7v5zm4 0h2V7h-2v10zm4 0h2v-7h-2v7z"/>
+            <path d="M3 3v18h18V3H3zm16 16H5V5h14v14z" />
+            <path d="M7 17h2v-5H7v5zm4 0h2V7h-2v10zm4 0h2v-7h-2v7z" />
           </svg>
-          {{ t('course.yourAttendance') }}
+          {{ t("course.yourAttendance") }}
         </h2>
-        
+
         <div class="attendance-stats">
           <!-- Circular Progress -->
           <div class="attendance-circle">
             <div class="circle-background"></div>
-            <div class="circle-progress" :style="{ transform: `rotate(${course.attendance?.percentage * 3.6}deg)` }"></div>
+            <div
+              class="circle-progress"
+              :style="{
+                transform: `rotate(${course.attendance?.percentage * 3.6}deg)`,
+              }"
+            ></div>
             <div class="circle-text">
-              <span class="percentage">{{ course.attendance?.percentage || 0 }}%</span>
-              <span class="label">{{ t('course.attendance') }}</span>
+              <span class="percentage"
+                >{{ course.attendance?.percentage || 0 }}%</span
+              >
+              <span class="label">{{ t("course.attendance") }}</span>
             </div>
           </div>
 
           <!-- Stats Grid -->
           <div class="stats-grid">
             <div class="stat-item attended">
-              <div class="stat-number">{{ course.attendance?.attended || 0 }}</div>
+              <div class="stat-number">
+                {{ course.attendance?.attended || 0 }}
+              </div>
               <div class="stat-label">
                 <div class="stat-dot"></div>
-                {{ t('course.attended') }}
+                {{ t("course.attended") }}
               </div>
             </div>
             <div class="stat-item missed">
-              <div class="stat-number">{{ course.attendance?.missed || 0 }}</div>
+              <div class="stat-number">
+                {{ course.attendance?.missed || 0 }}
+              </div>
               <div class="stat-label">
                 <div class="stat-dot"></div>
-                {{ t('course.missed') }}
+                {{ t("course.missed") }}
               </div>
             </div>
             <div class="stat-item excused">
-              <div class="stat-number">{{ course.attendance?.excused || 0 }}</div>
+              <div class="stat-number">
+                {{ course.attendance?.excused || 0 }}
+              </div>
               <div class="stat-label">
                 <div class="stat-dot"></div>
-                {{ t('course.excused') }}
+                {{ t("course.excused") }}
               </div>
             </div>
           </div>
@@ -114,68 +144,67 @@
       </div>
 
       <!-- Request Permission Button -->
-      <button class="permission-button" @click="goToPermissionRequest" @touchstart="handleTouch">
-        {{ t('course.requestPermission') }}
+      <button
+        class="permission-button"
+        @click="goToPermissionRequest"
+        @touchstart="handleTouch"
+      >
+        {{ t("course.requestPermission") }}
       </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from '#app'
-import { useLanguage } from '~/composables/useLanguage'
-import { useNavigation } from '~/composables/useNavigation'
-import { useStudentData } from '~/composables/useStudentData'
+import { ref, onMounted } from "vue";
+import { useRoute } from "#app";
+import { useLanguage } from "~/composables/useLanguage";
+import { useNavigation } from "~/composables/useNavigation";
+import { useStudentData } from "~/composables/useStudentData";
 
-const route = useRoute()
-const { locale, t, setLocale } = useLanguage()
-const { goBack, goToPermissionRequest } = useNavigation()
-const { courses } = useStudentData()
+const route = useRoute();
+const { t } = useLanguage();
+const { goBack, goToPermissionRequest } = useNavigation();
+const { courses } = useStudentData();
 
 const course = ref({
-  id: '',
-  name: '',
-  description: '',
-  schedule: '',
-  instructor: '',
-  room: '',
-  bgImage: '',
+  id: "",
+  name: "",
+  description: "",
+  schedule: "",
+  instructor: "",
+  room: "",
+  bgImage: "",
   attendance: {
     percentage: 0,
     attended: 0,
     missed: 0,
-    excused: 0
-  }
-})
+    excused: 0,
+  },
+});
 
 const handleTouch = (event) => {
-  event.currentTarget.style.opacity = '0.7'
+  event.currentTarget.style.opacity = "0.7";
   setTimeout(() => {
     if (event.currentTarget) {
-      event.currentTarget.style.opacity = '1'
+      event.currentTarget.style.opacity = "1";
     }
-  }, 150)
-}
-
-const toggleLanguage = () => {
-  const newLocale = locale.value === 'en' ? 'am' : 'en'
-  setLocale(newLocale)
-}
+  }, 150);
+};
 
 onMounted(() => {
-  const courseId = route.params.id
-  const foundCourse = courses.value.find(c => c.id === courseId)
+  const courseId = route.params.id;
+  const foundCourse = courses.value.find((c) => c.id === courseId);
   if (foundCourse) {
-    course.value = foundCourse
+    course.value = foundCourse;
   }
-})
+});
 </script>
 
 <style scoped>
 .course-detail-page {
   min-height: 100vh;
-  background: #1E3971;
+  background: #1e3971;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   touch-action: manipulation;
@@ -188,7 +217,7 @@ onMounted(() => {
   padding: 20px;
   position: sticky;
   top: 0;
-  background: #1E3971;
+  background: #1e3971;
   z-index: 100;
 }
 
@@ -227,25 +256,6 @@ onMounted(() => {
   margin: 0 15px;
 }
 
-.language-toggle {
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.language-toggle:active {
-  opacity: 0.7;
-  transform: scale(0.95);
-}
-
 .course-banner {
   position: relative;
   height: 220px;
@@ -263,7 +273,11 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.7) 100%);
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
 }
 
 .banner-content {
@@ -301,7 +315,7 @@ onMounted(() => {
 }
 
 .meta-icon {
-  color: #FFC125;
+  color: #ffc125;
   flex-shrink: 0;
 }
 
@@ -310,7 +324,7 @@ onMounted(() => {
 }
 
 .content-card {
-  background: #243F77;
+  background: #243f77;
   border-radius: 20px;
   padding: 25px;
   margin-bottom: 20px;
@@ -323,12 +337,12 @@ onMounted(() => {
   gap: 12px;
   font-size: 20px;
   font-weight: 700;
-  color: #FFC125;
+  color: #ffc125;
   margin: 0 0 20px 0;
 }
 
 .title-icon {
-  color: #FFC125;
+  color: #ffc125;
 }
 
 .card-content {
@@ -365,7 +379,7 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: conic-gradient(#3C414D 0deg, #3C414D 360deg);
+  background: conic-gradient(#3c414d 0deg, #3c414d 360deg);
 }
 
 .circle-progress {
@@ -373,8 +387,16 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: conic-gradient(#FFC125 0deg, #FFC125 0deg, #3C414D 0deg);
-  clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%);
+  background: conic-gradient(#ffc125 0deg, #ffc125 0deg, #3c414d 0deg);
+  clip-path: polygon(
+    50% 50%,
+    50% 0%,
+    100% 0%,
+    100% 100%,
+    0% 100%,
+    0% 0%,
+    50% 0%
+  );
   transform-origin: center;
 }
 
@@ -390,7 +412,7 @@ onMounted(() => {
   display: block;
   font-size: 24px;
   font-weight: 800;
-  color: #FFC125;
+  color: #ffc125;
   line-height: 1;
   margin-bottom: 4px;
 }
@@ -477,18 +499,19 @@ onMounted(() => {
 
 .permission-button {
   width: 100%;
-  background: #FFC125;
-  color: #1E3971;
+  background: #ffc125;
+  color: #1e3971;
   border: none;
   border-radius: 16px;
   padding: 20px;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 20px;
+  margin-bottom: 80px;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -503,16 +526,16 @@ onMounted(() => {
     flex-direction: column;
     gap: 25px;
   }
-  
+
   .stats-grid {
     width: 100%;
   }
-  
+
   .course-banner {
     height: 200px;
     margin: 0 15px 20px;
   }
-  
+
   .course-title {
     font-size: 24px;
   }
@@ -523,28 +546,28 @@ onMounted(() => {
     height: 180px;
     margin: 0 10px 15px;
   }
-  
+
   .banner-content {
     padding: 20px;
   }
-  
+
   .course-title {
     font-size: 22px;
   }
-  
+
   .content-card {
     padding: 20px;
   }
-  
+
   .attendance-circle {
     width: 90px;
     height: 90px;
   }
-  
+
   .percentage {
     font-size: 20px;
   }
-  
+
   .stat-number {
     font-size: 24px;
   }

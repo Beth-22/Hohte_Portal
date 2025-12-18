@@ -18,14 +18,7 @@
 
         <h1 class="page-title">{{ t('requestStatus.title') }}</h1>
 
-        <div class="header-right">
-          <button class="language-toggle" @click="toggleLanguage">
-            <span>{{ locale === 'en' ? 'አማ' : 'EN' }}</span>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2"/>
-            </svg>
-          </button>
-        </div>
+       
       </div>
     </header>
 
@@ -37,14 +30,17 @@
         @click="activeTab = tab.id"
       >
         {{ tab.label }}
+        <span v-if="getTabCount(tab.id) > 0" class="badge" :class="tab.id">
+          {{ getTabCount(tab.id) }}
+        </span>
       </button>
     </div>
 
     <main class="requests-main">
       <div v-if="filteredRequests.length === 0" class="empty-state">
         <div class="empty-icon">📄</div>
-        <h3>{{ t('requestStatus.noRequests') }}</h3>
-        <p>{{ t('requestStatus.noRequestsDesc') }}</p>
+        <h3>{{ getEmptyStateTitle() }}</h3>
+        <p>{{ getEmptyStateDescription() }}</p>
       </div>
 
       <div v-else class="requests-list">
@@ -59,7 +55,7 @@
               <span>{{ getCourseIcon(request.course) }}</span>
             </div>
             <div class="request-info">
-              <h3 class="request-title">{{ request.title }}</h3>
+              <h3 class="request-title">{{ request.title || request.course }}</h3>
               <p class="course-name">{{ request.course }}</p>
             </div>
             <div class="request-status" :class="request.status.toLowerCase()">
@@ -100,18 +96,18 @@
           <div class="request-details">
             <div class="detail-row">
               <span class="detail-label">{{ t('requestStatus.submitted') }}:</span>
-              <span class="detail-value">{{ request.submittedDate }}</span>
+              <span class="detail-value">{{ formatDate(request.submittedDate || request.createdAt) }}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">{{ t('requestStatus.classDate') }}:</span>
-              <span class="detail-value">{{ request.classDate }}</span>
+              <span class="detail-value">{{ getClassDate(request) }}</span>
             </div>
             <div
-              v-if="request.status === 'DENIED' && request.reason"
+              v-if="request.status === 'DENIED' && (request.reason || request.adminNote)"
               class="reason-row"
             >
               <span class="reason-label">{{ t('requestStatus.reason') }}:</span>
-              <span class="reason-text">{{ request.reason }}</span>
+              <span class="reason-text">{{ request.reason || request.adminNote }}</span>
             </div>
             <div
               v-else-if="request.status === 'APPROVED' && request.approvedBy"
@@ -119,6 +115,13 @@
             >
               <span class="reason-label">{{ t('requestStatus.approvedBy') }}:</span>
               <span class="reason-text">{{ request.approvedBy }}</span>
+            </div>
+            <div
+              v-if="request.note"
+              class="reason-row"
+            >
+              <span class="reason-label">{{ t('requestStatus.yourNote') }}:</span>
+              <span class="reason-text">{{ request.note }}</span>
             </div>
           </div>
 
@@ -135,20 +138,27 @@
                 v-else-if="request.status === 'APPROVED'"
                 class="approved-time"
               >
-                <span>{{ t('requestStatus.approvedOn') }} {{ request.approvedDate || request.updatedAt }}</span>
+                <span>{{ t('requestStatus.approvedOn') }} {{ formatDate(request.approvedDate || request.updatedAt) }}</span>
               </div>
               <div v-else class="denied-time">
-                <span>{{ t('requestStatus.deniedOn') }} {{ request.deniedDate || request.updatedAt }}</span>
+                <span>{{ t('requestStatus.deniedOn') }} {{ formatDate(request.deniedDate || request.updatedAt) }}</span>
               </div>
             </div>
             <div class="footer-right">
               <button
-                v-if="request.status === 'PENDING'"
+                v-if="request.status === 'PENDING' && !request.isCancelling"
                 class="cancel-button"
-                @click="cancelRequest(request.id)"
+                @click="cancelRequest(request)"
                 :disabled="isCancelling"
               >
-                {{ isCancelling ? t('requestStatus.cancelling') : t('requestStatus.cancel') }}
+                {{ t('requestStatus.cancel') }}
+              </button>
+              <button
+                v-if="request.status === 'PENDING' && request.isCancelling"
+                class="cancel-button"
+                disabled
+              >
+                {{ t('requestStatus.cancelling') }}
               </button>
               <button
                 v-else-if="request.status === 'DENIED'"
@@ -198,15 +208,33 @@ import { ref, computed, onMounted } from "vue";
 import { useLanguage } from "~/composables/useLanguage";
 import { useNavigation } from "~/composables/useNavigation";
 import { useStudentData } from "~/composables/useStudentData";
+import LanguageToggle from '~/components/LanguageToggle.vue';
 
-const { locale, t, setLocale } = useLanguage();
+const { t } = useLanguage();
 const { goBack, goToPermissionRequest } = useNavigation();
-const { permissionRequests, cancelPermissionRequest, pendingRequestsCount } = useStudentData();
+const { permissionRequests, cancelPermissionRequest } = useStudentData();
 
 const activeTab = ref("all");
 const showCancelModal = ref(false);
 const isCancelling = ref(false);
 let requestToCancel = null;
+
+// Counts for each tab
+const pendingCount = computed(() => {
+  return permissionRequests.value.filter(req => req.status === 'PENDING').length;
+});
+
+const approvedCount = computed(() => {
+  return permissionRequests.value.filter(req => req.status === 'APPROVED').length;
+});
+
+const deniedCount = computed(() => {
+  return permissionRequests.value.filter(req => req.status === 'DENIED').length;
+});
+
+const allCount = computed(() => {
+  return permissionRequests.value.length;
+});
 
 const tabs = computed(() => [
   { id: "all", label: t("requestStatus.tabs.all") },
@@ -223,11 +251,6 @@ const filteredRequests = computed(() => {
     (request) => request.status.toLowerCase() === activeTab.value
   );
 });
-
-const toggleLanguage = () => {
-  const newLocale = locale.value === "en" ? "am" : "en";
-  setLocale(newLocale);
-};
 
 const getStatusText = (status) => {
   switch (status) {
@@ -248,26 +271,136 @@ const getCourseIcon = (courseName) => {
     "Kedamay Course": "📚",
     "Abalat Kifi": "🎵",
     "General Studies": "📖",
+    "Media": "🎬",
+    "Kedamay": "📚",
+    "Abalat": "🎵",
+    "General": "📖",
   };
   return icons[courseName] || "📝";
 };
 
-const cancelRequest = (id) => {
-  requestToCancel = id;
+// Get count for specific tab
+const getTabCount = (tabId) => {
+  switch (tabId) {
+    case 'all':
+      return allCount.value;
+    case 'pending':
+      return pendingCount.value;
+    case 'approved':
+      return approvedCount.value;
+    case 'denied':
+      return deniedCount.value;
+    default:
+      return 0;
+  }
+};
+
+// API-ready date formatting
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  
+  try {
+    const date = new Date(dateString);
+    // Format based on locale
+    if (locale.value === 'am') {
+      return date.toLocaleDateString('am-ET', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch (error) {
+    return dateString;
+  }
+};
+
+const getClassDate = (request) => {
+  // Handle different date formats from API
+  if (request.classDate) {
+    return formatDate(request.classDate);
+  }
+  
+  if (request.specificDate) {
+    return formatDate(request.specificDate);
+  }
+  
+  if (request.startDate && request.endDate) {
+    return `${formatDate(request.startDate)} - ${formatDate(request.endDate)}`;
+  }
+  
+  return formatDate(request.submittedDate);
+};
+
+// Empty state messages based on active tab
+const getEmptyStateTitle = () => {
+  switch (activeTab.value) {
+    case 'pending':
+      return t('requestStatus.noPendingRequests');
+    case 'approved':
+      return t('requestStatus.noApprovedRequests');
+    case 'denied':
+      return t('requestStatus.noDeniedRequests');
+    default:
+      return t('requestStatus.noRequests');
+  }
+};
+
+const getEmptyStateDescription = () => {
+  switch (activeTab.value) {
+    case 'pending':
+      return t('requestStatus.noPendingRequestsDesc');
+    case 'approved':
+      return t('requestStatus.noApprovedRequestsDesc');
+    case 'denied':
+      return t('requestStatus.noDeniedRequestsDesc');
+    default:
+      return t('requestStatus.noRequestsDesc');
+  }
+};
+
+const cancelRequest = (request) => {
+  requestToCancel = request;
   showCancelModal.value = true;
 };
 
 const confirmCancel = async () => {
   if (requestToCancel) {
     isCancelling.value = true;
+    
+    // Set a flag on the request for UI feedback
+    if (requestToCancel.id) {
+      const requestIndex = permissionRequests.value.findIndex(r => r.id === requestToCancel.id);
+      if (requestIndex !== -1) {
+        permissionRequests.value[requestIndex].isCancelling = true;
+      }
+    }
+    
     try {
-      const result = await cancelPermissionRequest(requestToCancel);
+      // API call structure ready for real data
+      const result = await cancelPermissionRequest(requestToCancel.id);
+      
       if (result.success) {
+        // For real API: the data would be updated via reactive state
+        // For now, we'll show success message
         alert(t('requestStatus.cancelledSuccess'));
+        
+        // Remove the request from the list
+        if (requestToCancel.id) {
+          const index = permissionRequests.value.findIndex(r => r.id === requestToCancel.id);
+          if (index !== -1) {
+            permissionRequests.value.splice(index, 1);
+          }
+        }
       } else {
-        alert(result.error);
+        alert(result.error || t('requestStatus.cancellationFailed'));
       }
     } catch (error) {
+      console.error('Error cancelling request:', error);
       alert(t('requestStatus.cancellationFailed'));
     } finally {
       isCancelling.value = false;
@@ -278,13 +411,29 @@ const confirmCancel = async () => {
 };
 
 const resubmitRequest = (request) => {
-  if (confirm(t('requestStatus.resubmitMessage', { title: request.title }))) {
+  if (confirm(t('requestStatus.resubmitMessage', { title: request.title || request.course }))) {
+    // Navigate to new request page with pre-filled data
+    const query = {
+      courseId: request.courseId || '',
+      reason: request.reason || '',
+      note: request.note || '',
+      durationType: request.durationType || 'specific',
+      specificDate: request.specificDate || '',
+      startDate: request.startDate || '',
+      endDate: request.endDate || ''
+    };
+    
+    // For now, just navigate to the new request page
+    // In a real app, you might pass the data via query params or state
     goToPermissionRequest();
   }
 };
 
 onMounted(() => {
   console.log('Permission requests loaded:', permissionRequests.value.length);
+  
+  // This would be where you fetch real data
+  // Example: fetchPermissionRequests();
 });
 </script>
 
@@ -359,26 +508,6 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.language-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  color: white;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
-}
-
-.language-toggle:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
 .filter-tabs {
   display: flex;
   padding: 16px 20px;
@@ -401,6 +530,11 @@ onMounted(() => {
   border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
   border-radius: 8px 8px 0 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .tab-button:hover {
@@ -412,6 +546,66 @@ onMounted(() => {
   color: #1e3971;
   border-bottom-color: #ffc125;
   font-weight: 600;
+}
+
+/* Badge styling for different tabs */
+.badge {
+  position: static;
+  top: auto;
+  right: auto;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  color: white;
+  transform: none;
+  margin-left: 2px;
+}
+
+/* Color-coded badges */
+.badge.pending {
+  background: #ffc125; /* Yellow */
+  color: #1e3971;
+}
+
+.badge.approved {
+  background: #4cd964; /* Green */
+  color: #1e3971;
+}
+
+.badge.denied {
+  background: #ff3b30; /* Red */
+  color: white;
+}
+
+.badge.all {
+  background: #8e9ed6; /* Light blue for all tab */
+  color: #1e3971;
+}
+
+.tab-button.active .badge.pending {
+  background: #1e3971; /* Dark blue for active pending */
+  color: #ffc125;
+}
+
+.tab-button.active .badge.approved {
+  background: #1e3971; /* Dark blue for active approved */
+  color: #4cd964;
+}
+
+.tab-button.active .badge.denied {
+  background: #1e3971; /* Dark blue for active denied */
+  color: #ff3b30;
+}
+
+.tab-button.active .badge.all {
+  background: #1e3971; /* Dark blue for active all */
+  color: #8e9ed6;
 }
 
 .requests-main {
@@ -540,18 +734,18 @@ onMounted(() => {
 }
 
 .request-status.pending {
-  background: #fff3e0;
-  color: #ff9800;
+  background: #ffc125; /* Changed to yellow */
+  color: #1e3971;
 }
 
 .request-status.approved {
-  background: #e8f5e9;
-  color: #4caf50;
+  background: #4cd964;
+  color: #1e3971;
 }
 
 .request-status.denied {
-  background: #ffebee;
-  color: #f44336;
+  background: #ff3b30;
+  color: white;
 }
 
 .status-icon {
@@ -606,6 +800,7 @@ onMounted(() => {
   color: #ffffff;
   flex: 1;
   line-height: 1.5;
+  font-style: italic;
 }
 
 .request-footer {
@@ -628,14 +823,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #ff9800;
+  color: #ffc125; /* Changed to yellow */
   font-weight: 500;
 }
 
 .pending-dot {
   width: 8px;
   height: 8px;
-  background: #ff9800;
+  background: #ffc125; /* Changed to yellow */
   border-radius: 50%;
   animation: pulse 1.5s infinite;
 }
@@ -673,13 +868,14 @@ onMounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #ffebee;
-  color: #f44336;
+  background: #ffc125; /* Changed to yellow */
+  color: #1e3971;
+  min-width: 80px;
 }
 
 .cancel-button:hover:not(:disabled) {
-  background: #f44336;
-  color: white;
+  background: #e6b422;
+  color: #1e3971;
 }
 
 .cancel-button:disabled {
@@ -697,6 +893,7 @@ onMounted(() => {
   transition: all 0.2s ease;
   background: #e3f2fd;
   color: #1976d2;
+  min-width: 80px;
 }
 
 .resubmit-button:hover {
@@ -705,16 +902,17 @@ onMounted(() => {
 }
 
 .new-request-section {
-  position: fixed;
-  bottom: 80px;
+  position: relative;
+  top: 50px;
+  bottom: 20px;
   left: 20px;
   right: 20px;
   z-index: 100;
 }
 
 .new-request-button {
-  width: 100%;
-  padding: 16px;
+  width: 90%;
+  padding: 14px;
   background: #ffc125;
   border: none;
   border-radius: 16px;
@@ -832,6 +1030,12 @@ onMounted(() => {
   .tab-button {
     font-size: 12px;
     padding: 10px 4px;
+  }
+
+  .badge {
+    font-size: 10px;
+    min-width: 18px;
+    height: 18px;
   }
 
   .request-footer {

@@ -1,48 +1,39 @@
+// i18n/index.js
 import { createI18n } from "vue-i18n";
 
-// Import all page translations
-import enSplash from "@/locales/en/splash.json";
-import enHome from "@/locales/en/home.json";
-import amSplash from "@/locales/am/splash.json";
-import amHome from "@/locales/am/home.json";
-
-// You can add more pages like:
-// import enSettings from "@/locales/en/settings.json";
-// import amSettings from "@/locales/am/settings.json";
-
-// Merge all messages by language
-const messages = {
-  en: {
-    ...enSplash,
-    ...enHome,
-    // ...enSettings,
-    // Add more pages as needed
-  },
-  am: {
-    ...amSplash,
-    ...amHome,
-    // ...amSettings,
-    // Add more pages as needed
-  },
-};
-
-// Get saved language from localStorage or default to 'en'
-const savedLang =
-  typeof window !== "undefined"
-    ? localStorage.getItem("preferredLanguage")
-    : null;
-const defaultLocale =
-  savedLang && (savedLang === "en" || savedLang === "am") ? savedLang : "en";
+// Import JSON files directly
+import enTranslations from "@/locales/en.json";
+import amTranslations from "@/locales/am.json";
 
 // Create i18n instance
 const i18n = createI18n({
   legacy: false,
-  locale: defaultLocale,
+  locale: "en", // Default - will be overridden by localStorage
   fallbackLocale: "en",
-  messages,
+  messages: {
+    en: enTranslations,
+    am: amTranslations,
+  },
   globalInjection: true,
   allowComposition: true,
   missingWarn: false,
 });
+
+// Initialize locale from localStorage
+export const initI18n = () => {
+  if (process.client) {
+    const savedLang = localStorage.getItem("preferredLanguage");
+    if (savedLang && ["en", "am"].includes(savedLang)) {
+      i18n.global.locale.value = savedLang;
+      document.documentElement.lang = savedLang;
+
+      if (savedLang === "am") {
+        document.documentElement.classList.add("amharic-text");
+      } else {
+        document.documentElement.classList.remove("amharic-text");
+      }
+    }
+  }
+};
 
 export default i18n;

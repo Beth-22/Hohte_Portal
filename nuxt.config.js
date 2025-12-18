@@ -5,6 +5,9 @@ export default defineNuxtConfig({
 
   // CSS files
   css: ["~/assets/css/main.css"],
+  router: {
+    middleware: ["language"],
+  },
 
   // App configuration
   app: {

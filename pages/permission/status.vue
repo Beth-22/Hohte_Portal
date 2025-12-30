@@ -451,9 +451,10 @@ onMounted(async () => {
 }
 
 .header-content {
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px 1fr 40px; /* Back button, title, empty space */
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
 }
 
 .back-button {
@@ -486,10 +487,9 @@ onMounted(async () => {
 }
 
 .header-right {
+  grid-column: 3;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
+  justify-content: flex-end;
 }
 
 .language-toggle {

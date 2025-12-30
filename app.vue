@@ -1,3 +1,4 @@
+<!-- app.vue -->
 <template>
   <NuxtLayout>
     <NuxtPage />
@@ -9,12 +10,12 @@ import { onMounted } from 'vue'
 import { useLanguage } from '~/composables/useLanguage'
 import { useTelegram } from '~/composables/useTelegram'
 
-const { init: initLanguage } = useLanguage()
+//const { init: initLanguage } = useLanguage()
 const { isTelegram } = useTelegram()
 
-onMounted(async () => {
-  // Initialize language
-  await initLanguage()
+// Initialize language IMMEDIATELY when app loads
+onMounted(() => {
+  //initLanguage()
   
   // If in Telegram, hide browser navigation
   if (isTelegram.value) {

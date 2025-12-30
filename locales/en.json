@@ -70,6 +70,10 @@
     "resubmitMessage": "You can resubmit a request for: {title}",
     "noRequests": "No requests found",
     "noRequestsDesc": "You haven't submitted any permission requests yet.",
+    "noPendingDesc": "No pending permission requests found.",
+    "noApprovedDesc": "No approved permission requests found.",
+    "viewAllRequests": "View All Requests",
+    "noDeniedDesc": "No denied permission requests found.",
     "samples": {
       "mezmu": "MezmuT That",
       "kedamay": "Kedamay Course",
@@ -108,5 +112,12 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success"
+  },
+  "permissionReasons": {
+    "health_issue": "Health Issue",
+    "family_emergency": "Family Emergency",
+    "sickness": "Sickness",
+    "personal_matter": "Personal Matter",
+    "other": "Other"
   }
 }

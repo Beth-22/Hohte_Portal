@@ -117,10 +117,10 @@ import { useRouter } from "#app";
 import { useLanguage } from "~/composables/useLanguage";
 
 const router = useRouter();
-const { t, setLocale } = useLanguage();
+const { t, setLocale, init, locale } = useLanguage(); // Get locale from useLanguage
 
 const loading = ref(true);
-const selectedLanguage = ref("");
+const selectedLanguage = ref(locale.value); // Initialize with current locale
 const imageError = ref(false);
 
 const handleImageError = () => {
@@ -132,24 +132,18 @@ onMounted(() => {
     loading.value = false;
     
     if (process.client) {
-      const saved = localStorage.getItem("preferredLanguage");
-      if (saved && ['en', 'am'].includes(saved)) {
-        selectedLanguage.value = saved;
-        setLocale(saved);
-      } else {
-        selectedLanguage.value = 'en';
-        setLocale('en');
-      }
+      // 🌟 Initialize language system
+      init();
+      
+      // Set selectedLanguage to current locale
+      selectedLanguage.value = locale.value;
     }
   }, 1500);
 });
 
 const selectLanguage = (lang) => {
   selectedLanguage.value = lang;
-  setLocale(lang);
-  if (process.client) {
-    localStorage.setItem("preferredLanguage", lang);
-  }
+  setLocale(lang); // This now updates GLOBAL state
 };
 
 const continueToApp = () => {
@@ -158,7 +152,6 @@ const continueToApp = () => {
   }
 };
 </script>
-
 <style scoped>
 .splash-container {
   min-height: 100vh;
@@ -217,10 +210,10 @@ const continueToApp = () => {
 
 .logo-container {
   margin-bottom: 24px;
+  margin-top: 20px;
   display: flex;
   justify-content: center;
 }
-
 .logo-wrapper {
   position: relative;
   width: 120px;
@@ -230,7 +223,13 @@ const continueToApp = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 0 18px rgba(255, 255, 255, 0.5),
+    0 0 35px rgba(255, 255, 255, 0.3),
+    0 0 50px rgba(255, 255, 255, 0.15),
+    0 0 90px rgba(255, 193, 37, 0.08); /* Subtle yellow hint */
+  animation: subtleGlow 5s infinite alternate ease-in-out;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
 }
 
 .logo-image {
@@ -239,8 +238,26 @@ const continueToApp = () => {
   object-fit: contain;
   border-radius: 50%;
   background: transparent;
+  position: relative;
+  z-index: 2;
 }
 
+@keyframes subtleGlow {
+  0% {
+    box-shadow: 
+      0 0 18px rgba(255, 255, 255, 0.5),
+      0 0 35px rgba(255, 255, 255, 0.3),
+      0 0 50px rgba(255, 255, 255, 0.15),
+      0 0 90px rgba(255, 193, 37, 0.08);
+  }
+  100% {
+    box-shadow: 
+      0 0 22px rgba(255, 255, 255, 0.55),
+      0 0 40px rgba(255, 255, 255, 0.35),
+      0 0 60px rgba(255, 255, 255, 0.2),
+      0 0 100px rgba(255, 193, 37, 0.1);
+  }
+}
 .app-title-section {
   margin-top: 8px;
 }

@@ -70,6 +70,10 @@
     "resubmitMessage": "ለ {title} ጥያቄ እንደገና መላክ ይችላሉ።",
     "noRequests": "ምንም ጥያቄ አልተገኘም",
     "noRequestsDesc": "እስካሁን ምንም የፈቃድ ጥያቄ አላቀረቡም።",
+    "noPendingDesc": "ምንም የፈቃድ ጥያቄዎች በመጠባበቅ ላይ አልተገኙም።",
+    "noApprovedDesc": "ምንም የተፈቀደ የፈቃድ ጥያቄዎች አልተገኙም።",
+    "viewAllRequests": "ሁሉንም ጥያቄዎች ይመልከቱ",
+    "noDeniedDesc": "ምንም የተከለከለ የፈቃድ ጥያቄዎች አልተገኙም።",
     "samples": {
       "mezmu": "መዝሙር ጥብቅ",
       "kedamay": "ከዳማይ ኮርስ",
@@ -108,5 +112,12 @@
     "loading": "በመጫን ላይ...",
     "error": "ስህተት",
     "success": "ተሳክቷል"
+  },
+  "permissionReasons": {
+    "health_issue": "ጤና ችግር",
+    "family_emergency": "የቤተሰብ አደጋ",
+    "sickness": "ህመም",
+    "personal_matter": "የግል ጉዳይ",
+    "other": "ሌላ"
   }
 }

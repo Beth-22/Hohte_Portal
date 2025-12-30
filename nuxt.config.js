@@ -5,6 +5,7 @@ export default defineNuxtConfig({
 
   // CSS files
   css: ["~/assets/css/main.css"],
+  plugins: ['~/plugins/language.client.js'],
 
   // App configuration
   app: {
@@ -24,7 +25,7 @@ export default defineNuxtConfig({
   // Runtime configuration
   runtimeConfig: {
     public: {
-      // Add any public config here
+      apiBaseUrl: process.env.API_BASE_URL || "http://localhost:8000",
     },
   },
 

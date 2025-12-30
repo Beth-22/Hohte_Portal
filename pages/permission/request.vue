@@ -1,5 +1,29 @@
 <template>
   <div class="permission-request">
+    <!-- Toast Notifications -->
+    <div class="toast-container">
+      <ToastNotification
+        v-for="toast in toasts"
+        :key="toast.id"
+        :message="toast.message"
+        :type="toast.type"
+        :duration="toast.duration"
+        @close="removeToast(toast.id)"
+      />
+    </div>
+
+    <!-- Logo at the top -->
+    <div class="logo-top">
+      <div class="logo-container">
+        <img
+          src="~/assets/images/logo2-modified.png"
+          alt="HOHTE Logo"
+          class="logo-image-top"
+          @error="handleLogoError"
+        />
+      </div>
+    </div>
+
     <div class="form-card">
       <div class="header-section">
         <button class="back-button" @click="goBack">
@@ -8,11 +32,9 @@
           </svg>
         </button>
         <h1 class="page-title">{{ t('requestStatus.newRequest') }}</h1>
-        <div class="language-toggle" @click="toggleLanguage">
-          <span>{{ locale === 'en' ? 'አማ' : 'EN' }}</span>
-        </div>
       </div>
 
+      <!-- Rest of your template remains the same -->
       <div class="form-section">
         <div class="form-row">
           <div class="form-field">
@@ -22,7 +44,7 @@
             <select v-model="formData.course" class="select-input">
               <option value="" disabled selected>{{ t('requestStatus.selectClass') }}</option>
               <option
-                v-for="course in courses"
+                v-for="course in classOptions"
                 :key="course.id"
                 :value="course.id"
               >
@@ -37,8 +59,8 @@
             </div>
             <select v-model="formData.reason" class="select-input">
               <option value="" disabled selected>{{ t('requestStatus.selectReason') }}</option>
-              <option v-for="reason in reasons" :key="reason.value" :value="reason.value">
-                {{ locale === 'en' ? reason.en : reason.am }}
+              <option v-for="reason in permissionReasons" :key="reason.value" :value="reason.value">
+                {{ t(`permissionReasons.${reason.translationKey}`) }}
               </option>
             </select>
           </div>
@@ -123,14 +145,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
+import { useToast } from '~/composables/useToast'
+import ToastNotification from '~/components/ToastNotification.vue'
 
 const { locale, t, setLocale } = useLanguage()
 const { goBack } = useNavigation()
-const { courses, submitPermissionRequest } = useStudentData()
+const { 
+  classOptions, 
+  permissionReasons, 
+  submitPermissionRequest,
+  fetchClassOptions,
+  fetchPermissionReasons,
+  isLoading 
+} = useStudentData()
+
+const { toasts, success, error: showError, removeToast } = useToast()
 
 const durationType = ref('specific')
 const isSubmitting = ref(false)
@@ -143,78 +176,109 @@ const formData = ref({
   endDate: ''
 })
 
-const reasons = [
-  { value: 'sickness', en: 'Sickness', am: 'ህመም' },
-  { value: 'family', en: 'Family Emergency', am: 'የቤተሰብ አስቸኳይ ጉዳይ' },
-  { value: 'work', en: 'Work', am: 'ስራ' },
-  { value: 'travel', en: 'Travel', am: 'ጉዞ' },
-  { value: 'other', en: 'Other', am: 'ሌላ' }
-]
-
-const toggleLanguage = () => {
-  const newLocale = locale.value === 'en' ? 'am' : 'en'
-  setLocale(newLocale)
+// Add logo error handling
+const handleLogoError = () => {
+  console.error('Logo image failed to load')
 }
 
+watch(permissionReasons, (newReasons) => {
+  console.log('Permission reasons updated:', newReasons)
+  if (newReasons.length > 0) {
+    console.log('First reason translation:', t(`permissionReasons.${newReasons[0].translationKey}`))
+  }
+})
+
+watch(classOptions, (newOptions) => {
+  console.log('Class options updated:', newOptions)
+})
+
 const submitForm = async () => {
+  // Validation
   if (!formData.value.course || !formData.value.reason) {
-    alert(t('requestStatus.requiredFields'))
+    showError(t('requestStatus.requiredFields'), 3000)
     return
   }
 
   if (durationType.value === 'specific' && !formData.value.specificDate) {
-    alert(t('requestStatus.requiredDate'))
+    showError(t('requestStatus.requiredDate'), 3000)
     return
   }
 
   if (durationType.value === 'range' && (!formData.value.startDate || !formData.value.endDate)) {
-    alert(t('requestStatus.requiredDates'))
+    showError(t('requestStatus.requiredDates'), 3000)
     return
   }
 
-  const selectedCourse = courses.value.find(c => c.id === formData.value.course)
+  const selectedCourse = classOptions.value.find(c => c.id === formData.value.course)
+  const selectedReason = permissionReasons.value.find(r => r.value === formData.value.reason)
+  
+  const reasonText = selectedReason ? t(`permissionReasons.${selectedReason.translationKey}`) : t('requestStatus.samples.sickness')
   
   const requestData = {
-    title: selectedCourse?.name || '',
-    course: selectedCourse?.name || '',
+    title: reasonText,
+    course: selectedCourse?.name || 'Class',
     courseId: formData.value.course,
-    reason: formData.value.reason,
+    reason: reasonText,
     note: formData.value.note,
     durationType: durationType.value,
     specificDate: formData.value.specificDate,
     startDate: formData.value.startDate,
     endDate: formData.value.endDate,
-    submittedDate: new Date().toISOString().split('T')[0],
-    classDate: new Date().toLocaleDateString(locale.value, { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    })
+    reasonId: formData.value.reason
   }
+
+  console.log('Submitting request data:', requestData)
 
   try {
     isSubmitting.value = true
     const result = await submitPermissionRequest(requestData)
     
     if (result.success) {
-      alert(t('requestStatus.submissionSuccess'))
-      goBack()
+      // Show success toast
+      success(t('requestStatus.submissionSuccess'), 3000)
+      
+      // Wait a bit for toast to show, then go back
+      setTimeout(() => {
+        goBack()
+      }, 1500)
     } else {
-      alert(result.error || t('requestStatus.submissionFailed'))
+      showError(result.error || t('requestStatus.submissionFailed'), 4000)
     }
-  } catch (error) {
-    alert(t('requestStatus.submissionFailed'))
+  } catch (err) {
+    console.error('Submit error:', err)
+    showError(t('requestStatus.submissionFailed'), 4000)
   } finally {
     isSubmitting.value = false
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   const today = new Date().toISOString().split('T')[0]
   formData.value.specificDate = today
   formData.value.startDate = today
   formData.value.endDate = today
+
+  console.log('Permission request page mounted')
+
+  // Fetch dynamic data with error handling
+  try {
+    await Promise.all([
+      fetchClassOptions(),
+      fetchPermissionReasons()
+    ])
+    console.log('Data fetched successfully')
+    
+    // Set default values if available
+    if (classOptions.value.length > 0) {
+      formData.value.course = classOptions.value[0].id
+    }
+    if (permissionReasons.value.length > 0) {
+      formData.value.reason = permissionReasons.value[0].value
+    }
+  } catch (err) {
+    console.error('Failed to fetch data:', err)
+    showError('Failed to load form data. Please try again.', 4000)
+  }
 })
 </script>
 
@@ -227,6 +291,43 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  position: relative;
+  flex-direction: column;
+}
+
+/* Logo at the top */
+.logo-top {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+.logo-container {
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.logo-image-top {
+  width:100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.toast-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  pointer-events: none;
 }
 
 .form-card {
@@ -235,6 +336,8 @@ onMounted(() => {
   padding: 30px;
   width: 100%;
   max-width: 800px;
+  position: relative;
+  z-index: 1;
 }
 
 .header-section {
@@ -270,27 +373,6 @@ onMounted(() => {
   margin: 0;
   text-align: center;
   flex: 1;
-}
-
-.language-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  color: white;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
-  flex-shrink: 0;
-}
-
-.language-toggle:hover {
-  background: rgba(255, 255, 255, 0.2);
 }
 
 .form-section {
@@ -478,7 +560,8 @@ onMounted(() => {
 
 .submit-section {
   text-align: center;
-  margin-top: 40px;
+  margin-top: 30px;
+  margin-bottom: 50px;
 }
 
 .submit-btn {
@@ -529,6 +612,11 @@ onMounted(() => {
     flex: 1;
     min-width: auto;
     padding: 12px 15px;
+  }
+  
+  .logo-container {
+    width: 80px;
+    height: 80px;
   }
 }
 </style>

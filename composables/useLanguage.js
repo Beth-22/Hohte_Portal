@@ -1,12 +1,15 @@
 // composables/useLanguage.js
-import { ref } from "vue";
+import { ref, watch, onMounted } from "vue";
 
 // Import your JSON translation files
 import enTranslations from "~/locales/en.json";
 import amTranslations from "~/locales/am.json";
 
+// 🌟 CREATE A GLOBAL STATE (SINGLE SOURCE OF TRUTH)
+const globalLocale = ref("en");
+
 export const useLanguage = () => {
-  const locale = ref("en");
+  const locale = ref(globalLocale.value); // Use global state
 
   // Translations from your JSON files
   const translations = {
@@ -48,15 +51,26 @@ export const useLanguage = () => {
   };
 
   const setLocale = (newLocale) => {
-    if (newLocale === locale.value) return;
+    if (newLocale === globalLocale.value) return;
 
+    console.log(
+      `🌍 Changing language from ${globalLocale.value} to ${newLocale}`
+    );
+
+    // 🌟 UPDATE GLOBAL STATE
+    globalLocale.value = newLocale;
+
+    // 🌟 UPDATE LOCAL COMPONENT STATE
     locale.value = newLocale;
 
     if (process.client) {
+      // 🌟 PERSIST TO localStorage
       localStorage.setItem("preferredLanguage", newLocale);
+
+      // 🌟 UPDATE HTML DOCUMENT
       document.documentElement.lang = newLocale;
 
-      // Add/remove Amharic text class
+      // 🌟 ADD/REMOVE Amharic text class for ALL PAGES
       if (newLocale === "am") {
         document.documentElement.classList.add("amharic-text");
       } else {
@@ -73,9 +87,29 @@ export const useLanguage = () => {
         savedLang = "en";
       }
 
+      console.log(`🌍 Initializing language from localStorage: ${savedLang}`);
       setLocale(savedLang);
     }
   };
+
+  // 🌟 WATCH FOR GLOBAL CHANGES (when home toggle changes language)
+  onMounted(() => {
+    if (process.client) {
+      watch(globalLocale, (newLocale) => {
+        if (newLocale !== locale.value) {
+          console.log(`🌍 Component updating locale to: ${newLocale}`);
+          locale.value = newLocale;
+
+          // Update document class
+          if (newLocale === "am") {
+            document.documentElement.classList.add("amharic-text");
+          } else {
+            document.documentElement.classList.remove("amharic-text");
+          }
+        }
+      });
+    }
+  });
 
   return {
     locale,

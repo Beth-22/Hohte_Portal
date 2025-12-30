@@ -1,5 +1,200 @@
+<script setup>
+import { ref, computed, onMounted } from "vue";
+import { useLanguage } from "~/composables/useLanguage";
+import { useNavigation } from "~/composables/useNavigation";
+import { useStudentData } from "~/composables/useStudentData";
+import { useToast } from '~/composables/useToast'
+import ToastNotification from '~/components/ToastNotification.vue'
+
+const { locale, t, setLocale } = useLanguage();
+const { goBack, goToPermissionRequest } = useNavigation();
+const { 
+  permissionRequests, 
+  cancelPermissionRequest, 
+  pendingRequestsCount, 
+  fetchPermissionRequests 
+} = useStudentData();
+
+const { toasts, success, error: showError, removeToast } = useToast()
+
+const activeTab = ref("all");
+const showCancelModal = ref(false);
+const isCancelling = ref(false);
+let requestToCancel = null;
+
+const tabs = computed(() => [
+  { id: "all", label: t("requestStatus.tabs.all") },
+  { id: "pending", label: t("requestStatus.tabs.pending") },
+  { id: "approved", label: t("requestStatus.tabs.approved") },
+  { id: "denied", label: t("requestStatus.tabs.denied") },
+]);
+
+const filteredRequests = computed(() => {
+  console.log('Filtering requests for tab:', activeTab.value);
+  console.log('All requests:', permissionRequests.value);
+  
+  if (!permissionRequests.value || permissionRequests.value.length === 0) {
+    console.log('No requests to filter');
+    return [];
+  }
+  
+  if (activeTab.value === "all") {
+    console.log('Returning all requests');
+    return permissionRequests.value;
+  }
+  
+  const filtered = permissionRequests.value.filter(
+    (request) => request.status.toLowerCase() === activeTab.value
+  );
+  console.log(`Filtered to ${filtered.length} ${activeTab.value} requests`);
+  return filtered;
+});
+
+// Get the appropriate empty state message based on active tab
+const emptyStateMessage = computed(() => {
+  switch (activeTab.value) {
+    case 'pending':
+      return {
+        title: t('requestStatus.tabs.pending'),
+        description: t('requestStatus.noPendingDesc') || 'No pending permission requests found.'
+      };
+    case 'approved':
+      return {
+        title: t('requestStatus.tabs.approved'),
+        description: t('requestStatus.noApprovedDesc') || 'No approved permission requests found.'
+      };
+    case 'denied':
+      return {
+        title: t('requestStatus.tabs.denied'),
+        description: t('requestStatus.noDeniedDesc') || 'No denied permission requests found.'
+      };
+    default:
+      return {
+        title: t('requestStatus.noRequests'),
+        description: t('requestStatus.noRequestsDesc')
+      };
+  }
+});
+
+
+
+const getStatusText = (status) => {
+  const statusLower = status ? status.toLowerCase() : '';
+  switch (statusLower) {
+    case 'pending':
+      return t("requestStatus.tabs.pending");
+    case 'approved':
+      return t("requestStatus.tabs.approved");
+    case 'denied':
+      return t("requestStatus.tabs.denied");
+    default:
+      return status || 'Unknown';
+  }
+}
+
+const getCourseIcon = (courseName) => {
+  const icons = {
+    "Media Kifi": "🎬",
+    "Kedamay Course": "📚",
+    "Abalat Kifi": "🎵",
+    "General Studies": "📖",
+    "ጴጥሮስ ምድብ (Petros)": "📚",
+  };
+  return icons[courseName] || "📝";
+};
+
+const cancelRequest = (id) => {
+  requestToCancel = id;
+  showCancelModal.value = true;
+};
+
+const confirmCancel = async () => {
+  if (requestToCancel) {
+    isCancelling.value = true;
+    try {
+      const result = await cancelPermissionRequest(requestToCancel);
+      
+      if (result.success) {
+        // Show success toast
+        success(t('requestStatus.cancelledSuccess'), 3000);
+      } else {
+        // If the error is "Request not found", it was already cancelled
+        if (result.error && result.error.includes('not found')) {
+          success(t('requestStatus.cancelledSuccess') + ' (Already processed)', 3000);
+          // Refresh from API to get updated list
+          await refreshPermissionRequests();
+        } else {
+          showError(result.error || t('requestStatus.cancellationFailed'), 4000);
+        }
+      }
+    } catch (err) {
+      console.error('Cancel error:', err);
+      // If it's a "not found" error, the request was already cancelled
+      if (err.message && err.message.includes('not found')) {
+        success(t('requestStatus.cancelledSuccess') + ' (Already processed)', 3000);
+        await refreshPermissionRequests();
+      } else {
+        showError(t('requestStatus.cancellationFailed'), 4000);
+      }
+    } finally {
+      isCancelling.value = false;
+      showCancelModal.value = false;
+      requestToCancel = null;
+    }
+  }
+};
+
+const resubmitRequest = (request) => {
+  if (confirm(t('requestStatus.resubmitMessage', { title: request.title }))) {
+    goToPermissionRequest();
+  }
+};
+
+// Manual refresh function
+const refreshPermissionRequests = async () => {
+  console.log('=== MANUALLY REFRESHING PERMISSION REQUESTS ===');
+  try {
+    await fetchPermissionRequests();
+    console.log('Refresh successful. Current requests:', permissionRequests.value);
+  } catch (error) {
+    console.error('Failed to refresh:', error);
+    showError('Failed to refresh requests', 3000);
+  }
+};
+
+onMounted(async () => {
+  console.log('=== STATUS PAGE MOUNTED ===');
+  console.log('Initial permissionRequests:', permissionRequests.value);
+  
+  // Fetch permission requests on page load
+  await refreshPermissionRequests();
+  
+  if (permissionRequests.value.length > 0) {
+    console.log('Sample request structure:', {
+      id: permissionRequests.value[0].id,
+      title: permissionRequests.value[0].title,
+      course: permissionRequests.value[0].course,
+      status: permissionRequests.value[0].status,
+      raw: permissionRequests.value[0].raw
+    });
+  }
+});
+</script>
+
 <template>
   <div class="requests-container">
+    <!-- Toast Notifications -->
+    <div class="toast-container">
+      <ToastNotification
+        v-for="toast in toasts"
+        :key="toast.id"
+        :message="toast.message"
+        :type="toast.type"
+        :duration="toast.duration"
+        @close="removeToast(toast.id)"
+      />
+    </div>
+
     <header class="requests-header">
       <div class="logo-center">
         <img
@@ -19,15 +214,22 @@
         <h1 class="page-title">{{ t('requestStatus.title') }}</h1>
 
         <div class="header-right">
-          <button class="language-toggle" @click="toggleLanguage">
-            <span>{{ locale === 'en' ? 'አማ' : 'EN' }}</span>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2"/>
-            </svg>
-          </button>
+      
         </div>
       </div>
     </header>
+
+    <!-- Debug Section -->
+    <div class="debug-section" v-if="permissionRequests.length === 0 && activeTab === 'all'">
+      <div class="debug-info">
+        <p>Debug: No permission requests loaded ({{ permissionRequests.length }} found)</p>
+        <div class="debug-actions">
+          <button @click="refreshPermissionRequests" class="debug-button">
+            Refresh Data
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div class="filter-tabs">
       <button
@@ -37,14 +239,36 @@
         @click="activeTab = tab.id"
       >
         {{ tab.label }}
+        <span v-if="tab.id === 'pending' && pendingRequestsCount > 0" class="tab-badge">
+          {{ pendingRequestsCount }}
+        </span>
       </button>
     </div>
 
     <main class="requests-main">
       <div v-if="filteredRequests.length === 0" class="empty-state">
-        <div class="empty-icon">📄</div>
-        <h3>{{ t('requestStatus.noRequests') }}</h3>
-        <p>{{ t('requestStatus.noRequestsDesc') }}</p>
+        <div class="empty-icon" :class="activeTab">
+          <span v-if="activeTab === 'pending'">⏳</span>
+          <span v-else-if="activeTab === 'approved'">✅</span>
+          <span v-else-if="activeTab === 'denied'">❌</span>
+          <span v-else>📄</span>
+        </div>
+        <h3>{{ emptyStateMessage.title }}</h3>
+        <p>{{ emptyStateMessage.description }}</p>
+        <button 
+          v-if="activeTab !== 'all'" 
+          @click="activeTab = 'all'" 
+          class="view-all-btn"
+        >
+          {{  t('requestStatus.viewAllRequests') }}
+        </button>
+        <button 
+          v-else 
+          @click="goToPermissionRequest" 
+          class="new-request-btn"
+        >
+          {{ t('requestStatus.newRequest') }}
+        </button>
       </div>
 
       <div v-else class="requests-list">
@@ -61,12 +285,13 @@
             <div class="request-info">
               <h3 class="request-title">{{ request.title }}</h3>
               <p class="course-name">{{ request.course }}</p>
+              <p class="request-id">ID: {{ request.id }}</p>
             </div>
             <div class="request-status" :class="request.status.toLowerCase()">
               <span class="status-text">{{ getStatusText(request.status) }}</span>
               <div class="status-icon">
                 <svg
-                  v-if="request.status === 'PENDING'"
+                  v-if="request.status.toLowerCase() === 'pending'"
                   width="16"
                   height="16"
                   viewBox="0 0 16 16"
@@ -76,7 +301,7 @@
                   <path d="M8 4V8L10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
                 <svg
-                  v-else-if="request.status === 'APPROVED'"
+                  v-else-if="request.status.toLowerCase() === 'approved'"
                   width="16"
                   height="16"
                   viewBox="0 0 16 16"
@@ -85,12 +310,8 @@
                   <path d="M13.3333 4L6.00001 11.3333L2.66668 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
                 <svg
-                  v-else
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                >
+                  v-else-if="request.status.toLowerCase() === 'denied'"
+                  width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
               </div>
@@ -100,50 +321,47 @@
           <div class="request-details">
             <div class="detail-row">
               <span class="detail-label">{{ t('requestStatus.submitted') }}:</span>
-              <span class="detail-value">{{ request.submittedDate }}</span>
+              <span class="detail-value">{{ request.submittedDate || 'Not available' }}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">{{ t('requestStatus.classDate') }}:</span>
               <span class="detail-value">{{ request.classDate }}</span>
             </div>
-            <div
-              v-if="request.status === 'DENIED' && request.reason"
-              class="reason-row"
-            >
-              <span class="reason-label">{{ t('requestStatus.reason') }}:</span>
-              <span class="reason-text">{{ request.reason }}</span>
+            <div class="detail-row">
+              <span class="detail-label">{{ t('requestStatus.reason') }}:</span>
+              <span class="detail-value">{{ request.reason }}</span>
             </div>
             <div
-              v-else-if="request.status === 'APPROVED' && request.approvedBy"
-              class="reason-row"
+              v-if="request.status.toLowerCase() === 'approved' && request.approvedBy"
+              class="detail-row"
             >
-              <span class="reason-label">{{ t('requestStatus.approvedBy') }}:</span>
-              <span class="reason-text">{{ request.approvedBy }}</span>
+              <span class="detail-label">{{ t('requestStatus.approvedBy') }}:</span>
+              <span class="detail-value">{{ request.approvedBy }}</span>
             </div>
           </div>
 
           <div class="request-footer">
             <div class="footer-left">
               <div
-                v-if="request.status === 'PENDING'"
+                v-if="request.status.toLowerCase() === 'pending'"
                 class="pending-indicator"
               >
                 <span class="pending-dot"></span>
                 <span>{{ t('requestStatus.underReview') }}</span>
               </div>
               <div
-                v-else-if="request.status === 'APPROVED'"
+                v-else-if="request.status.toLowerCase() === 'approved'"
                 class="approved-time"
               >
-                <span>{{ t('requestStatus.approvedOn') }} {{ request.approvedDate || request.updatedAt }}</span>
+                <span>{{ t('requestStatus.approvedOn') }} {{ request.approvedDate || request.updatedAt || 'Not available' }}</span>
               </div>
-              <div v-else class="denied-time">
-                <span>{{ t('requestStatus.deniedOn') }} {{ request.deniedDate || request.updatedAt }}</span>
+              <div v-else-if="request.status.toLowerCase() === 'denied'" class="denied-time">
+                <span>{{ t('requestStatus.deniedOn') }} {{ request.deniedDate || request.updatedAt || 'Not available' }}</span>
               </div>
             </div>
             <div class="footer-right">
               <button
-                v-if="request.status === 'PENDING'"
+                v-if="request.status.toLowerCase() === 'pending'"
                 class="cancel-button"
                 @click="cancelRequest(request.id)"
                 :disabled="isCancelling"
@@ -151,7 +369,7 @@
                 {{ isCancelling ? t('requestStatus.cancelling') : t('requestStatus.cancel') }}
               </button>
               <button
-                v-else-if="request.status === 'DENIED'"
+                v-else-if="request.status.toLowerCase() === 'denied'"
                 class="resubmit-button"
                 @click="resubmitRequest(request)"
               >
@@ -162,7 +380,7 @@
         </div>
       </div>
 
-      <div class="new-request-section">
+      <div class="new-request-section" v-if="filteredRequests.length > 0">
         <button class="new-request-button" @click="goToPermissionRequest">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -193,107 +411,22 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from "vue";
-import { useLanguage } from "~/composables/useLanguage";
-import { useNavigation } from "~/composables/useNavigation";
-import { useStudentData } from "~/composables/useStudentData";
-
-const { locale, t, setLocale } = useLanguage();
-const { goBack, goToPermissionRequest } = useNavigation();
-const { permissionRequests, cancelPermissionRequest, pendingRequestsCount } = useStudentData();
-
-const activeTab = ref("all");
-const showCancelModal = ref(false);
-const isCancelling = ref(false);
-let requestToCancel = null;
-
-const tabs = computed(() => [
-  { id: "all", label: t("requestStatus.tabs.all") },
-  { id: "pending", label: t("requestStatus.tabs.pending") },
-  { id: "approved", label: t("requestStatus.tabs.approved") },
-  { id: "denied", label: t("requestStatus.tabs.denied") },
-]);
-
-const filteredRequests = computed(() => {
-  if (activeTab.value === "all") {
-    return permissionRequests.value;
-  }
-  return permissionRequests.value.filter(
-    (request) => request.status.toLowerCase() === activeTab.value
-  );
-});
-
-const toggleLanguage = () => {
-  const newLocale = locale.value === "en" ? "am" : "en";
-  setLocale(newLocale);
-};
-
-const getStatusText = (status) => {
-  switch (status) {
-    case "PENDING":
-      return t("requestStatus.tabs.pending");
-    case "APPROVED":
-      return t("requestStatus.tabs.approved");
-    case "DENIED":
-      return t("requestStatus.tabs.denied");
-    default:
-      return status;
-  }
-};
-
-const getCourseIcon = (courseName) => {
-  const icons = {
-    "Media Kifi": "🎬",
-    "Kedamay Course": "📚",
-    "Abalat Kifi": "🎵",
-    "General Studies": "📖",
-  };
-  return icons[courseName] || "📝";
-};
-
-const cancelRequest = (id) => {
-  requestToCancel = id;
-  showCancelModal.value = true;
-};
-
-const confirmCancel = async () => {
-  if (requestToCancel) {
-    isCancelling.value = true;
-    try {
-      const result = await cancelPermissionRequest(requestToCancel);
-      if (result.success) {
-        alert(t('requestStatus.cancelledSuccess'));
-      } else {
-        alert(result.error);
-      }
-    } catch (error) {
-      alert(t('requestStatus.cancellationFailed'));
-    } finally {
-      isCancelling.value = false;
-      showCancelModal.value = false;
-      requestToCancel = null;
-    }
-  }
-};
-
-const resubmitRequest = (request) => {
-  if (confirm(t('requestStatus.resubmitMessage', { title: request.title }))) {
-    goToPermissionRequest();
-  }
-};
-
-onMounted(() => {
-  console.log('Permission requests loaded:', permissionRequests.value.length);
-});
-</script>
-
 <style scoped>
 .requests-container {
   min-height: 100vh;
   background: #1e3971;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   padding-bottom: 80px;
+  position: relative;
+}
+
+.toast-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  pointer-events: none;
 }
 
 .requests-header {
@@ -379,6 +512,34 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Debug Section */
+.debug-section {
+  background: rgba(255, 193, 37, 0.1);
+  border: 1px solid #FFC125;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px 20px;
+}
+
+.debug-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #FFC125;
+  font-size: 14px;
+}
+
+.debug-button {
+  background: #FFC125;
+  color: #1e3971;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .filter-tabs {
   display: flex;
   padding: 16px 20px;
@@ -401,6 +562,7 @@ onMounted(() => {
   border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
   border-radius: 8px 8px 0 0;
+  position: relative;
 }
 
 .tab-button:hover {
@@ -412,6 +574,22 @@ onMounted(() => {
   color: #1e3971;
   border-bottom-color: #ffc125;
   font-weight: 600;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff3b30;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
 }
 
 .requests-main {
@@ -433,7 +611,19 @@ onMounted(() => {
 .empty-icon {
   font-size: 64px;
   margin-bottom: 20px;
-  opacity: 0.5;
+  opacity: 0.8;
+}
+
+.empty-icon.pending {
+  color: #ffc125;
+}
+
+.empty-icon.approved {
+  color: #4cd964;
+}
+
+.empty-icon.denied {
+  color: #ff3b30;
 }
 
 .empty-state h3 {
@@ -446,7 +636,43 @@ onMounted(() => {
 .empty-state p {
   color: #a0b3d9;
   font-size: 14px;
-  margin: 0;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.view-all-btn {
+  background: #4a6fc1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 10px;
+}
+
+.view-all-btn:hover {
+  background: #5a7fd1;
+  transform: translateY(-2px);
+}
+
+.new-request-btn {
+  background: #FFC125;
+  color: #1e3971;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.new-request-btn:hover {
+  background: #ffd54f;
+  transform: translateY(-2px);
 }
 
 .requests-list {
@@ -529,6 +755,12 @@ onMounted(() => {
   margin: 0;
 }
 
+.request-id {
+  font-size: 12px;
+  color: #a0b3d9;
+  margin-top: 2px;
+}
+
 .request-status {
   display: flex;
   align-items: center;
@@ -585,27 +817,6 @@ onMounted(() => {
 .detail-value {
   color: #fcfcfc;
   font-weight: 500;
-}
-
-.reason-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #e8ecf1;
-  font-size: 14px;
-}
-
-.reason-label {
-  color: #ffffff;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.reason-text {
-  color: #ffffff;
-  flex: 1;
-  line-height: 1.5;
 }
 
 .request-footer {
@@ -848,6 +1059,17 @@ onMounted(() => {
     left: 16px;
     right: 16px;
     bottom: 70px;
+  }
+  
+  .debug-section {
+    margin: 10px;
+    padding: 8px;
+  }
+  
+  .debug-info {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
   }
 }
 </style>

@@ -1,117 +1,149 @@
-<template>
-  <div class="dashboard-container">
-    <div class="status-bar-padding"></div>
-
-    <header class="header-section">
-      <div class="language-toggle" @click="toggleLanguage">
-        <svg class="globe-icon" viewBox="0 0 24 24" width="24" height="24">
-          <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM4.09 13H8.38C8.84 14.88 9.77 16.56 11 17.89C9.64 17.75 8.35 17.07 7.2 16.03L4.09 13ZM12 20C10.74 20 9.53 19.52 8.56 18.73C9.88 18.59 11.19 18.11 12 17.39C12.81 18.11 14.12 18.59 15.44 18.73C14.47 19.52 13.26 20 12 20ZM20 12C20 11.66 19.95 11.32 19.86 11H15.62C15.16 9.12 14.23 7.44 13 6.11C14.36 6.25 15.65 6.93 16.8 7.97L19.91 11C19.97 11.33 20 11.66 20 12ZM12 4C13.26 4 14.47 4.48 15.44 5.27C14.12 5.41 12.81 5.89 12 6.61C11.19 5.89 9.88 5.41 8.56 5.27C9.53 4.48 10.74 4 12 4ZM4.09 11L7.2 7.97C8.35 6.93 9.64 6.25 11 6.11C9.77 7.44 8.84 9.12 8.38 11H4.09Z"/>
-        </svg>
-        <span class="language-label">{{ locale === 'en' ? 'አማ' : 'EN' }}</span>
-      </div>
-
-      <div class="welcome-text">
-        <p class="welcome-label">{{ t('home.welcome') }}</p>
-        <h1 class="welcome-name">{{ student.fullName || student.name }}</h1>
-      </div>
-
-      <div class="profile-image-container">
-        <img :src="student.profileImage" :alt="student.fullName" class="profile-image" />
-      </div>
-    </header>
-
-    <div class="alert-box" @click="goToPermissionStatus">
-      <div class="alert-content">
-        <span class="alert-icon">
-          <svg viewBox="0 0 24 24" width="20" height="20">
-            <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z"/>
-          </svg>
-        </span>
-        <span class="alert-message">
-          <strong>{{ pendingRequestsCount }} {{ t('home.pendingRequests') }}</strong>
-        </span>
-      </div>
-      <span class="alert-arrow">
-        <svg viewBox="0 0 24 24" width="18" height="18">
-          <path d="M9 18L15 12L9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </span>
-    </div>
-
-    <section class="courses-section">
-      <h2 class="section-title">{{ t('home.myCourses') }}</h2>
-      <div class="course-list">
-        <div
-          v-for="course in courses"
-          :key="course.id"
-          class="course-card"
-          @click="goToCourseDetail(course.id)"
-          :style="{ backgroundImage: `url(${course.bgImage})` }"
-        >
-          <div class="course-overlay"></div>
-          <div class="course-content">
-            <h3 class="course-title">{{ course.name }}</h3>
-            <p class="course-time">
-              <span class="time-icon">🕒</span> {{ course.schedule }}
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="attendance-section">
-      <h2 class="section-title">{{ t('home.overallAttendance') }}</h2>
-      <div class="attendance-container">
-        <div class="attendance-details">
-          <div
-            class="attendance-chart"
-            :style="{
-              background: `conic-gradient(#FFC125 ${attendance.percentage * 3.6}deg, #3C414D 0deg)`
-            }"
-          >
-            <div class="chart-inner-circle">
-              <span class="attendance-percentage">{{ attendance.percentage }}%</span>
-            </div>
-          </div>
-          <div class="attendance-info">
-            <p class="status-label">
-              {{ t('home.status') }}:
-              <span class="status-value" :class="attendance.status">
-                {{ t(`home.${attendance.status}`) }}
-              </span>
-            </p>
-            <p class="total-label">
-              {{ t('home.totalPercentage') }}:
-              <span class="total-value">{{ attendance.percentage }}%</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="bottom-spacer"></div>
-  </div>
-</template>
-
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
 
 const { locale, t, setLocale } = useLanguage()
 const { goToPermissionStatus, goToCourseDetail } = useNavigation()
-const { student, courses, attendance, pendingRequestsCount, initializeData } = useStudentData()
+const { student, courses, attendance, pendingRequestsCount, initializeData, isLoading, error } = useStudentData()
 
+// 🌟 SIMPLE TOGGLE - updates GLOBAL state
 const toggleLanguage = () => {
   const newLocale = locale.value === 'en' ? 'am' : 'en'
-  setLocale(newLocale)
+  setLocale(newLocale) // This affects ALL pages immediately
+}
+
+// Handle image error
+const handleImageError = (event) => {
+  event.target.src = 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&auto=format&fit=crop'
 }
 
 onMounted(async () => {
-  await initializeData()
+  try {
+    console.log('🏠 Home page mounted')
+    await initializeData()
+  } catch (err) {
+    console.error('Failed to initialize data:', err)
+  }
 })
 </script>
+<template>
+  <div class="dashboard-container">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p class="loading-text">{{ t('common.loading') }}</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-state">
+      <div class="error-icon">⚠️</div>
+      <h3>Failed to load data</h3>
+      <p>{{ error }}</p>
+      <button class="retry-button" @click="initializeData">Retry</button>
+    </div>
+
+    <!-- Normal State -->
+    <div v-else>
+      <div class="status-bar-padding"></div>
+
+      <header class="header-section">
+        <div class="language-toggle" @click="toggleLanguage">
+          <svg class="globe-icon" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM4.09 13H8.38C8.84 14.88 9.77 16.56 11 17.89C9.64 17.75 8.35 17.07 7.2 16.03L4.09 13ZM12 20C10.74 20 9.53 19.52 8.56 18.73C9.88 18.59 11.19 18.11 12 17.39C12.81 18.11 14.12 18.59 15.44 18.73C14.47 19.52 13.26 20 12 20ZM20 12C20 11.66 19.95 11.32 19.86 11H15.62C15.16 9.12 14.23 7.44 13 6.11C14.36 6.25 15.65 6.93 16.8 7.97L19.91 11C19.97 11.33 20 11.66 20 12ZM12 4C13.26 4 14.47 4.48 15.44 5.27C14.12 5.41 12.81 5.89 12 6.61C11.19 5.89 9.88 5.41 8.56 5.27C9.53 4.48 10.74 4 12 4ZM4.09 11L7.2 7.97C8.35 6.93 9.64 6.25 11 6.11C9.77 7.44 8.84 9.12 8.38 11H4.09Z"/>
+          </svg>
+          <span class="language-label">{{ locale === 'en' ? 'አማ' : 'EN' }}</span>
+        </div>
+
+        <div class="welcome-text">
+          <p class="welcome-label">{{ t('home.welcome') }}</p>
+          <h1 class="welcome-name">{{ student?.fullName || student?.name || 'Student' }}</h1>
+        </div>
+
+        <div class="profile-image-container">
+          <img 
+            :src="student?.profileImage" 
+            :alt="student?.fullName" 
+            class="profile-image" 
+            @error="handleImageError"
+          />
+        </div>
+      </header>
+
+      <div class="alert-box" @click="goToPermissionStatus">
+        <div class="alert-content">
+          <span class="alert-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z"/>
+            </svg>
+          </span>
+          <span class="alert-message">
+            <strong>{{ pendingRequestsCount }} {{ t('home.pendingRequests') }}</strong>
+          </span>
+        </div>
+        <span class="alert-arrow">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path d="M9 18L15 12L9 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </div>
+
+      <section class="courses-section">
+        <h2 class="section-title">{{ t('home.myCourses') }}</h2>
+        <div class="course-list">
+          <div
+            v-for="course in courses"
+            :key="course.id"
+            class="course-card"
+            @click="goToCourseDetail(course.id)"
+            :style="{ backgroundImage: `url(${course.bgImage})` }"
+          >
+            <div class="course-overlay"></div>
+            <div class="course-content">
+              <h3 class="course-title">{{ course.name }}</h3>
+              <p class="course-time">
+                <span class="time-icon">🕒</span> {{ course.schedule }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="attendance-section">
+        <h2 class="section-title">{{ t('home.overallAttendance') }}</h2>
+        <div class="attendance-container">
+          <div class="attendance-details">
+            <div
+              class="attendance-chart"
+              :style="{
+                background: `conic-gradient(#FFC125 ${(attendance?.percentage || 0) * 3.6}deg, #3C414D 0deg)`
+              }"
+            >
+              <div class="chart-inner-circle">
+                <span class="attendance-percentage">{{ attendance?.percentage || 0 }}%</span>
+              </div>
+            </div>
+            <div class="attendance-info">
+              <p class="status-label">
+                {{ t('home.status') }}:
+                <span class="status-value" :class="attendance?.status || 'good'">
+                  {{ t(`home.${attendance?.status || 'good'}`) }}
+                </span>
+              </p>
+              <p class="total-label">
+                {{ t('home.totalPercentage') }}:
+                <span class="total-value">{{ attendance?.percentage || 0 }}%</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="bottom-spacer"></div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .dashboard-container {
@@ -210,6 +242,7 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  background: #2b4b8f;
 }
 
 .alert-box {
@@ -418,6 +451,71 @@ onMounted(async () => {
 
 .bottom-spacer {
   height: 100px;
+}
+
+/* Loading and error states */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(30, 57, 113, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #FFC125;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: white;
+  margin-top: 20px;
+  font-size: 18px;
+}
+
+.error-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: white;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.error-state h3 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.error-state p {
+  margin-bottom: 20px;
+  color: #ffc125;
+}
+
+.retry-button {
+  background: #ffc125;
+  color: #1e3971;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 @media (max-width: 375px) {

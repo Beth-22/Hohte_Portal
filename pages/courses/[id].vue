@@ -1,6 +1,6 @@
 <template>
   <div class="course-detail-page">
-    <!-- Back Button and Language Toggle -->
+    <!-- Back Button and Page Title -->
     <div class="top-bar">
       <button class="back-button" @click="goBack" @touchstart="handleTouch">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -8,16 +8,13 @@
         </svg>
       </button>
       
-      <div class="page-title">{{ t('course.classDetails') }}</div>
-      
-    
+      <div class="page-title">{{ course.name || t('course.classDetails') }}</div>
     </div>
 
     <!-- Loading State -->
     <div v-if="isLoading" class="loading-state">
       <div class="spinner"></div>
-      <p>{{ t('course.loadingCourse') }}</p>
-    </div>
+<p>{{ t('common.loading') }}</p>    </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-state">
@@ -32,7 +29,7 @@
     <!-- Normal Course Content -->
     <div v-else>
       <!-- Course Banner -->
-      <div class="course-banner" :style="{ backgroundImage: `url(${course.bgImage})` }">
+      <div class="course-banner" :style="{ backgroundImage: `url('${getClassImage()}')` }">
         <div class="banner-overlay"></div>
         <div class="banner-content">
           <h1 class="course-title">{{ course.name }}</h1>
@@ -43,13 +40,6 @@
                       stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
               </svg>
               <span>{{ course.schedule }}</span>
-            </div>
-            <div class="meta-item">
-              <svg class="meta-icon" width="16" height="16" viewBox="0 0 16 16">
-                <path d="M8 8a3.333 3.333 0 1 0 0-6.667A3.333 3.333 0 0 0 8 8zm4 1.333H4a4 4 0 0 0-4 4v.667h16v-.667a4 4 0 0 0-4-4z" 
-                      fill="currentColor"/>
-              </svg>
-              <span>{{ course.instructor }}</span>
             </div>
             <div class="meta-item">
               <svg class="meta-icon" width="16" height="16" viewBox="0 0 16 16">
@@ -65,10 +55,10 @@
 
       <!-- Main Content -->
       <div class="main-content">
-        <!-- Course Description -->
-        <div class="content-card">
+        <!-- Course Description - Only show if description exists -->
+        <div class="content-card" v-if="course.description && course.description.trim() !== ''">
           <h2 class="card-title">
-            <svg class="title-icon" width="20" height="20" viewBox="0 0 24 24">
+            <svg class="title-icon" width="20" height="20" viewBox="0 0 24 24" fill="white">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
               <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
             </svg>
@@ -76,15 +66,13 @@
           </h2>
           <div class="card-content">
             <p>{{ course.description }}</p>
-            <p>{{ t('course.descriptionText2') }}</p>
-            <p>{{ t('course.descriptionText3') }}</p>
           </div>
         </div>
 
         <!-- Attendance Stats -->
         <div class="content-card">
           <h2 class="card-title">
-            <svg class="title-icon" width="20" height="20" viewBox="0 0 24 24">
+            <svg class="title-icon" width="20" height="20" viewBox="0 0 24 24" fill="white">
               <path d="M3 3v18h18V3H3zm16 16H5V5h14v14z"/>
               <path d="M7 17h2v-5H7v5zm4 0h2V7h-2v10zm4 0h2v-7h-2v7z"/>
             </svg>
@@ -98,7 +86,7 @@
               <div class="circle-progress" :style="{ transform: `rotate(${course.attendance?.percentage * 3.6}deg)` }"></div>
               <div class="circle-text">
                 <span class="percentage">{{ course.attendance?.percentage || 0 }}%</span>
-                <span class="label">{{ t('course.attendance') }}</span>
+                <span class="label">Attendance</span>
               </div>
             </div>
 
@@ -155,7 +143,6 @@ const course = ref({
   name: '',
   description: '',
   schedule: '',
-  instructor: '',
   room: '',
   bgImage: '',
   attendance: {
@@ -169,6 +156,11 @@ const course = ref({
 const isLoading = ref(true)
 const error = ref(null)
 
+// Get the class image URL - using the same approach as home page
+const getClassImage = () => {
+  return new URL('~/assets/images/class_image.png', import.meta.url).href
+}
+
 const handleTouch = (event) => {
   event.currentTarget.style.opacity = '0.7'
   setTimeout(() => {
@@ -178,12 +170,22 @@ const handleTouch = (event) => {
   }, 150)
 }
 
-
-
 // Helper function to format schedule from API response
 const formatSchedule = (schedules) => {
   if (!schedules || schedules.length === 0) {
-    return t('course.sundayMornings') // Fallback to default
+    return 'No schedule information'
+  }
+  
+  // Filter out invalid schedules
+  const validSchedules = schedules.filter(schedule => {
+    const day = schedule.day_of_week || schedule.name || ''
+    const timeIn = schedule.time_in || ''
+    const timeOut = schedule.time_out || ''
+    return day.trim() !== '' && (timeIn.trim() !== '' || timeOut.trim() !== '')
+  })
+  
+  if (validSchedules.length === 0) {
+    return 'No schedule information'
   }
   
   // Format time (remove seconds if present)
@@ -193,18 +195,30 @@ const formatSchedule = (schedules) => {
   }
   
   // Group by day for better display
-  const scheduleText = schedules.map(schedule => {
+  const scheduleText = validSchedules.map(schedule => {
     const day = schedule.day_of_week || schedule.name || ''
     const timeIn = formatTime(schedule.time_in)
     const timeOut = formatTime(schedule.time_out)
     
     if (timeIn && timeOut) {
       return `${day} ${timeIn} - ${timeOut}`
+    } else if (timeIn) {
+      return `${day} ${timeIn}`
+    } else if (timeOut) {
+      return `${day} until ${timeOut}`
     }
     return day
   }).join(', ')
   
   return scheduleText
+}
+
+// Helper function to get room information
+const getRoomInfo = (roomData) => {
+  if (!roomData || roomData.trim() === '') {
+    return 'No room information'
+  }
+  return roomData
 }
 
 onMounted(async () => {
@@ -220,7 +234,11 @@ onMounted(async () => {
     
     if (foundCourse) {
       console.log('Found course in cache:', foundCourse)
-      course.value = foundCourse
+      course.value = {
+        ...foundCourse,
+        bgImage: getClassImage(), // Override with our placeholder image
+        room: getRoomInfo(foundCourse.room) // Clean room data
+      }
     } else {
       // If not found, fetch directly from API
       const { apiService } = await import('~/services/api.service')
@@ -235,11 +253,10 @@ onMounted(async () => {
       course.value = {
         id: apiResponse.id.toString(),
         name: apiResponse.name || `Class ${apiResponse.id}`,
-        description: apiResponse.description || t('course.descriptionText1'),
+        description: apiResponse.description || '',
         schedule: formatSchedule(schedules),
-        instructor: 'Instructor information not available in API',
-        room: apiResponse.room || 'Room not assigned',
-        bgImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop',
+        room: getRoomInfo(apiResponse.room),
+        bgImage: getClassImage(), // Use our placeholder image
         attendance: {
           percentage: stats.percentage || 0,
           attended: stats.present || 0,
@@ -258,11 +275,10 @@ onMounted(async () => {
     course.value = {
       id: route.params.id,
       name: 'Course Details',
-      description: t('course.descriptionText1'),
-      schedule: t('course.sundayMornings'),
-      instructor: 'Instructor',
-      room: 'Room',
-      bgImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop',
+      description: '',
+      schedule: 'No schedule information',
+      room: 'No room information',
+      bgImage: getClassImage(), // Use our placeholder image
       attendance: {
         percentage: 0,
         attended: 0,
@@ -281,7 +297,11 @@ watch(courses, (newCourses) => {
   if (newCourses.length > 0 && !course.value.id && courseId) {
     const foundCourse = newCourses.find(c => c.id === courseId)
     if (foundCourse) {
-      course.value = foundCourse
+      course.value = {
+        ...foundCourse,
+        bgImage: getClassImage(), // Override with our placeholder image
+        room: getRoomInfo(foundCourse.room) // Clean room data
+      }
       error.value = null
     }
   }
@@ -300,12 +320,12 @@ watch(courses, (newCourses) => {
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 20px;
   position: sticky;
   top: 0;
   background: #1E3971;
   z-index: 100;
+  gap: 15px;
 }
 
 .back-button {
@@ -338,28 +358,11 @@ watch(courses, (newCourses) => {
   font-size: 18px;
   font-weight: 700;
   color: white;
-  text-align: center;
   flex: 1;
-  margin: 0 15px;
-}
-
-.language-toggle {
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.language-toggle:active {
-  opacity: 0.7;
-  transform: scale(0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
 }
 
 /* Loading State */
@@ -518,7 +521,8 @@ watch(courses, (newCourses) => {
 }
 
 .title-icon {
-  color: #FFC125;
+  color: white;
+  fill: white;
 }
 
 .card-content {
@@ -748,6 +752,14 @@ watch(courses, (newCourses) => {
   
   .content-card {
     padding: 20px;
+  }
+  
+  .top-bar {
+    padding: 15px;
+  }
+  
+  .page-title {
+    font-size: 16px;
   }
 }
 </style>

@@ -4,9 +4,15 @@ import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
 
+// Import the class image directly
+import classImage from '~/assets/images/class_image.png'
+
 const { locale, t, setLocale } = useLanguage()
 const { goToPermissionStatus, goToCourseDetail } = useNavigation()
 const { student, courses, attendance, pendingRequestsCount, initializeData, isLoading, error } = useStudentData()
+
+// Track expanded schedules for each course
+const expandedSchedules = ref({})
 
 // 🌟 SIMPLE TOGGLE - updates GLOBAL state
 const toggleLanguage = () => {
@@ -14,20 +20,156 @@ const toggleLanguage = () => {
   setLocale(newLocale) // This affects ALL pages immediately
 }
 
+// Toggle schedule expansion
+const toggleSchedule = (courseId, event) => {
+  event.stopPropagation() // Prevent card click
+  expandedSchedules.value[courseId] = !expandedSchedules.value[courseId]
+}
+
+// Format schedule by day for visual display
+const formatScheduleByDay = (scheduleText) => {
+  if (!scheduleText || scheduleText === 'No schedule information' || scheduleText === 'No schedule available') {
+    return []
+  }
+  
+  // Parse schedule text into array of day-time objects
+  const scheduleItems = scheduleText.split(',').map(item => {
+    const trimmed = item.trim()
+    
+    // Extract day abbreviation (Mon, Tue, Wed, etc.)
+    let dayAbbr = ''
+    let time = ''
+    
+    if (trimmed.includes('Monday')) {
+      dayAbbr = 'Mon'
+      time = trimmed.replace('Monday', '').trim()
+    } else if (trimmed.includes('Tuesday')) {
+      dayAbbr = 'Tue'
+      time = trimmed.replace('Tuesday', '').trim()
+    } else if (trimmed.includes('Wednesday')) {
+      dayAbbr = 'Wed'
+      time = trimmed.replace('Wednesday', '').trim()
+    } else if (trimmed.includes('Thursday')) {
+      dayAbbr = 'Thu'
+      time = trimmed.replace('Thursday', '').trim()
+    } else if (trimmed.includes('Friday')) {
+      dayAbbr = 'Fri'
+      time = trimmed.replace('Friday', '').trim()
+    } else if (trimmed.includes('Saturday')) {
+      dayAbbr = 'Sat'
+      time = trimmed.replace('Saturday', '').trim()
+    } else if (trimmed.includes('Sunday')) {
+      dayAbbr = 'Sun'
+      time = trimmed.replace('Sunday', '').trim()
+    } else {
+      // Fallback: use first 3 letters
+      dayAbbr = trimmed.substring(0, 3)
+      time = trimmed.substring(3).trim()
+    }
+    
+    return { 
+      dayAbbr, 
+      time, 
+      full: trimmed,
+      dayFull: getFullDayName(trimmed)
+    }
+  })
+  
+  return scheduleItems
+}
+
+// Get full day name for expanded view
+const getFullDayName = (scheduleText) => {
+  if (scheduleText.includes('Monday')) return 'Monday'
+  if (scheduleText.includes('Tuesday')) return 'Tuesday'
+  if (scheduleText.includes('Wednesday')) return 'Wednesday'
+  if (scheduleText.includes('Thursday')) return 'Thursday'
+  if (scheduleText.includes('Friday')) return 'Friday'
+  if (scheduleText.includes('Saturday')) return 'Saturday'
+  if (scheduleText.includes('Sunday')) return 'Sunday'
+  return scheduleText
+}
+
+// Check if schedule has many items (more than 2 for mobile)
+const hasManySchedules = (scheduleText) => {
+  if (!scheduleText || scheduleText === 'No schedule information' || scheduleText === 'No schedule available') return false
+  return scheduleText.split(',').length > 2
+}
+
+// Get schedule count
+const getScheduleCount = (scheduleText) => {
+  if (!scheduleText || scheduleText === 'No schedule information' || scheduleText === 'No schedule available') return 0
+  return scheduleText.split(',').length
+}
+
 // Handle image error
 const handleImageError = (event) => {
-  event.target.src = 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&auto=format&fit=crop'
+  console.error('Image failed to load:', event.target.src);
+  
+  // Check if this is the profile image
+  if (event.target.classList.contains('profile-image')) {
+    // Use placeholder for profile image
+    event.target.src = getPlaceholderProfile();
+    console.log('Falling back to placeholder for profile image');
+  } else if (event.target.classList.contains('course-bg')) {
+    // This is a course background, use the imported class image
+    event.target.src = classImage;
+    console.log('Retrying course background image with imported path');
+  }
+}
+
+// Get placeholder profile image URL
+const getPlaceholderProfile = () => {
+  // Return a base64 encoded SVG as fallback
+  return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNTAiIGZpbGw9IiMyQjRCODMiLz48cGF0aCBkPSJNNTAgNTVDNjAuMzU1MyA1NSA2OC44NzUgNDYuNDgwMiA2OC44NzUgMzYuMTI1QzY4Ljg3NSAyNS43Njk4IDYwLjM1NTMgMTcuMjUgNTAgMTcuMjVDMzkuNjQ0NyAxNy4yNSAzMS4xMjUgMjUuNzY5OCAzMS4xMjUgMzYuMTI1QzMxLjEyNSA0Ni40ODAyIDM5LjY0NDcgNTUgNTAgNTVaIiBmaWxsPSIjRkZGMDAwIi8+PHBhdGggZD0iTTUwIDYwQzMyLjg3NSA2MCAxOC43NSA3NC4xMjUgMTguNzUgOTEuMjVWOTJINzIuNVY5MS4yNUM3Mi41IDc0LjEyNSA1OC4zNzUgNjAgNTEuMjUgNjBINTAiIGZpbGw9IiNGRkYwMDAiLz48L3N2Zz4=';
+}
+
+// Get the class image URL - Use imported class_image.png
+const getClassImage = () => {
+  return classImage;
+}
+
+// Get student profile image URL - use ERP photo_url if available
+const getStudentProfileImage = () => {
+  if (student.value && student.value.profileImage) {
+    const profileUrl = student.value.profileImage;
+    if (profileUrl && (profileUrl.startsWith('http://') || profileUrl.startsWith('https://'))) {
+      console.log('Using ERP profile image:', profileUrl);
+      return profileUrl;
+    }
+  }
+  
+  if (student.value && student.value.raw && student.value.raw.photo_url) {
+    const photoUrl = student.value.raw.photo_url;
+    if (photoUrl && (photoUrl.startsWith('http://') || photoUrl.startsWith('https://'))) {
+      console.log('Using photo_url from API:', photoUrl);
+      return photoUrl;
+    }
+  }
+  
+  console.log('Using placeholder profile image');
+  return getPlaceholderProfile();
 }
 
 onMounted(async () => {
   try {
     console.log('🏠 Home page mounted')
+    console.log('Initial student data:', student.value)
+    console.log('Initial courses:', courses.value)
     await initializeData()
+    console.log('After initialize - student:', student.value)
+    console.log('After initialize - courses:', courses.value)
   } catch (err) {
     console.error('Failed to initialize data:', err)
   }
 })
+
+// Watch for courses changes
+watch(courses, (newCourses) => {
+  console.log('Courses updated:', newCourses.length)
+}, { immediate: true })
 </script>
+
 <template>
   <div class="dashboard-container">
     <!-- Loading State -->
@@ -63,10 +205,11 @@ onMounted(async () => {
 
         <div class="profile-image-container">
           <img 
-            :src="student?.profileImage" 
+            :src="getStudentProfileImage()" 
             :alt="student?.fullName" 
             class="profile-image" 
             @error="handleImageError"
+            loading="lazy"
           />
         </div>
       </header>
@@ -96,15 +239,95 @@ onMounted(async () => {
             v-for="course in courses"
             :key="course.id"
             class="course-card"
+            :class="{ 'expanded': expandedSchedules[course.id] }"
             @click="goToCourseDetail(course.id)"
-            :style="{ backgroundImage: `url(${course.bgImage})` }"
           >
+            <!-- Use img tag for background with proper src -->
+            <img 
+              :src="getClassImage()" 
+              alt="Course background" 
+              class="course-bg"
+              loading="lazy"
+              @error="handleImageError"
+            />
             <div class="course-overlay"></div>
             <div class="course-content">
-              <h3 class="course-title">{{ course.name }}</h3>
-              <p class="course-time">
-                <span class="time-icon">🕒</span> {{ course.schedule }}
-              </p>
+              <div class="course-header">
+                <h3 class="course-title">{{ course.name }}</h3>
+                <div 
+                  v-if="hasManySchedules(course.schedule)" 
+                  class="expand-indicator"
+                  :class="{ 'expanded': expandedSchedules[course.id] }"
+                  @click="toggleSchedule(course.id, $event)"
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+                  </svg>
+                </div>
+              </div>
+              
+              <div class="course-schedule-section">
+                <div class="time-icon">🕒</div>
+                <div class="schedule-container">
+                  <div v-if="formatScheduleByDay(course.schedule).length === 0" class="no-schedule-text">
+                    No schedule available
+                  </div>
+                  <div v-else class="schedule-display">
+                    <!-- Schedule Pills -->
+                    <div class="schedule-pills">
+                      <!-- Show only first 2 schedules when collapsed -->
+                      <template v-if="!expandedSchedules[course.id]">
+                        <div 
+                          v-for="(item, index) in formatScheduleByDay(course.schedule).slice(0, 2)"
+                          :key="index"
+                          class="schedule-pill"
+                          :title="item.full"
+                        >
+                          <span class="day-abbr">{{ item.dayAbbr }}</span>
+                          <span class="day-time" v-if="item.time">{{ item.time }}</span>
+                        </div>
+                        
+                        <!-- Show more indicator -->
+                        <div 
+                          v-if="formatScheduleByDay(course.schedule).length > 2" 
+                          class="more-pill"
+                          @click="toggleSchedule(course.id, $event)"
+                        >
+                          <span class="more-text">+{{ formatScheduleByDay(course.schedule).length - 2 }}</span>
+                        </div>
+                      </template>
+                      
+                      <!-- Show ALL schedules when expanded -->
+                      <template v-if="expandedSchedules[course.id]">
+                        <div 
+                          v-for="(item, index) in formatScheduleByDay(course.schedule)"
+                          :key="index"
+                          class="schedule-pill"
+                          :title="item.full"
+                        >
+                          <span class="day-abbr">{{ item.dayAbbr }}</span>
+                          <span class="day-time" v-if="item.time">{{ item.time }}</span>
+                        </div>
+                      </template>
+                    </div>
+                    
+                    <!-- Expanded view with full details -->
+                    <div v-if="expandedSchedules[course.id]" class="expanded-details">
+                      <div class="expanded-title">Full Schedule:</div>
+                      <div class="expanded-items">
+                        <div 
+                          v-for="(item, index) in formatScheduleByDay(course.schedule)" 
+                          :key="index"
+                          class="expanded-item"
+                        >
+                          <span class="expanded-day">{{ item.dayFull }}</span>
+                          <span class="expanded-time">{{ item.time }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -202,7 +425,7 @@ onMounted(async () => {
 
 .welcome-text {
   position: absolute;
-  left: 0;
+  left: 3%;
   top: 50%;
   transform: translateY(-50%);
   text-align: left;
@@ -303,20 +526,33 @@ onMounted(async () => {
 
 .course-card {
   position: relative;
-  height: 130px;
+  min-height: 130px;
   border-radius: 20px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
+.course-card.expanded {
+  min-height: 180px;
+  transition: min-height 0.3s ease;
+}
+
 .course-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.course-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .course-overlay {
@@ -340,27 +576,191 @@ onMounted(async () => {
   justify-content: flex-end;
 }
 
-.course-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #fff;
-  margin: 0 0 8px 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+.course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
 }
 
-.course-time {
-  font-size: 16px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
+.course-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin-top:5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  flex: 1;
+  padding-right: 10px;
+}
+
+.expand-indicator {
   display: flex;
   align-items: center;
-  gap: 8px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.expand-indicator:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.expand-indicator.expanded svg {
+  transform: rotate(180deg);
+}
+
+.expand-indicator svg {
+  fill: #ffc125;
+  transition: transform 0.3s ease;
+}
+
+.course-schedule-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .time-icon {
-  font-size: 14px;
+  font-size: 16px;
+  margin-top: 20px;
+  flex-shrink: 0;
+}
+
+.schedule-container {
+  flex: 1;
+}
+
+.no-schedule-text {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  margin-top:22px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.schedule-display {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedule-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.schedule-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-top:15px;
+  min-width: 50px;
+  cursor: default;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.schedule-pill:hover {
+  transform: translateY(-2px);
+}
+
+.day-abbr {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffc125;
+  margin-bottom: 2px;
+}
+
+.day-time {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 193, 37, 0.2);
+  padding: 6px 12px;
+  margin-top:15px;
+  border-radius: 8px;
+  min-width: 40px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 193, 37, 0.3);
+}
+
+.more-pill:hover {
+  background: rgba(255, 193, 37, 0.3);
+  transform: translateY(-2px);
+}
+
+.more-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffc125;
+}
+
+.expanded-details {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.expanded-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffc125;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.expanded-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.expanded-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.expanded-day {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.expanded-time {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .attendance-section {
@@ -453,6 +853,78 @@ onMounted(async () => {
   height: 100px;
 }
 
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .welcome-text {
+    padding-left: 100px;
+  }
+
+  .welcome-name {
+    font-size: 32px;
+  }
+
+  .course-card {
+    min-height: 140px;
+  }
+  
+  .course-card.expanded {
+    min-height: auto; /* Allow dynamic height */
+    height: auto;
+  }
+
+  .course-title {
+    font-size: 20px;
+  }
+
+  .schedule-pill {
+    padding: 5px 8px;
+    min-width: 45px;
+  }
+
+  .day-abbr {
+    font-size: 11px;
+  }
+
+  .day-time {
+    font-size: 9px;
+    max-width: 50px;
+  }
+
+  .more-pill {
+    padding: 5px 10px;
+  }
+
+  .more-text {
+    font-size: 11px;
+  }
+
+  .expanded-details {
+    padding: 10px;
+  }
+
+  .expanded-item {
+    font-size: 12px;
+    padding: 5px 6px;
+  }
+}
+
+@media (max-width: 375px) {
+  .course-title {
+    font-size: 18px;
+  }
+
+  .schedule-pill {
+    min-width: 40px;
+    padding: 4px 6px;
+  
+  }
+
+  .day-time {
+    max-width: 40px;
+    font-size: 8px;
+  }
+}
+
 /* Loading and error states */
 .loading-overlay {
   position: fixed;
@@ -516,33 +988,5 @@ onMounted(async () => {
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-}
-
-@media (max-width: 375px) {
-  .welcome-text {
-    padding-left: 100px;
-  }
-
-  .welcome-name {
-    font-size: 32px;
-  }
-
-  .course-title {
-    font-size: 22px;
-  }
-
-  .attendance-details {
-    gap: 20px;
-  }
-
-  .attendance-chart {
-    width: 90px;
-    height: 90px;
-  }
-
-  .chart-inner-circle {
-    width: 70px;
-    height: 70px;
-  }
 }
 </style>

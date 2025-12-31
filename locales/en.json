@@ -74,6 +74,19 @@
     "noApprovedDesc": "No approved permission requests found.",
     "viewAllRequests": "View All Requests",
     "noDeniedDesc": "No denied permission requests found.",
+    "errors": {
+      "validationFailed": "Please fix the errors in the form",
+      "selectClass": "Please select a class",
+      "selectReason": "Please select a reason",
+      "customReasonRequired": "Please provide a custom reason",
+      "selectDate": "Please select a date",
+      "selectStartDate": "Please select a start date",
+      "selectEndDate": "Please select an end date",
+      "endDateBeforeStart": "End date cannot be before start date"
+    },
+    "customReason": "Custom Reason",
+    "customReasonHint": "Please describe your reason for requesting permission",
+    "customReasonPlaceholder": "Enter your custom reason here...",
     "samples": {
       "mezmu": "MezmuT That",
       "kedamay": "Kedamay Course",
@@ -118,6 +131,7 @@
     "family_emergency": "Family Emergency",
     "sickness": "Sickness",
     "personal_matter": "Personal Matter",
+    "custom": "Custom Reason",
     "other": "Other"
   }
 }

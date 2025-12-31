@@ -27,51 +27,113 @@ export const useStudentData = () => {
     }
   };
 
-  // Computed properties
+  // In the currentClasses computed property, update the schedule formatting:
   const currentClasses = computed(() => {
-    if (!classes.value || classes.value.length === 0) return [];
+    console.log("currentClasses computed - classes.value:", classes.value);
 
-    return classes.value.map((cls) => {
-      // Get schedule information
-      const hasSchedules = cls.schedules && cls.schedules.length > 0;
-      const firstSchedule = hasSchedules ? cls.schedules[0] : null;
+    if (!classes.value || classes.value.length === 0) {
+      console.log("No classes available");
+      return [];
+    }
 
-      // Format schedule time
-      let scheduleTime = safeT("course.notScheduled", "Not scheduled");
-      if (firstSchedule) {
-        const day = firstSchedule.day_of_week || safeT("common.day", "Day");
-        const time = firstSchedule.time_in
-          ? firstSchedule.time_in.substring(0, 5)
-          : "";
-        scheduleTime = `${day} ${time}`;
-      }
+    return classes.value.map((cls, index) => {
+      console.log(`Processing class ${index}:`, cls);
 
-      // Format schedule summary
-      let scheduleSummary = safeT(
-        "course.scheduleNotAvailable",
-        "Schedule not available"
-      );
-      if (hasSchedules) {
-        const days = cls.schedules
-          .map((s) => {
-            const day = s.day_of_week || "";
-            return day.substring(0, 3);
+      // Format schedule - Helper function
+      const formatSchedule = (schedules) => {
+        console.log("Formatting schedules:", schedules);
+
+        if (!schedules || schedules.length === 0) {
+          console.log("No schedules found");
+          return "No schedule information";
+        }
+
+        // Filter out invalid schedules
+        const validSchedules = schedules.filter((schedule) => {
+          const day = schedule.day_of_week || schedule.name || "";
+          const timeIn = schedule.time_in || "";
+          const timeOut = schedule.time_out || "";
+
+          console.log("Schedule item:", { day, timeIn, timeOut });
+
+          // A schedule is valid if it has a day OR a time
+          const isValid =
+            day.trim() !== "" || timeIn.trim() !== "" || timeOut.trim() !== "";
+          console.log("Is valid schedule?", isValid);
+          return isValid;
+        });
+
+        console.log("Valid schedules:", validSchedules);
+
+        if (validSchedules.length === 0) {
+          console.log("No valid schedules found");
+          return "No schedule information";
+        }
+
+        // Format time (remove seconds if present)
+        const formatTime = (timeString) => {
+          if (!timeString) return "";
+          // If time is in HH:MM:SS format, take only HH:MM
+          if (timeString.includes(":")) {
+            const parts = timeString.split(":");
+            if (parts.length >= 2) {
+              return `${parts[0]}:${parts[1]}`;
+            }
+          }
+          return timeString;
+        };
+
+        // Group by day for better display
+        const scheduleText = validSchedules
+          .map((schedule) => {
+            const day = schedule.day_of_week || schedule.name || "";
+            const timeIn = formatTime(schedule.time_in);
+            const timeOut = formatTime(schedule.time_out);
+
+            console.log("Processing schedule for display:", {
+              day,
+              timeIn,
+              timeOut,
+            });
+
+            if (timeIn && timeOut) {
+              return `${day} ${timeIn} - ${timeOut}`;
+            } else if (timeIn) {
+              return `${day} ${timeIn}`;
+            } else if (timeOut) {
+              return `${day} until ${timeOut}`;
+            } else if (day) {
+              return day;
+            }
+            return "";
           })
+          .filter((text) => text.trim() !== "")
           .join(", ");
-        const time = firstSchedule.time_in
-          ? firstSchedule.time_in.substring(0, 5)
-          : "";
-        scheduleSummary = `${days} ${time}`;
-      }
+
+        console.log("Final schedule text:", scheduleText);
+        return scheduleText || "No schedule information";
+      };
+
+      // Get room info
+      const getRoomInfo = (roomData) => {
+        if (!roomData || roomData.trim() === "") {
+          return "No room information";
+        }
+        return roomData;
+      };
+
+      // Get schedule text
+      const scheduleText = formatSchedule(cls.schedules);
+      console.log(`Class ${cls.name || cls.id} schedule:`, scheduleText);
 
       return {
-        id: cls.id.toString(),
-        code: cls.code || `CLASS${cls.id}`,
+        id: cls.id ? cls.id.toString() : `class-${index}`,
+        code: cls.code || `CLASS${cls.id || index}`,
         name:
           cls.name ||
           cls.class_name ||
-          safeT("api.defaultClass", `Class ${cls.id}`),
-        time: scheduleTime,
+          safeT("api.defaultClass", `Class ${cls.id || index}`),
+        time: scheduleText, // Keep for backward compatibility
         description: cls.description || "",
         attendance: {
           attended: cls.stats?.present || 0,
@@ -79,18 +141,19 @@ export const useStudentData = () => {
           excused: cls.stats?.permission || 0,
           percentage: cls.stats?.percentage || 0,
         },
-        bgImage:
-          "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop",
-        schedule: scheduleSummary,
+        bgImage: "/assets/images/class_image.png",
+        schedule: scheduleText, // Use the properly formatted schedule
         instructor:
           cls.instructor ||
           cls.teacher_name ||
           safeT("api.defaultInstructor", "Instructor not assigned"),
-        room: cls.room || safeT("api.defaultRoom", "Room not assigned"),
+        room: getRoomInfo(cls.room),
+        raw: cls, // Keep raw data for debugging
       };
     });
   });
 
+  // In useStudentData.js - Update the currentRequests computed property:
   const currentRequests = computed(() => {
     if (!permissionRequests.value || permissionRequests.value.length === 0) {
       console.log(safeT("api.noRequests", "No requests found"));
@@ -110,10 +173,14 @@ export const useStudentData = () => {
         className = request.organization_name;
       }
 
-      // Status handling - API returns lowercase, convert to uppercase
+      // Status handling - Normalize to lowercase
       let status = request.status || "pending";
-      if (status) {
-        status = status.toUpperCase();
+      // Convert to lowercase and handle different status names
+      status = status.toLowerCase();
+
+      // If API returns "rejected", convert to "denied" for consistency
+      if (status === "rejected") {
+        status = "denied";
       }
 
       return {
@@ -123,7 +190,7 @@ export const useStudentData = () => {
           request.category ||
           safeT("permissionReasons.other", "Other"),
         course: className,
-        status: status,
+        status: status, // Use normalized status
         submittedDate: formatDate(request.created_at),
         classDate:
           request.start_date || request.end_date
@@ -210,7 +277,7 @@ export const useStudentData = () => {
     return "poor";
   };
 
-  // API Methods
+  // In fetchStudentProfile function, update to include photo_url:
   const fetchStudentProfile = async () => {
     try {
       isLoading.value = true;
@@ -228,17 +295,20 @@ export const useStudentData = () => {
           `${data.first_name || ""} ${data.last_name || ""}`.trim() ||
           "Student User",
         email: data.email || "student@example.com",
-        phone: data.phone || "+251900000000",
-        profileImage:
-          data.profile_picture ||
-          data.avatar ||
-          "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&auto=format&fit=crop",
+        phone: data.phone || data.phone_number || "+251900000000",
+        profileImage: data.photo_url || data.profile_picture || data.avatar, // FIX: Use photo_url from API
         enrollmentDate: data.enrollment_date || "2023-09-01",
         currentSemester: data.current_semester || "2nd",
         department: data.department || "Theology",
         program: data.program || "Bachelor of Divinity",
         status: data.status || "active",
+        raw: data, // Store raw data to access photo_url directly
       };
+
+      console.log(
+        "Student profile loaded with photo_url:",
+        student.value.profileImage
+      );
       return student.value;
     } catch (err) {
       error.value = err.message;
@@ -259,7 +329,49 @@ export const useStudentData = () => {
       console.log("Classes API response:", data);
       console.log("Total enrolled classes:", data?.length || 0);
 
-      classes.value = Array.isArray(data) ? data : [];
+      // Process classes with enhanced schedule data
+      if (Array.isArray(data)) {
+        classes.value = await Promise.all(
+          data.map(async (cls) => {
+            console.log(
+              `Class ${cls.name}: schedules_count = ${cls.schedules_count}`
+            );
+
+            let enrichedCls = { ...cls };
+
+            // If class has schedules, fetch the schedule details
+            if (cls.schedules_count > 0 || cls.schedule_count > 0) {
+              try {
+                console.log(`Fetching schedule details for class ${cls.id}...`);
+                const classDetails = await apiService.getClassSchedules(cls.id);
+
+                // Merge the schedule data if available
+                if (classDetails && classDetails.schedules) {
+                  enrichedCls.schedules = classDetails.schedules;
+                  console.log(
+                    `Fetched ${classDetails.schedules.length} schedules for ${cls.name}`
+                  );
+                } else if (classDetails && classDetails.schedule) {
+                  enrichedCls.schedules = classDetails.schedule;
+                  console.log(`Fetched schedule for ${cls.name}`);
+                }
+              } catch (scheduleError) {
+                console.warn(
+                  `Could not fetch schedule for class ${cls.id}:`,
+                  scheduleError.message
+                );
+                // Keep the original class data without schedules
+              }
+            }
+
+            return enrichedCls;
+          })
+        );
+      } else {
+        classes.value = [];
+      }
+
+      console.log("Processed classes with schedules:", classes.value);
       return classes.value;
     } catch (err) {
       error.value = err.message;

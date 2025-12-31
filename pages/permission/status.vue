@@ -30,8 +30,15 @@ const tabs = computed(() => [
 ]);
 
 const filteredRequests = computed(() => {
-  console.log('Filtering requests for tab:', activeTab.value);
-  console.log('All requests:', permissionRequests.value);
+  console.log('=== FILTER DEBUG ===');
+  console.log('Active tab:', activeTab.value);
+  console.log('All requests with statuses:', 
+    permissionRequests.value.map(r => ({ 
+      id: r.id, 
+      status: r.status,
+      title: r.title 
+    }))
+  );
   
   if (!permissionRequests.value || permissionRequests.value.length === 0) {
     console.log('No requests to filter');
@@ -43,10 +50,19 @@ const filteredRequests = computed(() => {
     return permissionRequests.value;
   }
   
+  const tabStatus = activeTab.value;
   const filtered = permissionRequests.value.filter(
-    (request) => request.status.toLowerCase() === activeTab.value
+    (request) => {
+      // Normalize status for comparison
+      const requestStatus = request.status ? request.status.toLowerCase() : '';
+      const normalizedStatus = requestStatus === 'rejected' ? 'denied' : requestStatus;
+      return normalizedStatus === tabStatus;
+    }
   );
-  console.log(`Filtered to ${filtered.length} ${activeTab.value} requests`);
+  
+  console.log(`Filtered to ${filtered.length} ${activeTab.value} requests:`, 
+    filtered.map(f => ({ id: f.id, status: f.status }))
+  );
   return filtered;
 });
 
@@ -76,31 +92,45 @@ const emptyStateMessage = computed(() => {
   }
 });
 
-
-
 const getStatusText = (status) => {
-  const statusLower = status ? status.toLowerCase() : '';
-  switch (statusLower) {
+  if (!status) return 'Unknown';
+  
+  const statusLower = status.toLowerCase();
+  console.log('Getting status text for:', status, '->', statusLower);
+  
+  // Handle "rejected" as "denied" for display
+  const normalizedStatus = statusLower === 'rejected' ? 'denied' : statusLower;
+  
+  switch (normalizedStatus) {
     case 'pending':
-      return t("requestStatus.tabs.pending");
+      return t("requestStatus.tabs.pending") || 'Pending';
     case 'approved':
-      return t("requestStatus.tabs.approved");
+      return t("requestStatus.tabs.approved") || 'Approved';
     case 'denied':
-      return t("requestStatus.tabs.denied");
+      return t("requestStatus.tabs.denied") || 'Denied';
     default:
-      return status || 'Unknown';
+      return status;
   }
 }
 
-const getCourseIcon = (courseName) => {
-  const icons = {
+// Handle image error
+const handleImageError = (event) => {
+  // Fallback to emoji if image fails to load
+  const emojis = {
     "Media Kifi": "🎬",
     "Kedamay Course": "📚",
     "Abalat Kifi": "🎵",
     "General Studies": "📖",
     "ጴጥሮስ ምድብ (Petros)": "📚",
   };
-  return icons[courseName] || "📝";
+  const courseName = event.target.alt;
+  event.target.style.display = 'none';
+  // Show emoji fallback
+  const parent = event.target.parentElement;
+  const emojiSpan = document.createElement('span');
+  emojiSpan.textContent = emojis[courseName] || "📝";
+  emojiSpan.style.fontSize = '24px';
+  parent.appendChild(emojiSpan);
 };
 
 const cancelRequest = (id) => {
@@ -144,10 +174,10 @@ const confirmCancel = async () => {
   }
 };
 
-const resubmitRequest = (request) => {
-  if (confirm(t('requestStatus.resubmitMessage', { title: request.title }))) {
-    goToPermissionRequest();
-  }
+// FIXED: Removed the alert and made it navigate directly
+const resubmitRequest = () => {
+  // Simply navigate to the permission request page
+  goToPermissionRequest();
 };
 
 // Manual refresh function
@@ -276,18 +306,23 @@ onMounted(async () => {
           v-for="request in filteredRequests"
           :key="request.id"
           class="request-card"
-          :class="request.status.toLowerCase()"
+          :class="request.status.toLowerCase() === 'rejected' ? 'denied' : request.status.toLowerCase()"
         >
           <div class="request-header">
             <div class="course-icon">
-              <span>{{ getCourseIcon(request.course) }}</span>
+              <img 
+                src="~/assets/images/class_image.png" 
+                :alt="request.course"
+                @error="handleImageError"
+                class="course-icon-img"
+              />
             </div>
             <div class="request-info">
               <h3 class="request-title">{{ request.title }}</h3>
               <p class="course-name">{{ request.course }}</p>
               <p class="request-id">ID: {{ request.id }}</p>
             </div>
-            <div class="request-status" :class="request.status.toLowerCase()">
+            <div class="request-status" :class="request.status.toLowerCase() === 'rejected' ? 'denied' : request.status.toLowerCase()">
               <span class="status-text">{{ getStatusText(request.status) }}</span>
               <div class="status-icon">
                 <svg
@@ -310,7 +345,7 @@ onMounted(async () => {
                   <path d="M13.3333 4L6.00001 11.3333L2.66668 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
                 <svg
-                  v-else-if="request.status.toLowerCase() === 'denied'"
+                  v-else-if="request.status.toLowerCase() === 'denied' || request.status.toLowerCase() === 'rejected'"
                   width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
@@ -355,7 +390,7 @@ onMounted(async () => {
               >
                 <span>{{ t('requestStatus.approvedOn') }} {{ request.approvedDate || request.updatedAt || 'Not available' }}</span>
               </div>
-              <div v-else-if="request.status.toLowerCase() === 'denied'" class="denied-time">
+              <div v-else-if="request.status.toLowerCase() === 'denied' || request.status.toLowerCase() === 'rejected'" class="denied-time">
                 <span>{{ t('requestStatus.deniedOn') }} {{ request.deniedDate || request.updatedAt || 'Not available' }}</span>
               </div>
             </div>
@@ -369,9 +404,9 @@ onMounted(async () => {
                 {{ isCancelling ? t('requestStatus.cancelling') : t('requestStatus.cancel') }}
               </button>
               <button
-                v-else-if="request.status.toLowerCase() === 'denied'"
+                v-else-if="request.status.toLowerCase() === 'denied' || request.status.toLowerCase() === 'rejected'"
                 class="resubmit-button"
-                @click="resubmitRequest(request)"
+                @click="resubmitRequest"
               >
                 {{ t('requestStatus.resubmit') }}
               </button>
@@ -411,6 +446,7 @@ onMounted(async () => {
   </div>
 </template>
 
+<!-- Styles remain the same -->
 <style scoped>
 .requests-container {
   min-height: 100vh;
@@ -724,6 +760,7 @@ onMounted(async () => {
   justify-content: center;
   font-size: 24px;
   color: white;
+  overflow: hidden;
 }
 
 .request-card.pending .course-icon {
@@ -736,6 +773,13 @@ onMounted(async () => {
 
 .request-card.denied .course-icon {
   background: #ff3b30;
+}
+
+.course-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
 }
 
 .request-info {

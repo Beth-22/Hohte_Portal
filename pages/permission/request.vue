@@ -34,14 +34,13 @@
         <h1 class="page-title">{{ t('requestStatus.newRequest') }}</h1>
       </div>
 
-      <!-- Rest of your template remains the same -->
       <div class="form-section">
         <div class="form-row">
           <div class="form-field">
             <div class="field-header">
               <span class="field-label">{{ t('requestStatus.class') }}</span>
             </div>
-            <select v-model="formData.course" class="select-input">
+            <select v-model="formData.course" class="select-input" :class="{ error: errors.course }">
               <option value="" disabled selected>{{ t('requestStatus.selectClass') }}</option>
               <option
                 v-for="course in classOptions"
@@ -51,33 +50,40 @@
                 {{ course.name }}
               </option>
             </select>
+            <span v-if="errors.course" class="error-message">{{ errors.course }}</span>
           </div>
 
           <div class="form-field">
             <div class="field-header">
               <span class="field-label">{{ t('requestStatus.reason') }}</span>
             </div>
-            <select v-model="formData.reason" class="select-input">
+            <select v-model="formData.reason" class="select-input" :class="{ error: errors.reason }">
               <option value="" disabled selected>{{ t('requestStatus.selectReason') }}</option>
               <option v-for="reason in permissionReasons" :key="reason.value" :value="reason.value">
                 {{ t(`permissionReasons.${reason.translationKey}`) }}
               </option>
             </select>
+            <span v-if="errors.reason" class="error-message">{{ errors.reason }}</span>
           </div>
         </div>
       </div>
 
-      <div class="note-section">
+      <!-- Custom reason field - Only shown when "custom" is selected -->
+      <div v-if="isCustomReason" class="custom-reason-section">
         <div class="field-header">
-          <span class="field-label">{{ t('requestStatus.note') }}:</span>
+          <span class="field-label">{{ t('requestStatus.customReason') }}:</span>
+          <span class="required-asterisk">*</span>
         </div>
-        <p class="note-hint">{{ t('requestStatus.noteHint') }}</p>
+        <p class="custom-reason-hint">{{ t('requestStatus.customReasonHint') }}</p>
         <textarea
-          v-model="formData.note"
-          class="note-textarea"
+          v-model="formData.customReason"
+          class="custom-reason-textarea"
           rows="3"
-          :placeholder="t('requestStatus.notePlaceholder')"
+          :placeholder="t('requestStatus.customReasonPlaceholder')"
+          :class="{ error: errors.customReason }"
+          @input="clearError('customReason')"
         ></textarea>
+        <span v-if="errors.customReason" class="error-message">{{ errors.customReason }}</span>
       </div>
 
       <div class="duration-section">
@@ -108,7 +114,9 @@
               type="date"
               v-model="formData.specificDate"
               class="date-input"
+              :class="{ error: errors.specificDate }"
             />
+            <span v-if="errors.specificDate" class="error-message">{{ errors.specificDate }}</span>
           </div>
 
           <div v-else class="date-range-input">
@@ -120,7 +128,9 @@
                   v-model="formData.startDate"
                   :placeholder="t('requestStatus.startDate')"
                   class="date-input"
+                  :class="{ error: errors.startDate }"
                 />
+                <span v-if="errors.startDate" class="error-message">{{ errors.startDate }}</span>
               </div>
               <div class="range-field">
                 <input
@@ -128,7 +138,9 @@
                   v-model="formData.endDate"
                   :placeholder="t('requestStatus.endDate')"
                   class="date-input"
+                  :class="{ error: errors.endDate }"
                 />
+                <span v-if="errors.endDate" class="error-message">{{ errors.endDate }}</span>
               </div>
             </div>
           </div>
@@ -145,7 +157,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
@@ -170,10 +182,35 @@ const isSubmitting = ref(false)
 const formData = ref({
   course: '',
   reason: '',
-  note: '',
+  customReason: '',
   specificDate: '',
   startDate: '',
   endDate: ''
+})
+
+const errors = ref({
+  course: '',
+  reason: '',
+  customReason: '',
+  specificDate: '',
+  startDate: '',
+  endDate: ''
+})
+
+// Check if custom reason is selected
+const isCustomReason = computed(() => {
+  if (!formData.value.reason) return false
+  
+  const selectedReason = permissionReasons.value.find(r => r.value === formData.value.reason)
+  return selectedReason?.translationKey === 'custom'
+})
+
+// Watch for reason change to clear custom reason field
+watch(() => formData.value.reason, (newReason) => {
+  if (!isCustomReason.value) {
+    formData.value.customReason = ''
+    clearError('customReason')
+  }
 })
 
 // Add logo error handling
@@ -192,34 +229,92 @@ watch(classOptions, (newOptions) => {
   console.log('Class options updated:', newOptions)
 })
 
+// Helper function to clear error
+const clearError = (field) => {
+  if (errors.value[field]) {
+    errors.value[field] = ''
+  }
+}
+
+const validateForm = () => {
+  let isValid = true
+  
+  // Clear previous errors
+  Object.keys(errors.value).forEach(key => {
+    errors.value[key] = ''
+  })
+
+  // Validate course
+  if (!formData.value.course) {
+    errors.value.course = t('requestStatus.errors.selectClass')
+    isValid = false
+  }
+
+  // Validate reason
+  if (!formData.value.reason) {
+    errors.value.reason = t('requestStatus.errors.selectReason')
+    isValid = false
+  }
+
+  // Validate custom reason if custom is selected
+  if (isCustomReason.value && !formData.value.customReason.trim()) {
+    errors.value.customReason = t('requestStatus.errors.customReasonRequired')
+    isValid = false
+  }
+
+  // Validate dates
+  if (durationType.value === 'specific') {
+    if (!formData.value.specificDate) {
+      errors.value.specificDate = t('requestStatus.errors.selectDate')
+      isValid = false
+    }
+  } else {
+    if (!formData.value.startDate) {
+      errors.value.startDate = t('requestStatus.errors.selectStartDate')
+      isValid = false
+    }
+    if (!formData.value.endDate) {
+      errors.value.endDate = t('requestStatus.errors.selectEndDate')
+      isValid = false
+    }
+    
+    // Validate date range (end date not before start date)
+    if (formData.value.startDate && formData.value.endDate) {
+      const start = new Date(formData.value.startDate)
+      const end = new Date(formData.value.endDate)
+      if (end < start) {
+        errors.value.endDate = t('requestStatus.errors.endDateBeforeStart')
+        isValid = false
+      }
+    }
+  }
+
+  return isValid
+}
+
 const submitForm = async () => {
-  // Validation
-  if (!formData.value.course || !formData.value.reason) {
-    showError(t('requestStatus.requiredFields'), 3000)
-    return
-  }
-
-  if (durationType.value === 'specific' && !formData.value.specificDate) {
-    showError(t('requestStatus.requiredDate'), 3000)
-    return
-  }
-
-  if (durationType.value === 'range' && (!formData.value.startDate || !formData.value.endDate)) {
-    showError(t('requestStatus.requiredDates'), 3000)
+  // Validate form
+  if (!validateForm()) {
+    showError(t('requestStatus.errors.validationFailed'), 3000)
     return
   }
 
   const selectedCourse = classOptions.value.find(c => c.id === formData.value.course)
   const selectedReason = permissionReasons.value.find(r => r.value === formData.value.reason)
   
-  const reasonText = selectedReason ? t(`permissionReasons.${selectedReason.translationKey}`) : t('requestStatus.samples.sickness')
+  // Use custom reason if provided, otherwise use the translated reason text
+  let reasonText = ''
+  if (isCustomReason.value && formData.value.customReason.trim()) {
+    reasonText = formData.value.customReason.trim()
+  } else {
+    reasonText = selectedReason ? t(`permissionReasons.${selectedReason.translationKey}`) : t('requestStatus.samples.sickness')
+  }
   
   const requestData = {
     title: reasonText,
     course: selectedCourse?.name || 'Class',
     courseId: formData.value.course,
     reason: reasonText,
-    note: formData.value.note,
     durationType: durationType.value,
     specificDate: formData.value.specificDate,
     startDate: formData.value.startDate,
@@ -268,12 +363,33 @@ onMounted(async () => {
     ])
     console.log('Data fetched successfully')
     
+    // Add custom option to permission reasons if not already present
+    const hasCustomOption = permissionReasons.value.some(reason => 
+      reason.translationKey === 'custom' || reason.category?.toLowerCase() === 'custom'
+    )
+    
+    if (!hasCustomOption) {
+      // Add custom option at the end
+      permissionReasons.value.push({
+        value: 'custom',
+        translationKey: 'custom',
+        category: 'Custom',
+        raw: { id: 'custom', name: 'Custom' }
+      })
+    }
+    
     // Set default values if available
     if (classOptions.value.length > 0) {
       formData.value.course = classOptions.value[0].id
     }
     if (permissionReasons.value.length > 0) {
-      formData.value.reason = permissionReasons.value[0].value
+      // Don't set custom as default - set first non-custom reason
+      const nonCustomReason = permissionReasons.value.find(r => r.translationKey !== 'custom')
+      if (nonCustomReason) {
+        formData.value.reason = nonCustomReason.value
+      } else {
+        formData.value.reason = permissionReasons.value[0].value
+      }
     }
   } catch (err) {
     console.error('Failed to fetch data:', err)
@@ -305,8 +421,8 @@ onMounted(async () => {
 }
 
 .logo-container {
-  width: 250px;
-  height: 250px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -394,10 +510,14 @@ onMounted(async () => {
 
 .form-field {
   flex: 1;
+  position: relative;
 }
 
 .field-header {
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .field-label {
@@ -406,10 +526,15 @@ onMounted(async () => {
   font-size: 16px;
 }
 
+.required-asterisk {
+  color: #ff3b30;
+  font-weight: bold;
+}
+
 .select-input {
   width: 100%;
   padding: 12px 15px;
-  border: 2px solid #e0e0e0;
+  border: 4px solid #e0e0e0;
   border-radius: 6px;
   font-size: 15px;
   color: #333;
@@ -424,18 +549,22 @@ onMounted(async () => {
   box-shadow: 0 0 0 3px rgba(255, 193, 37, 0.1);
 }
 
-.note-section {
-  margin-bottom: 35px;
+.select-input.error {
+  border-color: #ff3b30;
 }
 
-.note-hint {
+.custom-reason-section {
+  margin-bottom: 30px;
+}
+
+.custom-reason-hint {
   font-size: 14px;
   color: #afadad;
   margin: 8px 0 15px 0;
   font-style: italic;
 }
 
-.note-textarea {
+.custom-reason-textarea {
   width: 100%;
   padding: 15px;
   border: 2px solid #e0e0e0;
@@ -450,9 +579,13 @@ onMounted(async () => {
   transition: all 0.3s;
 }
 
-.note-textarea:focus {
+.custom-reason-textarea:focus {
   border-color: #FFC125;
   box-shadow: 0 0 0 3px rgba(255, 193, 37, 0.1);
+}
+
+.custom-reason-textarea.error {
+  border-color: #ff3b30;
 }
 
 .duration-section {
@@ -536,6 +669,10 @@ onMounted(async () => {
   box-shadow: 0 0 0 3px rgba(255, 193, 37, 0.1);
 }
 
+.date-input.error {
+  border-color: #ff3b30;
+}
+
 .date-input::placeholder {
   color: #aba9a9;
 }
@@ -556,7 +693,17 @@ onMounted(async () => {
 
 .range-field {
   width: 100%;
+  position: relative;
 }
+
+.error-message {
+  display: block;
+  color: #ff3b30;
+  font-size: 14px;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
 
 .submit-section {
   text-align: center;

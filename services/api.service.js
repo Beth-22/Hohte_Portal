@@ -100,7 +100,12 @@ export class ApiService {
 
     return this.request(endpoint);
   }
-
+  
+  // Class Schedules API
+  async getClassSchedules(classId) {
+    // Use the class details endpoint which includes schedules
+    return this.request(`/api/v1/student/classes/${classId}`);
+  }
   // Attendance API
   async getAttendanceRecords(filters = {}) {
     const params = new URLSearchParams();

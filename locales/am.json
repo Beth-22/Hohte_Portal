@@ -36,6 +36,7 @@
     "classDetails": "የክፍል ዝርዝሮች",
     "courseDescription": "የኮርስ መግለጫ",
     "yourAttendance": "የእርስዎ ተገኝነት",
+    
     "attended": "ተገኝቷል",
     "missed": "ተጠናቀቀ",
     "excused": "ፈቃድ ያለው",
@@ -74,6 +75,19 @@
     "noApprovedDesc": "ምንም የተፈቀደ የፈቃድ ጥያቄዎች አልተገኙም።",
     "viewAllRequests": "ሁሉንም ጥያቄዎች ይመልከቱ",
     "noDeniedDesc": "ምንም የተከለከለ የፈቃድ ጥያቄዎች አልተገኙም።",
+    "errors": {
+      "validationFailed": "እባክዎ በቅጹ ውስጥ ያሉትን ስህተቶች ያርትዑ",
+      "selectClass": "እባክዎ ክፍል ይምረጡ",
+      "selectReason": "እባክዎ ምክንያት ይምረጡ",
+      "customReasonRequired": "እባክዎ የራስዎን ምክንያት ያስገቡ",
+      "selectDate": "እባክዎ ቀን ይምረጡ",
+      "selectStartDate": "እባክዎ የመጀመሪያ ቀን ይምረጡ",
+      "selectEndDate": "እባክዎ የመጨረሻ ቀን ይምረጡ",
+      "endDateBeforeStart": "የመጨረሻ ቀን ከመጀመሪያ ቀን በፊት ሊሆን አይችልም"
+    },
+    "customReason": "የራስዎ ምክንያት",
+    "customReasonHint": "እባክዎ ለፈቃድ ጥያቄዎ ምክንያት ይግለጹ",
+    "customReasonPlaceholder": "የራስዎን ምክንያት እዚህ ያስገቡ...",
     "samples": {
       "mezmu": "መዝሙር ጥብቅ",
       "kedamay": "ከዳማይ ኮርስ",
@@ -118,6 +132,7 @@
     "family_emergency": "የቤተሰብ አደጋ",
     "sickness": "ህመም",
     "personal_matter": "የግል ጉዳይ",
+    "custom": "የራስዎ ምክንያት",
     "other": "ሌላ"
   }
 }

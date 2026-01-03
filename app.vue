@@ -1,15 +1,19 @@
 <!-- app.vue -->
 <template>
   <NuxtLayout>
-    <!-- Authentication Loading State -->
+    <!-- Loading State -->
     <div v-if="authLoading" class="auth-loading">
-      <div class="auth-spinner"></div>
-      <p class="auth-loading-text">Connecting to your account...</p>
+      <div class="spinner"></div>
+      <p class="loading-text">
+        {{ authMessage }}
+        <br>
+        <small v-if="debugInfo" class="debug-info">{{ debugInfo }}</small>
+      </p>
     </div>
 
     <!-- Connect Account Screen -->
     <ConnectAccount 
-      v-else-if="requiresLinking"
+      v-else-if="needsLinking"
       @connected="handleConnected"
     />
 
@@ -19,71 +23,67 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useTelegramAuth } from '~/composables/useTelegramAuth'
+import { ref, onMounted } from 'vue'
+import { useSimpleAuth } from '~/composables/useSimpleAuth'
 import ConnectAccount from '~/components/ConnectAccount.vue'
 
-const telegramAuth = useTelegramAuth()
-
+const auth = useSimpleAuth()
 const authLoading = ref(true)
-const requiresLinking = ref(false)
+const needsLinking = ref(false)
+const authMessage = ref("Initializing...")
+const debugInfo = ref("")
 
 const handleConnected = () => {
-  console.log('🔄 ConnectAccount emitted connected event');
-  requiresLinking.value = false
-  // Reload the page to restart the auth flow
+  console.log('🔄 Account linked, reloading...')
   window.location.reload()
 }
 
 onMounted(async () => {
-  console.log('🚀 App mounted, initializing auth...')
+  console.log('🚀 App mounted...')
   
-  // Initialize authentication
-  const result = await telegramAuth.initAuth()
+  // Check Telegram environment
+  if (window.Telegram?.WebApp) {
+    const tg = window.Telegram.WebApp
+    console.log('✅ Running in Telegram')
+    console.log('📱 Platform:', tg.platform)
+    console.log('📄 initData exists:', !!tg.initData)
+    console.log('📏 initData length:', tg.initData?.length || 0)
+    console.log('👤 User:', tg.initDataUnsafe?.user)
+    
+    debugInfo.value = `Telegram • Platform: ${tg.platform} • initData: ${tg.initData?.length || 0} chars`
+  } else {
+    console.log('⚠️ Not in Telegram')
+    debugInfo.value = 'Browser (Not Telegram)'
+  }
   
-  console.log('🔐 Auth initialization result:', result);
+  authMessage.value = "Checking authentication..."
+  
+  // Initialize auth
+  const result = await auth.init()
+  
+  console.log('🔐 Auth result:', result)
   
   if (result.needsLinking) {
-    console.log('⚠️ User needs linking, showing ConnectAccount screen');
-    requiresLinking.value = true
-  } else if (result.isAuthenticated) {
-    console.log('✅ User is authenticated, showing main app');
+    console.log('⚠️ User needs linking')
+    needsLinking.value = true
+    authMessage.value = "Account needs linking..."
+  } else if (result.success) {
+    console.log('✅ Authentication successful')
+    authMessage.value = "Authentication successful!"
   } else {
-    console.log('❌ User is not authenticated');
+    console.log('❌ Authentication failed:', result.error)
+    authMessage.value = `Authentication failed: ${result.error || 'Unknown error'}`
   }
   
-  authLoading.value = false
-  
-  // If in Telegram, hide browser navigation
-  if (telegramAuth.isInTelegram) {
-    document.documentElement.style.setProperty('--tg-viewport-height', window.innerHeight + 'px')
-  }
+  // Short delay then hide loading
+  setTimeout(() => {
+    authLoading.value = false
+  }, 500)
 })
-
-// Watch for authentication changes (for debugging)
-watch(() => telegramAuth.getAuthStatus(), (status) => {
-  console.log('🔍 Auth status changed:', status);
-}, { deep: true });
 </script>
 
 <style>
-/* Global Telegram styles */
-:root {
-  --tg-viewport-height: 100vh;
-}
-
-html, body {
-  height: var(--tg-viewport-height);
-  overflow: hidden;
-}
-
-/* Prevent overscroll on mobile */
-body {
-  -webkit-overflow-scrolling: touch;
-  overflow: auto;
-}
-
-/* Authentication loading styles */
+/* Keep your existing styles */
 .auth-loading {
   position: fixed;
   top: 0;
@@ -96,9 +96,11 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  padding: 20px;
+  text-align: center;
 }
 
-.auth-spinner {
+.spinner {
   width: 60px;
   height: 60px;
   border: 4px solid rgba(255, 255, 255, 0.1);
@@ -108,10 +110,17 @@ body {
   margin-bottom: 20px;
 }
 
-.auth-loading-text {
+.loading-text {
   color: white;
   font-size: 18px;
   font-weight: 500;
+}
+
+.debug-info {
+  color: #a0b3d9;
+  font-size: 12px;
+  margin-top: 10px;
+  opacity: 0.8;
 }
 
 @keyframes spin {

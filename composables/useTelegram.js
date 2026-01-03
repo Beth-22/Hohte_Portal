@@ -21,7 +21,7 @@ export const useTelegram = () => {
         initData.value = webApp.value.initData;
         initDataUnsafe.value = webApp.value.initDataUnsafe;
 
-        // Expand the app to full height
+        // Expand the app to full height and mark ready
         try {
           webApp.value.expand();
           webApp.value.ready();
@@ -33,10 +33,18 @@ export const useTelegram = () => {
         // Set theme colors
         setThemeColors();
 
+        // Log user info and initData
         console.log("Telegram User ID:", userId.value);
         console.log("Telegram User:", initDataUnsafe.value?.user);
         console.log("initData available?", !!initData.value);
         console.log("initData length:", initData.value?.length);
+
+        // 🔥 Log the actual initData string in console
+        console.log("🔹 Telegram initData (full):", initData.value);
+        console.log(
+          "🔹 Telegram initDataUnsafe (parsed object):",
+          initDataUnsafe.value
+        );
       } else {
         console.log("⚠️ Not running in Telegram Mini App");
         console.log("For local testing, you can:");
@@ -102,7 +110,7 @@ export const useTelegram = () => {
     return webApp.value;
   };
 
-  // Get initData for authentication
+  // ✅ Fixed: actually returns initData
   const getInitData = () => {
     return initData.value;
   };

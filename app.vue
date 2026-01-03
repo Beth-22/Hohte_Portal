@@ -4,7 +4,7 @@
     <!-- Authentication Loading State -->
     <div v-if="authLoading" class="auth-loading">
       <div class="auth-spinner"></div>
-      <p class="auth-loading-text">Connecting to your account...</p>
+      <p class="auth-loading-text">{{ t('common.connecting') }}</p>
     </div>
 
     <!-- Connect Account Screen -->
@@ -19,19 +19,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useLanguage } from '~/composables/useLanguage'
 import { useTelegramAuth } from '~/composables/useTelegramAuth'
 import ConnectAccount from '~/components/ConnectAccount.vue'
 
+const { t } = useLanguage()
 const telegramAuth = useTelegramAuth()
 
 const authLoading = ref(true)
 const requiresLinking = ref(false)
 
 const handleConnected = () => {
-  console.log('🔄 ConnectAccount emitted connected event');
   requiresLinking.value = false
-  // Reload the page to restart the auth flow
+  // You might want to reload the current page
   window.location.reload()
 }
 
@@ -41,15 +42,8 @@ onMounted(async () => {
   // Initialize authentication
   const result = await telegramAuth.initAuth()
   
-  console.log('🔐 Auth initialization result:', result);
-  
   if (result.needsLinking) {
-    console.log('⚠️ User needs linking, showing ConnectAccount screen');
     requiresLinking.value = true
-  } else if (result.isAuthenticated) {
-    console.log('✅ User is authenticated, showing main app');
-  } else {
-    console.log('❌ User is not authenticated');
   }
   
   authLoading.value = false
@@ -59,11 +53,6 @@ onMounted(async () => {
     document.documentElement.style.setProperty('--tg-viewport-height', window.innerHeight + 'px')
   }
 })
-
-// Watch for authentication changes (for debugging)
-watch(() => telegramAuth.getAuthStatus(), (status) => {
-  console.log('🔍 Auth status changed:', status);
-}, { deep: true });
 </script>
 
 <style>

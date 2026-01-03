@@ -1,4 +1,3 @@
-<!-- components/ConnectAccount.vue -->
 <template>
   <div class="connect-screen">
     <div class="connect-container">
@@ -60,24 +59,17 @@ const telegramAuth = useTelegramAuth()
 const showRetry = ref(false)
 
 const closeApp = () => {
-  console.log('🔗 Closing app to trigger contact sharing...');
   telegramAuth.closeMiniApp()
 }
 
 const retryLogin = async () => {
-  console.log('🔄 Retrying login...');
   const result = await telegramAuth.login()
   if (result.success) {
-    console.log('✅ Retry successful, emitting connected event');
     emit('connected')
-  } else {
-    console.log('❌ Retry failed:', result.error);
   }
 }
 
 onMounted(() => {
-  console.log('🔗 ConnectAccount component mounted');
-  // Show retry button after 5 seconds
   setTimeout(() => {
     showRetry.value = true
   }, 5000)

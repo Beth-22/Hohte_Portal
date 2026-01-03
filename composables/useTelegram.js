@@ -1,11 +1,13 @@
 // composables/useTelegram.js
 import { ref, onMounted } from "vue";
+import { apiService } from "~/services/api.service";
 
 export const useTelegram = () => {
   const webApp = ref(null);
   const isTelegram = ref(false);
   const userId = ref(null);
   const initData = ref("");
+  const isAuthenticated = ref(false);
 
   onMounted(() => {
     if (typeof window !== "undefined" && window.Telegram?.WebApp) {
@@ -16,14 +18,12 @@ export const useTelegram = () => {
 
       // Expand the app to full height
       webApp.value.expand();
-      webApp.value.ready();
 
       // Set theme colors
       setThemeColors();
 
-      console.log("✅ Telegram WebApp initialized");
-      console.log("User ID:", userId.value);
-      console.log("Platform:", webApp.value.platform);
+      // Initialize Telegram auth
+      initTelegramAuth();
     }
   });
 
@@ -48,6 +48,30 @@ export const useTelegram = () => {
         "--tg-button-text-color",
         themeParams.button_text_color || "#1E3971"
       );
+    }
+  };
+
+  const initTelegramAuth = async () => {
+    if (!webApp.value || !initData.value) return;
+
+    try {
+      // For Telegram Mini Apps, the initData can be used for authentication
+      // You might need to send this to your backend to validate the user
+      console.log("Telegram init data available:", initData.value);
+
+      // In a real app, you would send initData to your backend for verification
+      // and get a JWT token back
+      // const response = await fetch('/api/auth/telegram', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ initData: initData.value })
+      // });
+      // const { token } = await response.json();
+      // apiService.setToken(token);
+
+      isAuthenticated.value = true;
+    } catch (error) {
+      console.error("Telegram auth failed:", error);
     }
   };
 
@@ -77,14 +101,15 @@ export const useTelegram = () => {
     }
   };
 
-  // Get Telegram WebApp instance
-  const getWebApp = () => {
-    return webApp.value;
+  // Manual authentication for development
+  const setAuthToken = (token) => {
+    apiService.setToken(token);
+    isAuthenticated.value = true;
   };
 
-  // Get initData for authentication
-  const getInitData = () => {
-    return initData.value;
+  const logout = () => {
+    apiService.clearToken();
+    isAuthenticated.value = false;
   };
 
   return {
@@ -92,10 +117,11 @@ export const useTelegram = () => {
     isTelegram,
     userId,
     initData,
-    getWebApp,
-    getInitData,
+    isAuthenticated,
     showAlert,
     showConfirm,
     closeApp,
+    setAuthToken,
+    logout,
   };
 };

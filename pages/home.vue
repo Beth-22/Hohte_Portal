@@ -1,10 +1,8 @@
-<!-- home.vue -->
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
-import { useTelegramAuth } from '~/composables/useTelegramAuth'
 
 // Import the class image directly
 import classImage from '~/assets/images/class_image.png'
@@ -12,7 +10,6 @@ import classImage from '~/assets/images/class_image.png'
 const { locale, t, setLocale } = useLanguage()
 const { goToPermissionStatus, goToCourseDetail } = useNavigation()
 const { student, courses, attendance, pendingRequestsCount, initializeData, isLoading, error } = useStudentData()
-const telegramAuth = useTelegramAuth()
 
 // Track expanded schedules for each course
 const expandedSchedules = ref({})
@@ -154,45 +151,16 @@ const getStudentProfileImage = () => {
   return getPlaceholderProfile();
 }
 
-// Check authentication before loading data
-const loadDataWithAuth = async () => {
+onMounted(async () => {
   try {
     console.log('🏠 Home page mounted')
-    
-    // Check if user is authenticated
-    if (!telegramAuth.isAuthenticated.value) {
-      console.log('User not authenticated, waiting for auth...')
-      return
-    }
-    
-    console.log('User authenticated, loading data...')
     console.log('Initial student data:', student.value)
     console.log('Initial courses:', courses.value)
-    
     await initializeData()
     console.log('After initialize - student:', student.value)
     console.log('After initialize - courses:', courses.value)
   } catch (err) {
     console.error('Failed to initialize data:', err)
-  }
-}
-
-onMounted(async () => {
-  // Wait for authentication to complete
-  const authStatus = telegramAuth.getAuthStatus()
-  console.log('Home auth status:', authStatus)
-  
-  // If authenticated, load data
-  if (telegramAuth.isAuthenticated.value) {
-    await loadDataWithAuth()
-  }
-})
-
-// Watch for authentication changes
-watch(() => telegramAuth.isAuthenticated.value, (isAuthenticated) => {
-  if (isAuthenticated) {
-    console.log('Authentication state changed to true, loading data...')
-    loadDataWithAuth()
   }
 })
 
@@ -200,27 +168,12 @@ watch(() => telegramAuth.isAuthenticated.value, (isAuthenticated) => {
 watch(courses, (newCourses) => {
   console.log('Courses updated:', newCourses.length)
 }, { immediate: true })
-
-// Logout function
-const handleLogout = () => {
-  telegramAuth.logout()
-  // You might want to redirect to login/splash screen
-  window.location.href = '/'
-}
 </script>
 
 <template>
   <div class="dashboard-container">
-    <!-- Authentication Required State -->
-    <div v-if="!telegramAuth.isAuthenticated" class="auth-required-state">
-      <div class="auth-icon">🔒</div>
-      <h3>Authentication Required</h3>
-      <p>Please log in to access your dashboard</p>
-      <button class="retry-button" @click="telegramAuth.login()">Login</button>
-    </div>
-
     <!-- Loading State -->
-    <div v-else-if="isLoading" class="loading-overlay">
+    <div v-if="isLoading" class="loading-overlay">
       <div class="spinner"></div>
       <p class="loading-text">{{ t('common.loading') }}</p>
     </div>
@@ -411,16 +364,6 @@ const handleLogout = () => {
       </section>
 
       <div class="bottom-spacer"></div>
-      
-      <!-- Logout button (optional, can be hidden) -->
-      <div class="logout-container" v-if="telegramAuth.isInTelegram">
-        <button class="logout-button" @click="handleLogout">
-          <svg viewBox="0 0 24 24" width="18" height="18">
-            <path d="M16 17L21 12L16 7M21 12H9M9 3H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Logout
-        </button>
-      </div>
     </div>
   </div>
 </template>
@@ -433,34 +376,6 @@ const handleLogout = () => {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;
   flex-direction: column;
-}
-
-.auth-required-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  padding: 20px;
-  text-align: center;
-}
-
-.auth-icon {
-  font-size: 64px;
-  margin-bottom: 20px;
-  color: #FFC125;
-}
-
-.auth-required-state h3 {
-  font-size: 24px;
-  color: #FFC125;
-  margin-bottom: 10px;
-}
-
-.auth-required-state p {
-  font-size: 16px;
-  color: #a0b3d9;
-  margin-bottom: 30px;
 }
 
 .status-bar-padding {
@@ -938,32 +853,6 @@ const handleLogout = () => {
   height: 100px;
 }
 
-.logout-container {
-  padding: 20px;
-  text-align: center;
-}
-
-.logout-button {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffc125;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.logout-button:hover {
-  background: rgba(255, 193, 37, 0.1);
-  transform: translateY(-2px);
-}
-
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .welcome-text {
@@ -979,7 +868,7 @@ const handleLogout = () => {
   }
   
   .course-card.expanded {
-    min-height: auto;
+    min-height: auto; /* Allow dynamic height */
     height: auto;
   }
 
@@ -1027,6 +916,7 @@ const handleLogout = () => {
   .schedule-pill {
     min-width: 40px;
     padding: 4px 6px;
+  
   }
 
   .day-time {

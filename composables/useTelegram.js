@@ -16,6 +16,12 @@ export const useTelegram = () => {
 
       if (window.Telegram?.WebApp) {
         webApp.value = window.Telegram.WebApp;
+        console.log("🔹 Full Telegram initData:", initData.value);
+        console.log(
+          "🔹 Telegram initDataUnsafe (parsed):",
+          initDataUnsafe.value
+        );
+
         isTelegram.value = true;
         userId.value = webApp.value.initDataUnsafe?.user?.id;
         initData.value = webApp.value.initData;

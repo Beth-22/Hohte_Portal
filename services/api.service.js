@@ -1,8 +1,8 @@
 // services/api.service.js
 export class ApiService {
   constructor() {
-    // ✅ USE YOUR ACTUAL BACKEND
-    this.baseURL = "https://staging-hohte.batelew.com";
+    // For local testing, use localhost
+    this.baseURL = "http://localhost:8000";
     this.token = null;
 
     // Load token from localStorage if available
@@ -14,7 +14,10 @@ export class ApiService {
     console.log("Server:", this.baseURL);
 
     if (this.token) {
-      console.log("Token loaded from localStorage");
+      console.log(
+        "Token loaded from localStorage:",
+        this.token?.substring(0, 20) + "..."
+      );
     } else {
       console.log("No token found in localStorage");
     }
@@ -50,18 +53,19 @@ export class ApiService {
 
   // Check if user is authenticated
   isAuthenticated() {
-    return !!this.token;
+    const hasToken = !!this.token;
+    console.log("🔍 Auth check - Has token?", hasToken);
+    return hasToken;
   }
 
-  // Authentication API - DIRECT CALL TO YOUR BACKEND
+  // Authentication API
   async telegramLogin(initData) {
     try {
-      console.log("🔐 Sending Telegram login to YOUR backend...");
-      console.log("URL:", `${this.baseURL}/api/v1/auth/telegram/login`);
-
-      if (!initData || initData.length < 10) {
-        throw new Error("Invalid initData: too short or empty");
-      }
+      console.log(
+        "🔐 Sending Telegram login request to:",
+        `${this.baseURL}/api/v1/auth/telegram/login`
+      );
+      console.log("initData length:", initData?.length);
 
       const response = await fetch(
         `${this.baseURL}/api/v1/auth/telegram/login`,
@@ -75,29 +79,30 @@ export class ApiService {
         }
       );
 
-      console.log("📊 Response status:", response.status, response.statusText);
+      console.log(
+        "📊 Login response status:",
+        response.status,
+        response.statusText
+      );
 
-      if (response.status === 404) {
-        console.log("⚠️ User needs linking (404)");
+      if (response.status === 404 || response.status === 401) {
+        console.log("⚠️ User is unlinked (404/401)");
         throw new Error("UNLINKED_USER: Account needs linking");
-      }
-
-      if (response.status === 401) {
-        console.log("⚠️ Unauthorized (401)");
-        throw new Error("UNAUTHORIZED: Invalid credentials");
       }
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ Login failed:", errorText);
-        throw new Error(`Login failed: ${response.status}`);
+        console.error("❌ Login error response:", errorText);
+        throw new Error(
+          `Login failed: ${response.status} - ${response.statusText}`
+        );
       }
 
       const data = await response.json();
-      console.log("✅ Login response:", data);
+      console.log("✅ Login successful, response data:", data);
 
       if (!data.token) {
-        console.error("❌ No token in response");
+        console.error("❌ No token in response:", data);
         throw new Error("No token in response");
       }
 
@@ -108,7 +113,7 @@ export class ApiService {
     }
   }
 
-  // Update request method
+  // Update the request method
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
 
@@ -118,7 +123,7 @@ export class ApiService {
       ...options.headers,
     };
 
-    // Add Authorization header if we have a token
+    // Add Authorization header only if we have a token AND not skipping auth
     if (this.token && !options.skipAuth) {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
@@ -135,16 +140,18 @@ export class ApiService {
 
       console.log(`📊 Response: ${response.status} ${response.statusText}`);
 
-      // Handle auth errors
+      // Handle authentication errors
       if (response.status === 401 || response.status === 403) {
+        console.log("⚠️ Token expired/invalid (401/403)");
         this.clearToken();
-        throw new Error("Session expired");
+        throw new Error("Session expired. Please login again.");
       }
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("API Error:", errorText);
+        console.error("API Error Response:", errorText);
 
+        // Check for unlinked user (404)
         if (response.status === 404) {
           throw new Error("UNLINKED_USER: Account needs linking");
         }
@@ -170,40 +177,51 @@ export class ApiService {
     }
   }
 
-  // Your existing methods (keep all these)
+  // Profile API
   async getProfile() {
     return this.request("/api/v1/student/profile");
   }
 
+  // Classes API
   async getMyClasses() {
     return this.request("/api/v1/student/classes");
   }
 
   async getClassDetails(classId, startDate = null, endDate = null) {
     let endpoint = `/api/v1/student/classes/${classId}`;
+
     const params = new URLSearchParams();
     if (startDate) params.append("start_date", startDate);
     if (endDate) params.append("end_date", endDate);
+
     const queryString = params.toString();
-    if (queryString) endpoint += `?${queryString}`;
+    if (queryString) {
+      endpoint += `?${queryString}`;
+    }
+
     return this.request(endpoint);
   }
 
+  // Class Schedules API
   async getClassSchedules(classId) {
     return this.request(`/api/v1/student/classes/${classId}`);
   }
 
+  // Attendance API
   async getAttendanceRecords(filters = {}) {
     const params = new URLSearchParams();
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         params.append(key, value);
       }
     });
+
     const queryString = params.toString();
     const endpoint = `/api/v1/student/attendance/records${
       queryString ? `?${queryString}` : ""
     }`;
+
     return this.request(endpoint);
   }
 
@@ -211,6 +229,7 @@ export class ApiService {
     return this.request("/api/v1/student/attendance/summary");
   }
 
+  // Permission API
   async getPermissionReasons() {
     return this.request("/api/v1/student/config/permission-reasons");
   }

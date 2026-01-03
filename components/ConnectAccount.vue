@@ -9,8 +9,7 @@
 
       <div class="connect-content">
         <p class="connect-description">
-          To access your student dashboard, we need to link your Telegram
-          account with your phone number.
+          To access your student dashboard, we need to link your Telegram account with your phone number.
         </p>
 
         <div class="steps-container">
@@ -54,37 +53,37 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { useTelegramAuth } from "~/composables/useSimpleAuth";
+import { ref, onMounted } from 'vue'
+import { useTelegramAuth } from '~/composables/useTelegramAuth'
 
-const telegramAuth = useTelegramAuth();
-const showRetry = ref(false);
+const telegramAuth = useTelegramAuth()
+const showRetry = ref(false)
 
 const closeApp = () => {
-  console.log("🔗 Closing app to trigger contact sharing...");
-  telegramAuth.closeMiniApp();
-};
+  console.log('🔗 Closing app to trigger contact sharing...');
+  telegramAuth.closeMiniApp()
+}
 
 const retryLogin = async () => {
-  console.log("🔄 Retrying login...");
-  const result = await telegramAuth.login();
+  console.log('🔄 Retrying login...');
+  const result = await telegramAuth.login()
   if (result.success) {
-    console.log("✅ Retry successful, emitting connected event");
-    emit("connected");
+    console.log('✅ Retry successful, emitting connected event');
+    emit('connected')
   } else {
-    console.log("❌ Retry failed:", result.error);
+    console.log('❌ Retry failed:', result.error);
   }
-};
+}
 
 onMounted(() => {
-  console.log("🔗 ConnectAccount component mounted");
+  console.log('🔗 ConnectAccount component mounted');
   // Show retry button after 5 seconds
   setTimeout(() => {
-    showRetry.value = true;
-  }, 5000);
-});
+    showRetry.value = true
+  }, 5000)
+})
 
-defineEmits(["connected"]);
+defineEmits(['connected'])
 </script>
 
 <style scoped>
@@ -155,11 +154,11 @@ defineEmits(["connected"]);
   padding: 15px;
   background: rgba(255, 193, 37, 0.1);
   border-radius: 12px;
-  border-left: 4px solid #ffc125;
+  border-left: 4px solid #FFC125;
 }
 
 .step-number {
-  background: #ffc125;
+  background: #FFC125;
   color: #1e3971;
   width: 32px;
   height: 32px;
@@ -198,7 +197,7 @@ defineEmits(["connected"]);
 }
 
 .close-button {
-  background: linear-gradient(135deg, #ffc125 0%, #ffb300 100%);
+  background: linear-gradient(135deg, #FFC125 0%, #ffb300 100%);
   color: #1e3971;
   border: none;
   padding: 18px;

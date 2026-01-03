@@ -5,7 +5,7 @@ export default defineNuxtConfig({
 
   // CSS files
   css: ["~/assets/css/main.css"],
-  plugins: ['~/plugins/language.client.js'],
+  plugins: ["~/plugins/language.client.js"],
 
   // App configuration
   app: {
@@ -18,6 +18,12 @@ export default defineNuxtConfig({
             "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
         },
         { charset: "utf-8" },
+      ],
+      script: [
+        {
+          src: "https://telegram.org/js/telegram-web-app.js",
+          async: true,
+        },
       ],
     },
   },

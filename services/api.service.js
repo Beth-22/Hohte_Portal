@@ -1,32 +1,60 @@
 // services/api.service.js
 export class ApiService {
   constructor() {
-    // ✅ CORRECT CONFIGURATION
     this.baseURL = "https://staging-hohte.batelew.com";
-    this.token =
-      "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJhMGIxM2I3MC02N2FhLTRjMGYtYTczNy1hODA3MzI4MmY3MTkiLCJqdGkiOiI4ZDdmZDVhYjU4NDNlZDA4MDBmNzlhNmUwMzQwZDU3MmM1NGIzMzQ1ZjU4MjNlMzEyNjdlOWZmMDA0ZTk3YmE0MDlhYjQ1ZTZjNTJlNjI1MSIsImlhdCI6MTc2NzAzMDUxMi44ODE3MDcsIm5iZiI6MTc2NzAzMDUxMi44ODE3MTEsImV4cCI6MTc5ODU2NjUxMi44NjAwMDksInN1YiI6IjI0MzEiLCJzY29wZXMiOltdfQ.BUXqafuykZqzlzIqrmN2HtpCyRrliMcMekSQoLUsmoki1twEiFlD4m9ULBDrpukUtv_Ch4xbcm3FgZ4BNb1ejzphpHSm3dcwpTNRWJHYau9R9LczTkuP2hyAllLAnUJikQ-4gqwqROriz9b2TXsSiH0WQF0-tYs7k4xrQPgalq-96iYpCG6Ftc5O0RvZQY8txaG5-kuGPmD8E-7FaanU1RtK3CiTs8hXzDYGqGnKfaHDtNFA0xPUPjLxoFVHigyvSHOigd9myCID64gqq5CSYRn_AJK19AefAmiYxA8s5kRUuqCch1v6yBpLKIZKp9dZhMEMQNxv10tWwYLG81a_Tnd7MHyXwG9_gj5MF02hwkgl2y7Bm7gnLTq_gYMvQwBnxs0fqlodOl-vopJEJArQFazJjnqcYaBwU9x7JPInIGk5MY6X_7h0rxKGklT1NLAwRLyf6L-R2vGoPSZKj6MRv9bGMmJ6-6XNIgD19lgnbGeJGszAWRRduHOFT66BXZdzCY-ICqnRdpJTX5SS_17uI9aJvgp5MtrZs00NpFSkcYnOgx8xC_JTvgpA9cqmd7VRIxLGfeMscvqI8A0da5vE_90-CjS_wdjPkkabsbK_9wutCzSeDjTnB_2saIM0TcVlG9yWuOK-mehQ50yvgwBeUBm8FctGMtPGlfyfpeyaKbg";
+    this.token = null;
 
-    // Log token info for debugging
+    // Load token from localStorage if available
+    if (process.client) {
+      this.token = localStorage.getItem("auth_token");
+    }
+
     console.log("🔑 API Service Initialized");
     console.log("Server:", this.baseURL);
-    console.log("Token preview:", this.token.substring(0, 50) + "...");
 
-    // Decode token to verify
-    try {
-      const parts = this.token.split(".");
-      if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]));
-        console.log("Token decoded successfully:", {
-          subject: payload.sub,
-          issued: new Date(payload.iat * 1000).toLocaleString(),
-          expires: new Date(payload.exp * 1000).toLocaleString(),
-        });
-      }
-    } catch (e) {
-      console.log("Token decode warning:", e.message);
+    if (this.token) {
+      console.log("Token loaded from localStorage");
     }
   }
 
+  // Set token after successful login
+  setToken(token) {
+    this.token = token;
+    if (process.client) {
+      localStorage.setItem("auth_token", token);
+    }
+    console.log("✅ Token set");
+  }
+
+  // Clear token on logout
+  clearToken() {
+    this.token = null;
+    if (process.client) {
+      localStorage.removeItem("auth_token");
+    }
+    console.log("✅ Token cleared");
+  }
+
+  // Get current token
+  getToken() {
+    return this.token;
+  }
+
+  // Authentication API
+  async telegramLogin(initData) {
+    return this.request("/api/v1/auth/telegram/login", {
+      method: "POST",
+      body: JSON.stringify({ initData }),
+      skipAuth: true, // Don't add auth header for login
+    });
+  }
+
+  // Check if user is authenticated
+  isAuthenticated() {
+    return !!this.token;
+  }
+
+  // Update the request method to handle authentication
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
 
@@ -36,8 +64,10 @@ export class ApiService {
       ...options.headers,
     };
 
-    // Always add the Authorization header
-    headers["Authorization"] = `Bearer ${this.token}`;
+    // Add Authorization header only if we have a token AND not skipping auth
+    if (this.token && !options.skipAuth) {
+      headers["Authorization"] = `Bearer ${this.token}`;
+    }
 
     const config = {
       ...options,
@@ -51,9 +81,20 @@ export class ApiService {
 
       console.log(`📊 Response: ${response.status} ${response.statusText}`);
 
+      // Handle authentication errors
+      if (response.status === 401 || response.status === 403) {
+        this.clearToken();
+        throw new Error("Session expired. Please login again.");
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error Response:", errorText);
+
+        // Check for unlinked user (404)
+        if (response.status === 404) {
+          throw new Error("UNLINKED_USER: Account needs linking");
+        }
 
         let errorData;
         try {
@@ -100,12 +141,12 @@ export class ApiService {
 
     return this.request(endpoint);
   }
-  
+
   // Class Schedules API
   async getClassSchedules(classId) {
-    // Use the class details endpoint which includes schedules
     return this.request(`/api/v1/student/classes/${classId}`);
   }
+
   // Attendance API
   async getAttendanceRecords(filters = {}) {
     const params = new URLSearchParams();

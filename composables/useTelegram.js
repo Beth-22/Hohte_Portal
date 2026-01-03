@@ -6,24 +6,44 @@ export const useTelegram = () => {
   const isTelegram = ref(false);
   const userId = ref(null);
   const initData = ref("");
+  const initDataUnsafe = ref(null);
 
   onMounted(() => {
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      webApp.value = window.Telegram.WebApp;
-      isTelegram.value = true;
-      userId.value = webApp.value.initDataUnsafe?.user?.id;
-      initData.value = webApp.value.initData;
+    if (typeof window !== "undefined") {
+      console.log("🔍 Checking for Telegram WebApp...");
+      console.log("window.Telegram exists?", !!window.Telegram);
+      console.log("window.Telegram.WebApp exists?", !!window.Telegram?.WebApp);
 
-      // Expand the app to full height
-      webApp.value.expand();
-      webApp.value.ready();
+      if (window.Telegram?.WebApp) {
+        webApp.value = window.Telegram.WebApp;
+        isTelegram.value = true;
+        userId.value = webApp.value.initDataUnsafe?.user?.id;
+        initData.value = webApp.value.initData;
+        initDataUnsafe.value = webApp.value.initDataUnsafe;
 
-      // Set theme colors
-      setThemeColors();
+        // Expand the app to full height
+        try {
+          webApp.value.expand();
+          webApp.value.ready();
+          console.log("✅ Telegram WebApp initialized and ready");
+        } catch (err) {
+          console.error("Failed to initialize Telegram:", err);
+        }
 
-      console.log("✅ Telegram WebApp initialized");
-      console.log("User ID:", userId.value);
-      console.log("Platform:", webApp.value.platform);
+        // Set theme colors
+        setThemeColors();
+
+        console.log("Telegram User ID:", userId.value);
+        console.log("Telegram User:", initDataUnsafe.value?.user);
+        console.log("initData available?", !!initData.value);
+        console.log("initData length:", initData.value?.length);
+      } else {
+        console.log("⚠️ Not running in Telegram Mini App");
+        console.log("For local testing, you can:");
+        console.log("1. Run in Telegram Desktop");
+        console.log("2. Use Telegram Web");
+        console.log("3. Your existing token will be used if available");
+      }
     }
   });
 
@@ -87,13 +107,20 @@ export const useTelegram = () => {
     return initData.value;
   };
 
+  // Get initDataUnsafe for debugging
+  const getInitDataUnsafe = () => {
+    return initDataUnsafe.value;
+  };
+
   return {
     webApp,
     isTelegram,
     userId,
     initData,
+    initDataUnsafe,
     getWebApp,
     getInitData,
+    getInitDataUnsafe,
     showAlert,
     showConfirm,
     closeApp,

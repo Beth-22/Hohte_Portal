@@ -136,13 +136,19 @@
   },
   "auth": {
     "unlinkedTitle": "Account Connection Required",
-    "unlinkedMessage": "We need to link your Telegram account with our system. Please close this window and tap the",
+    "unlinkedMessage": "We need to link your Telegram account with our system.",
     "shareContact": "'Share Contact'",
-    "unlinkedMessage2": "button in the bot chat.",
+    "unlinkedMessage2": "",
     "closeAndShare": "Close & Share Contact",
     "connecting": "Connecting to Telegram...",
     "loginError": "Login failed. Please try again.",
-    "telegramOnly": "Please open this app from Telegram"
+    "telegramOnly": "Please open this app from Telegram",
+    "stepClose": "Close this window",
+    "stepFindBot": "Return to the bot chat",
+    "stepTapShare": "Tap the 'Share Contact' button",
+    "stepReopen": "Reopen this app to continue",
+    "alreadyShared": "Already shared contact? Try again",
+    "retry": "Try Again"
   },
   "api": {
     "defaultClass": "Class",

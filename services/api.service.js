@@ -1,38 +1,30 @@
 // services/api.service.js
 export class ApiService {
   constructor() {
-    // ✅ CORRECT CONFIGURATION
     this.baseURL = "https://staging-hohte.batelew.com";
     this.token = null;
-
-    // Load token from localStorage on client side
+    
     if (process.client) {
-      this.token = localStorage.getItem("auth_token");
+      this.token = localStorage.getItem('auth_token');
     }
 
-    // Log token info for debugging
     console.log("🔑 API Service Initialized");
     console.log("Server:", this.baseURL);
     console.log("Token loaded:", !!this.token);
   }
 
-  // Set token method
   setToken(token) {
     this.token = token;
     if (process.client) {
-      localStorage.setItem("auth_token", token);
+      localStorage.setItem('auth_token', token);
     }
-    console.log(
-      "✅ Token set:",
-      token ? token.substring(0, 50) + "..." : "null"
-    );
+    console.log("✅ Token set");
   }
 
-  // Clear token method
   clearToken() {
     this.token = null;
     if (process.client) {
-      localStorage.removeItem("auth_token");
+      localStorage.removeItem('auth_token');
     }
     console.log("✅ Token cleared");
   }
@@ -46,7 +38,6 @@ export class ApiService {
       ...options.headers,
     };
 
-    // Always add the Authorization header if token exists
     if (this.token) {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
@@ -63,9 +54,17 @@ export class ApiService {
 
       console.log(`📊 Response: ${response.status} ${response.statusText}`);
 
+      // Check for 401/404 specifically for auth
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error Response:", errorText);
+
+        // Special handling for authentication endpoints
+        if (endpoint.includes('/auth/telegram/login')) {
+          if (response.status === 404 || response.status === 401) {
+            throw new Error(`HTTP ${response.status}: User not linked. Please share contact in Telegram bot.`);
+          }
+        }
 
         let errorData;
         try {
@@ -88,7 +87,6 @@ export class ApiService {
     }
   }
 
-  // Telegram Authentication
   async telegramLogin(initData) {
     return this.request("/api/v1/auth/telegram/login", {
       method: "POST",
@@ -96,12 +94,10 @@ export class ApiService {
     });
   }
 
-  // Profile API
   async getProfile() {
     return this.request("/api/v1/student/profile");
   }
 
-  // Classes API
   async getMyClasses() {
     return this.request("/api/v1/student/classes");
   }
@@ -120,14 +116,11 @@ export class ApiService {
 
     return this.request(endpoint);
   }
-
-  // Class Schedules API
+  
   async getClassSchedules(classId) {
-    // Use the class details endpoint which includes schedules
     return this.request(`/api/v1/student/classes/${classId}`);
   }
-
-  // Attendance API
+  
   async getAttendanceRecords(filters = {}) {
     const params = new URLSearchParams();
 
@@ -149,7 +142,6 @@ export class ApiService {
     return this.request("/api/v1/student/attendance/summary");
   }
 
-  // Permission API
   async getPermissionReasons() {
     return this.request("/api/v1/student/config/permission-reasons");
   }
@@ -180,5 +172,4 @@ export class ApiService {
   }
 }
 
-// Create singleton instance
 export const apiService = new ApiService();

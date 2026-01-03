@@ -136,13 +136,19 @@
   },
   "auth": {
     "unlinkedTitle": "መለያ ግንኙነት ያስፈልጋል",
-    "unlinkedMessage": "የቴሌግራም መለያዎን ከስርዓታችን ጋር ማገናኘት ያስፈልገናል። እባክዎ ይህንን መስኮት ዝጋ እና በቦት ውይይት ውስጥ",
+    "unlinkedMessage": "የቴሌግራም መለያዎን ከስርዓታችን ጋር ማገናኘት ያስፈልገናል።",
     "shareContact": "'እውቂያ ያካፍሉ'",
-    "unlinkedMessage2": "አዝራሩን ይንኩ።",
+    "unlinkedMessage2": "",
     "closeAndShare": "ዝጋ እና እውቂያ ያካፍሉ",
     "connecting": "ከቴሌግራም ጋር በመገናኘት ላይ...",
     "loginError": "መግባት አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
-    "telegramOnly": "እባክዎ ይህን መተግበሪያ ከቴሌግራም ይክፈቱ"
+    "telegramOnly": "እባክዎ ይህን መተግበሪያ ከቴሌግራም ይክፈቱ",
+    "stepClose": "ይህን መስኮት ዝጋ",
+    "stepFindBot": "ወደ ቦት ውይይት ይመለሱ",
+    "stepTapShare": "'እውቂያ ያካፍሉ' የሚለውን አዝራር ይንኩ",
+    "stepReopen": "ለመቀጠል ይህን መተግበሪያ እንደገና ይክፈቱ",
+    "alreadyShared": "አስቀድመው እውቂያ አካፍለዋል? እንደገና ይሞክሩ",
+    "retry": "እንደገና ይሞክሩ"
   },
   "api": {
     "defaultClass": "ክፍል",

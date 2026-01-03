@@ -1,8 +1,7 @@
-<!-- pages/index.vue -->
 <template>
   <div class="splash-container">
     <!-- Authentication Unlinked State -->
-    <div v-if="showUnlinkedMessage" class="unlinked-container">
+    <div v-if="isUnlinked" class="unlinked-container">
       <div class="unlinked-content">
         <div class="unlinked-icon">
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
@@ -12,16 +11,35 @@
         <h2 class="unlinked-title">{{ t('auth.unlinkedTitle') }}</h2>
         <p class="unlinked-message">
           {{ t('auth.unlinkedMessage') }}
-          <strong>{{ t('auth.shareContact') }}</strong>
-          {{ t('auth.unlinkedMessage2') }}
         </p>
+        <div class="unlinked-instructions">
+          <div class="instruction-step">
+            <span class="step-number">1</span>
+            <span class="step-text">{{ t('auth.stepClose') }}</span>
+          </div>
+          <div class="instruction-step">
+            <span class="step-number">2</span>
+            <span class="step-text">{{ t('auth.stepFindBot') }}</span>
+          </div>
+          <div class="instruction-step">
+            <span class="step-number">3</span>
+            <span class="step-text">{{ t('auth.stepTapShare') }}</span>
+          </div>
+          <div class="instruction-step">
+            <span class="step-number">4</span>
+            <span class="step-text">{{ t('auth.stepReopen') }}</span>
+          </div>
+        </div>
         <button class="unlinked-button" @click="shareContactInstruction">
           {{ t('auth.closeAndShare') }}
+        </button>
+        <button class="unlinked-retry" @click="retryLogin">
+          {{ t('auth.alreadyShared') }}
         </button>
       </div>
     </div>
 
-    <!-- Normal Splash Content -->
+    <!-- Normal Splash Content (only show if NOT unlinked) -->
     <div v-else class="splash-content">
       <!-- Loading State -->
       <div v-if="isLoading || authLoading" class="loading-state">
@@ -129,6 +147,14 @@
               <path d="M10 4.16666L15.8333 10L10 15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </button>
+          
+          <!-- Error message -->
+          <div v-if="authError && !isUnlinked" class="auth-error">
+            <p>{{ authError }}</p>
+            <button @click="retryLogin" class="retry-link">
+              {{ t('auth.retry') }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -144,8 +170,8 @@ import { useAuth } from "~/composables/useAuth";
 
 const router = useRouter();
 const { t, setLocale, init, locale } = useLanguage();
-const { showUnlinkedMessage, shareContactInstruction, authLoading, isTelegram, attemptLogin } = useTelegramAuth();
-const { isAuthenticated, isLoading: authIsLoading } = useAuth();
+const { isUnlinked, authLoading, isTelegram, attemptLogin, shareContactInstruction } = useTelegramAuth();
+const { isAuthenticated, authError, isLoading: authIsLoading } = useAuth();
 
 const selectedLanguage = ref(locale.value);
 const splashLoading = ref(true);
@@ -176,6 +202,15 @@ const selectLanguage = (lang) => {
   setLocale(lang);
 };
 
+const retryLogin = async () => {
+  if (isTelegram.value) {
+    const result = await attemptLogin();
+    if (result.success) {
+      router.push('/home');
+    }
+  }
+};
+
 const continueToApp = async () => {
   if (!selectedLanguage.value) return;
   
@@ -185,17 +220,18 @@ const continueToApp = async () => {
     if (result.success) {
       router.push('/home');
     } else if (result.unlinked) {
-      // Already showing unlinked message via showUnlinkedMessage ref
+      // isUnlinked ref will automatically show the unlinked screen
       return;
     } else {
-      // Other error
-      alert(t('auth.loginError'));
+      // Other error - will be shown in authError
+      return;
     }
   } else {
     // Not in Telegram, check if already authenticated
     if (isAuthenticated.value) {
       router.push('/home');
     } else {
+      // Show error that app must be opened from Telegram
       alert(t('auth.telegramOnly'));
     }
   }
@@ -213,6 +249,7 @@ const continueToApp = async () => {
   touch-action: manipulation;
 }
 
+/* Unlinked State Styles */
 .unlinked-container {
   height: var(--tg-viewport-height, 100vh);
   display: flex;
@@ -253,6 +290,45 @@ const continueToApp = async () => {
   opacity: 0.9;
 }
 
+.unlinked-instructions {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+.instruction-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #fff;
+}
+
+.instruction-step:last-child {
+  margin-bottom: 0;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  background: #FFC125;
+  color: #1e3971;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.step-text {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
 .unlinked-button {
   background: #FFC125;
   color: #1e3971;
@@ -264,7 +340,7 @@ const continueToApp = async () => {
   cursor: pointer;
   width: 100%;
   transition: all 0.2s ease;
-  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .unlinked-button:hover {
@@ -278,6 +354,49 @@ const continueToApp = async () => {
   box-shadow: 0 2px 8px rgba(255, 193, 37, 0.2);
 }
 
+.unlinked-retry {
+  background: transparent;
+  color: #FFC125;
+  border: 1px solid #FFC125;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.unlinked-retry:hover {
+  background: rgba(255, 193, 37, 0.1);
+}
+
+.auth-error {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(255, 86, 86, 0.1);
+  border: 1px solid rgba(255, 86, 86, 0.3);
+  border-radius: 8px;
+  color: #ff5656;
+  font-size: 14px;
+}
+
+.retry-link {
+  background: transparent;
+  color: #FFC125;
+  border: none;
+  padding: 5px 10px;
+  margin-top: 5px;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+}
+
+.retry-link:hover {
+  color: #ffd54f;
+}
+
+/* Loading State */
 .loading-state {
   flex: 1;
   display: flex;
@@ -308,6 +427,7 @@ const continueToApp = async () => {
   }
 }
 
+/* Splash Content */
 .splash-content {
   flex: 1;
   padding: 40px 24px 24px;

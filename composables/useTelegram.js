@@ -1,13 +1,12 @@
 // composables/useTelegram.js
 import { ref, onMounted } from "vue";
-import { apiService } from "~/services/api.service";
 
 export const useTelegram = () => {
   const webApp = ref(null);
   const isTelegram = ref(false);
   const userId = ref(null);
   const initData = ref("");
-  const isAuthenticated = ref(false);
+  const themeParams = ref({});
 
   onMounted(() => {
     if (typeof window !== "undefined" && window.Telegram?.WebApp) {
@@ -15,6 +14,10 @@ export const useTelegram = () => {
       isTelegram.value = true;
       userId.value = webApp.value.initDataUnsafe?.user?.id;
       initData.value = webApp.value.initData;
+      themeParams.value = webApp.value.themeParams;
+
+      // Initialize the WebApp
+      webApp.value.ready();
 
       // Expand the app to full height
       webApp.value.expand();
@@ -22,56 +25,32 @@ export const useTelegram = () => {
       // Set theme colors
       setThemeColors();
 
-      // Initialize Telegram auth
-      initTelegramAuth();
+      console.log("✅ Telegram WebApp initialized");
+      console.log("User ID:", userId.value);
+      console.log("Theme params:", themeParams.value);
     }
   });
 
   const setThemeColors = () => {
     if (!webApp.value) return;
 
-    const themeParams = webApp.value.themeParams;
-    if (themeParams) {
+    if (themeParams.value) {
       document.documentElement.style.setProperty(
         "--tg-bg-color",
-        themeParams.bg_color || "#1E3971"
+        themeParams.value.bg_color || "#1E3971"
       );
       document.documentElement.style.setProperty(
         "--tg-text-color",
-        themeParams.text_color || "#ffffff"
+        themeParams.value.text_color || "#ffffff"
       );
       document.documentElement.style.setProperty(
         "--tg-button-color",
-        themeParams.button_color || "#FFC125"
+        themeParams.value.button_color || "#FFC125"
       );
       document.documentElement.style.setProperty(
         "--tg-button-text-color",
-        themeParams.button_text_color || "#1E3971"
+        themeParams.value.button_text_color || "#1E3971"
       );
-    }
-  };
-
-  const initTelegramAuth = async () => {
-    if (!webApp.value || !initData.value) return;
-
-    try {
-      // For Telegram Mini Apps, the initData can be used for authentication
-      // You might need to send this to your backend to validate the user
-      console.log("Telegram init data available:", initData.value);
-
-      // In a real app, you would send initData to your backend for verification
-      // and get a JWT token back
-      // const response = await fetch('/api/auth/telegram', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ initData: initData.value })
-      // });
-      // const { token } = await response.json();
-      // apiService.setToken(token);
-
-      isAuthenticated.value = true;
-    } catch (error) {
-      console.error("Telegram auth failed:", error);
     }
   };
 
@@ -101,27 +80,14 @@ export const useTelegram = () => {
     }
   };
 
-  // Manual authentication for development
-  const setAuthToken = (token) => {
-    apiService.setToken(token);
-    isAuthenticated.value = true;
-  };
-
-  const logout = () => {
-    apiService.clearToken();
-    isAuthenticated.value = false;
-  };
-
   return {
     webApp,
     isTelegram,
     userId,
     initData,
-    isAuthenticated,
+    themeParams,
     showAlert,
     showConfirm,
     closeApp,
-    setAuthToken,
-    logout,
   };
 };

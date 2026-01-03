@@ -7,17 +7,11 @@
 
 <script setup>
 import { onMounted } from 'vue'
-import { useLanguage } from '~/composables/useLanguage'
 import { useTelegram } from '~/composables/useTelegram'
 
-//const { init: initLanguage } = useLanguage()
 const { isTelegram } = useTelegram()
 
-// Initialize language IMMEDIATELY when app loads
 onMounted(() => {
-  //initLanguage()
-  
-  // If in Telegram, hide browser navigation
   if (isTelegram.value) {
     document.documentElement.style.setProperty('--tg-viewport-height', window.innerHeight + 'px')
   }
@@ -25,7 +19,6 @@ onMounted(() => {
 </script>
 
 <style>
-/* Global Telegram styles */
 :root {
   --tg-viewport-height: 100vh;
 }
@@ -33,11 +26,23 @@ onMounted(() => {
 html, body {
   height: var(--tg-viewport-height);
   overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
-/* Prevent overscroll on mobile */
 body {
   -webkit-overflow-scrolling: touch;
   overflow: auto;
+  background: #1e3971;
+}
+
+body {
+  background-color: var(--tg-bg-color, #1e3971);
+  color: var(--tg-text-color, #ffffff);
+}
+
+.tg-button {
+  background-color: var(--tg-button-color, #FFC125);
+  color: var(--tg-button-text-color, #1e3971);
 }
 </style>

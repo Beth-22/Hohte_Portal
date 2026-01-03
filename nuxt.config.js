@@ -1,13 +1,11 @@
 // nuxt.config.js
 export default defineNuxtConfig({
-  // Basic configuration
   devtools: { enabled: true },
-
-  // CSS files
   css: ["~/assets/css/main.css"],
-  plugins: ['~/plugins/language.client.js'],
 
-  // App configuration
+  // Add plugins
+  plugins: ["~/plugins/language.client.js"],
+
   app: {
     head: {
       title: "HOHTE Portal",
@@ -19,18 +17,21 @@ export default defineNuxtConfig({
         },
         { charset: "utf-8" },
       ],
+      // Add Telegram WebApp script
+      script: [
+        {
+          src: "https://telegram.org/js/telegram-web-app.js",
+        },
+      ],
     },
   },
 
-  // Runtime configuration
-  runtimeConfig: {
-    public: {
-      apiBaseUrl: process.env.API_BASE_URL || "http://localhost:8000",
-    },
+  // Route rules for client-side rendering
+  routeRules: {
+    "/home/**": { ssr: false },
+    "/**": { ssr: false },
   },
 
-  // Build configuration
-  build: {
-    // Add any build config here
-  },
+  // Enable components auto-import
+  components: true,
 });

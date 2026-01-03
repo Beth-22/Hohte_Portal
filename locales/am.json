@@ -36,7 +36,6 @@
     "classDetails": "የክፍል ዝርዝሮች",
     "courseDescription": "የኮርስ መግለጫ",
     "yourAttendance": "የእርስዎ ተገኝነት",
-    
     "attended": "ተገኝቷል",
     "missed": "ተጠናቀቀ",
     "excused": "ፈቃድ ያለው",
@@ -134,5 +133,22 @@
     "personal_matter": "የግል ጉዳይ",
     "custom": "የራስዎ ምክንያት",
     "other": "ሌላ"
+  },
+  "auth": {
+    "unlinkedTitle": "መለያ ግንኙነት ያስፈልጋል",
+    "unlinkedMessage": "የቴሌግራም መለያዎን ከስርዓታችን ጋር ማገናኘት ያስፈልገናል። እባክዎ ይህንን መስኮት ዝጋ እና በቦት ውይይት ውስጥ",
+    "shareContact": "'እውቂያ ያካፍሉ'",
+    "unlinkedMessage2": "አዝራሩን ይንኩ።",
+    "closeAndShare": "ዝጋ እና እውቂያ ያካፍሉ",
+    "connecting": "ከቴሌግራም ጋር በመገናኘት ላይ...",
+    "loginError": "መግባት አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
+    "telegramOnly": "እባክዎ ይህን መተግበሪያ ከቴሌግራም ይክፈቱ"
+  },
+  "api": {
+    "defaultClass": "ክፍል",
+    "defaultInstructor": "አስተማሪ",
+    "noRequests": "ምንም ጥያቄ አልተገኘም",
+    "loadingError": "መረጃ ለመጫን አልተሳካም። እባክዎ እንደገና ይሞክሩ።",
+    "networkError": "የይነገጽ ስህተት። እባክዎ ግንኙነትዎን ያረጋግጡ።"
   }
 }

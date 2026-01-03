@@ -20,14 +20,22 @@ export const useStudentData = () => {
   const safeT = (key, fallback) => {
     try {
       const translation = t(key);
-      // If translation returns the key itself (not found), use fallback
       return translation === key ? fallback : translation;
     } catch {
       return fallback;
     }
   };
 
-  // In the currentClasses computed property, update the schedule formatting:
+  // Check if authenticated before making API calls
+  const checkAuth = () => {
+    if (!apiService.token) {
+      error.value = "Not authenticated. Please login first.";
+      return false;
+    }
+    return true;
+  };
+
+  // Current classes computed property
   const currentClasses = computed(() => {
     console.log("currentClasses computed - classes.value:", classes.value);
 
@@ -73,7 +81,6 @@ export const useStudentData = () => {
         // Format time (remove seconds if present)
         const formatTime = (timeString) => {
           if (!timeString) return "";
-          // If time is in HH:MM:SS format, take only HH:MM
           if (timeString.includes(":")) {
             const parts = timeString.split(":");
             if (parts.length >= 2) {
@@ -133,7 +140,7 @@ export const useStudentData = () => {
           cls.name ||
           cls.class_name ||
           safeT("api.defaultClass", `Class ${cls.id || index}`),
-        time: scheduleText, // Keep for backward compatibility
+        time: scheduleText,
         description: cls.description || "",
         attendance: {
           attended: cls.stats?.present || 0,
@@ -142,18 +149,18 @@ export const useStudentData = () => {
           percentage: cls.stats?.percentage || 0,
         },
         bgImage: "/assets/images/class_image.png",
-        schedule: scheduleText, // Use the properly formatted schedule
+        schedule: scheduleText,
         instructor:
           cls.instructor ||
           cls.teacher_name ||
           safeT("api.defaultInstructor", "Instructor not assigned"),
         room: getRoomInfo(cls.room),
-        raw: cls, // Keep raw data for debugging
+        raw: cls,
       };
     });
   });
 
-  // In useStudentData.js - Update the currentRequests computed property:
+  // Current requests computed property
   const currentRequests = computed(() => {
     if (!permissionRequests.value || permissionRequests.value.length === 0) {
       console.log(safeT("api.noRequests", "No requests found"));
@@ -175,7 +182,6 @@ export const useStudentData = () => {
 
       // Status handling - Normalize to lowercase
       let status = request.status || "pending";
-      // Convert to lowercase and handle different status names
       status = status.toLowerCase();
 
       // If API returns "rejected", convert to "denied" for consistency
@@ -190,7 +196,7 @@ export const useStudentData = () => {
           request.category ||
           safeT("permissionReasons.other", "Other"),
         course: className,
-        status: status, // Use normalized status
+        status: status,
         submittedDate: formatDate(request.created_at),
         classDate:
           request.start_date || request.end_date
@@ -277,9 +283,13 @@ export const useStudentData = () => {
     return "poor";
   };
 
-  // In fetchStudentProfile function, update to include photo_url:
+  // Fetch student profile
   const fetchStudentProfile = async () => {
     try {
+      if (!checkAuth()) {
+        throw new Error("Not authenticated");
+      }
+
       isLoading.value = true;
       error.value = null;
       console.log("Fetching student profile...");
@@ -296,13 +306,13 @@ export const useStudentData = () => {
           "Student User",
         email: data.email || "student@example.com",
         phone: data.phone || data.phone_number || "+251900000000",
-        profileImage: data.photo_url || data.profile_picture || data.avatar, // FIX: Use photo_url from API
+        profileImage: data.photo_url || data.profile_picture || data.avatar,
         enrollmentDate: data.enrollment_date || "2023-09-01",
         currentSemester: data.current_semester || "2nd",
         department: data.department || "Theology",
         program: data.program || "Bachelor of Divinity",
         status: data.status || "active",
-        raw: data, // Store raw data to access photo_url directly
+        raw: data,
       };
 
       console.log(
@@ -321,6 +331,10 @@ export const useStudentData = () => {
 
   const fetchClasses = async () => {
     try {
+      if (!checkAuth()) {
+        throw new Error("Not authenticated");
+      }
+
       isLoading.value = true;
       error.value = null;
       console.log("Fetching classes...");
@@ -384,6 +398,10 @@ export const useStudentData = () => {
 
   const fetchAttendance = async () => {
     try {
+      if (!checkAuth()) {
+        throw new Error("Not authenticated");
+      }
+
       isLoading.value = true;
       error.value = null;
       console.log("Fetching attendance summary...");
@@ -412,6 +430,10 @@ export const useStudentData = () => {
 
   const fetchPermissionRequests = async () => {
     try {
+      if (!checkAuth()) {
+        throw new Error("Not authenticated");
+      }
+
       isLoading.value = true;
       error.value = null;
       console.log("Fetching permission requests...");
@@ -454,6 +476,10 @@ export const useStudentData = () => {
 
   const fetchPermissionReasons = async () => {
     try {
+      if (!checkAuth()) {
+        throw new Error("Not authenticated");
+      }
+
       error.value = null;
       console.log("Fetching permission reasons...");
       const data = await apiService.getPermissionReasons();
@@ -489,6 +515,10 @@ export const useStudentData = () => {
 
   const fetchClassOptions = async () => {
     try {
+      if (!checkAuth()) {
+        throw new Error("Not authenticated");
+      }
+
       error.value = null;
       console.log("Fetching class options...");
       const data = await apiService.getClassOptions();
@@ -510,6 +540,10 @@ export const useStudentData = () => {
 
   const submitPermissionRequest = async (requestData) => {
     try {
+      if (!checkAuth()) {
+        throw new Error("Not authenticated");
+      }
+
       isLoading.value = true;
       error.value = null;
       console.log("Submitting permission request:", requestData);
@@ -545,6 +579,10 @@ export const useStudentData = () => {
 
   const cancelPermissionRequest = async (requestId) => {
     try {
+      if (!checkAuth()) {
+        throw new Error("Not authenticated");
+      }
+
       isLoading.value = true;
       error.value = null;
       console.log("Cancelling permission request:", requestId);
@@ -604,6 +642,10 @@ export const useStudentData = () => {
 
   const getPendingCount = async () => {
     try {
+      if (!checkAuth()) {
+        throw new Error("Not authenticated");
+      }
+
       console.log("Fetching pending count...");
       const data = await apiService.getPendingPermissionCount();
       return data.count || 0;
@@ -620,6 +662,11 @@ export const useStudentData = () => {
       isLoading.value = true;
       error.value = null;
       console.log("Initializing student data...");
+
+      // Check authentication first
+      if (!checkAuth()) {
+        throw new Error("Not authenticated. Please login first.");
+      }
 
       // Fetch critical data in parallel
       await Promise.all([

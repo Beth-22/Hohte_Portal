@@ -133,5 +133,22 @@
     "personal_matter": "Personal Matter",
     "custom": "Custom Reason",
     "other": "Other"
+  },
+  "auth": {
+    "unlinkedTitle": "Account Connection Required",
+    "unlinkedMessage": "We need to link your Telegram account with our system. Please close this window and tap the",
+    "shareContact": "'Share Contact'",
+    "unlinkedMessage2": "button in the bot chat.",
+    "closeAndShare": "Close & Share Contact",
+    "connecting": "Connecting to Telegram...",
+    "loginError": "Login failed. Please try again.",
+    "telegramOnly": "Please open this app from Telegram"
+  },
+  "api": {
+    "defaultClass": "Class",
+    "defaultInstructor": "Instructor",
+    "noRequests": "No requests found",
+    "loadingError": "Failed to load data. Please try again.",
+    "networkError": "Network error. Please check your connection."
   }
 }

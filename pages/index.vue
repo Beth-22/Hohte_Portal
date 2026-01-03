@@ -1,111 +1,135 @@
+<!-- pages/index.vue -->
 <template>
   <div class="splash-container">
-    <!-- Loading State -->
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p class="loading-text">{{ t('common.loading') }}</p>
+    <!-- Authentication Unlinked State -->
+    <div v-if="showUnlinkedMessage" class="unlinked-container">
+      <div class="unlinked-content">
+        <div class="unlinked-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="#FFC125"/>
+          </svg>
+        </div>
+        <h2 class="unlinked-title">{{ t('auth.unlinkedTitle') }}</h2>
+        <p class="unlinked-message">
+          {{ t('auth.unlinkedMessage') }}
+          <strong>{{ t('auth.shareContact') }}</strong>
+          {{ t('auth.unlinkedMessage2') }}
+        </p>
+        <button class="unlinked-button" @click="shareContactInstruction">
+          {{ t('auth.closeAndShare') }}
+        </button>
+      </div>
     </div>
 
-    <!-- Splash Content -->
+    <!-- Normal Splash Content -->
     <div v-else class="splash-content">
-      <!-- Header -->
-      <div class="splash-header">
-        <!-- Logo -->
-        <div class="logo-container">
-          <div class="logo-wrapper">
-            <img
-              src="~/assets/images/logo2-modified.png"
-              alt="HOHTE Logo"
-              class="logo-image"
-              @error="handleImageError"
-            />
+      <!-- Loading State -->
+      <div v-if="isLoading || authLoading" class="loading-state">
+        <div class="spinner"></div>
+        <p class="loading-text">{{ t('auth.connecting') }}</p>
+      </div>
+
+      <!-- Original splash content -->
+      <div v-else>
+        <!-- Header -->
+        <div class="splash-header">
+          <!-- Logo -->
+          <div class="logo-container">
+            <div class="logo-wrapper">
+              <img
+                src="~/assets/images/logo2-modified.png"
+                alt="HOHTE Logo"
+                class="logo-image"
+                @error="handleImageError"
+              />
+            </div>
+          </div>
+
+          <div class="app-title-section">
+            <h1 class="app-title-main">HOHTE STUDENT</h1>
+            <h2 class="app-title-sub">PORTAL</h2>
+          </div>
+
+          <p class="version-text">v1.0.0</p>
+        </div>
+
+        <!-- Language Selection -->
+        <div class="language-section">
+          <div class="language-header">
+            <h3 class="language-title">{{ t('splash.selectLanguage') }}</h3>
+            <p class="language-subtitle">{{ t('splash.chooseLanguage') }}</p>
+          </div>
+
+          <div class="language-options">
+            <!-- English -->
+            <button
+              class="language-option"
+              :class="{ selected: selectedLanguage === 'en' }"
+              @click="selectLanguage('en')"
+            >
+              <div class="option-content">
+                <div class="option-text">
+                  <h4>{{ t('splash.english') }}</h4>
+                  <p>English</p>
+                </div>
+              </div>
+              <div v-if="selectedLanguage === 'en'" class="option-check">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="11" fill="#FFC125" />
+                  <path
+                    d="M7 12L10 15L17 9"
+                    stroke="white"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+            </button>
+
+            <!-- Amharic -->
+            <button
+              class="language-option ethiopic"
+              :class="{ selected: selectedLanguage === 'am' }"
+              @click="selectLanguage('am')"
+            >
+              <div class="option-content">
+                <div class="option-text">
+                  <h4>{{ t('splash.amharic') }}</h4>
+                  <p>አማርኛ</p>
+                </div>
+              </div>
+              <div v-if="selectedLanguage === 'am'" class="option-check">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="11" fill="#FFC125" />
+                  <path
+                    d="M7 12L10 15L17 9"
+                    stroke="white"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+            </button>
           </div>
         </div>
 
-        <div class="app-title-section">
-          <h1 class="app-title-main">HOHTE STUDENT</h1>
-          <h2 class="app-title-sub">PORTAL</h2>
-        </div>
-
-        <p class="version-text">v1.0.0</p>
-      </div>
-
-      <!-- Language Selection -->
-      <div class="language-section">
-        <div class="language-header">
-          <h3 class="language-title">{{ t('splash.selectLanguage') }}</h3>
-          <p class="language-subtitle">{{ t('splash.chooseLanguage') }}</p>
-        </div>
-
-        <div class="language-options">
-          <!-- English -->
+        <!-- Continue Button -->
+        <div class="action-section">
           <button
-            class="language-option"
-            :class="{ selected: selectedLanguage === 'en' }"
-            @click="selectLanguage('en')"
+            class="continue-button"
+            @click="continueToApp"
+            :disabled="!selectedLanguage || authLoading"
+            :class="{ enabled: selectedLanguage && !authLoading }"
           >
-            <div class="option-content">
-              <div class="option-text">
-                <h4>{{ t('splash.english') }}</h4>
-                <p>English</p>
-              </div>
-            </div>
-            <div v-if="selectedLanguage === 'en'" class="option-check">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="11" fill="#FFC125" />
-                <path
-                  d="M7 12L10 15L17 9"
-                  stroke="white"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </div>
-          </button>
-
-          <!-- Amharic -->
-          <button
-            class="language-option ethiopic"
-            :class="{ selected: selectedLanguage === 'am' }"
-            @click="selectLanguage('am')"
-          >
-            <div class="option-content">
-              <div class="option-text">
-                <h4>{{ t('splash.amharic') }}</h4>
-                <p>አማርኛ</p>
-              </div>
-            </div>
-            <div v-if="selectedLanguage === 'am'" class="option-check">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="11" fill="#FFC125" />
-                <path
-                  d="M7 12L10 15L17 9"
-                  stroke="white"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </div>
+            {{ t('splash.continue') }}
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M4.16663 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M10 4.16666L15.8333 10L10 15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
           </button>
         </div>
-      </div>
-
-      <!-- Continue Button -->
-      <div class="action-section">
-        <button
-          class="continue-button"
-          @click="continueToApp"
-          :disabled="!selectedLanguage"
-          :class="{ enabled: selectedLanguage }"
-        >
-          {{ t('splash.continue') }}
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M4.16663 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <path d="M10 4.16666L15.8333 10L10 15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
       </div>
     </div>
   </div>
@@ -115,12 +139,16 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "#app";
 import { useLanguage } from "~/composables/useLanguage";
+import { useTelegramAuth } from "~/composables/useTelegramAuth";
+import { useAuth } from "~/composables/useAuth";
 
 const router = useRouter();
-const { t, setLocale, init, locale } = useLanguage(); // Get locale from useLanguage
+const { t, setLocale, init, locale } = useLanguage();
+const { showUnlinkedMessage, shareContactInstruction, authLoading, isTelegram, attemptLogin } = useTelegramAuth();
+const { isAuthenticated, isLoading: authIsLoading } = useAuth();
 
-const loading = ref(true);
-const selectedLanguage = ref(locale.value); // Initialize with current locale
+const selectedLanguage = ref(locale.value);
+const splashLoading = ref(true);
 const imageError = ref(false);
 
 const handleImageError = () => {
@@ -129,38 +157,125 @@ const handleImageError = () => {
 
 onMounted(() => {
   setTimeout(() => {
-    loading.value = false;
+    splashLoading.value = false;
     
     if (process.client) {
-      // 🌟 Initialize language system
       init();
-      
-      // Set selectedLanguage to current locale
       selectedLanguage.value = locale.value;
+      
+      // If already authenticated, go to home
+      if (isAuthenticated.value) {
+        router.push('/home');
+      }
     }
   }, 1500);
 });
 
 const selectLanguage = (lang) => {
   selectedLanguage.value = lang;
-  setLocale(lang); // This now updates GLOBAL state
+  setLocale(lang);
 };
 
-const continueToApp = () => {
-  if (selectedLanguage.value) {
-    router.push("/home");
+const continueToApp = async () => {
+  if (!selectedLanguage.value) return;
+  
+  // If in Telegram environment, try to authenticate
+  if (isTelegram.value) {
+    const result = await attemptLogin();
+    if (result.success) {
+      router.push('/home');
+    } else if (result.unlinked) {
+      // Already showing unlinked message via showUnlinkedMessage ref
+      return;
+    } else {
+      // Other error
+      alert(t('auth.loginError'));
+    }
+  } else {
+    // Not in Telegram, check if already authenticated
+    if (isAuthenticated.value) {
+      router.push('/home');
+    } else {
+      alert(t('auth.telegramOnly'));
+    }
   }
 };
 </script>
+
 <style scoped>
 .splash-container {
-  min-height: 100vh;
+  min-height: var(--tg-viewport-height, 100vh);
   background: #1e3971;
   display: flex;
   flex-direction: column;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   touch-action: manipulation;
+}
+
+.unlinked-container {
+  height: var(--tg-viewport-height, 100vh);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #1e3971;
+}
+
+.unlinked-content {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 40px 30px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  border: 1px solid rgba(255, 193, 37, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.unlinked-icon {
+  margin-bottom: 20px;
+}
+
+.unlinked-title {
+  color: #FFC125;
+  font-size: 24px;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.unlinked-message {
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 25px;
+  opacity: 0.9;
+}
+
+.unlinked-button {
+  background: #FFC125;
+  color: #1e3971;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+  margin-top: 10px;
+}
+
+.unlinked-button:hover {
+  background: #ffd54f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 193, 37, 0.3);
+}
+
+.unlinked-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 193, 37, 0.2);
 }
 
 .loading-state {
@@ -214,6 +329,7 @@ const continueToApp = () => {
   display: flex;
   justify-content: center;
 }
+
 .logo-wrapper {
   position: relative;
   width: 120px;
@@ -227,7 +343,7 @@ const continueToApp = () => {
     0 0 18px rgba(255, 255, 255, 0.5),
     0 0 35px rgba(255, 255, 255, 0.3),
     0 0 50px rgba(255, 255, 255, 0.15),
-    0 0 90px rgba(255, 193, 37, 0.08); /* Subtle yellow hint */
+    0 0 90px rgba(255, 193, 37, 0.08);
   animation: subtleGlow 5s infinite alternate ease-in-out;
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
 }
@@ -258,6 +374,7 @@ const continueToApp = () => {
       0 0 100px rgba(255, 193, 37, 0.1);
   }
 }
+
 .app-title-section {
   margin-top: 8px;
 }
@@ -329,7 +446,6 @@ const continueToApp = () => {
   transition: all 0.2s ease;
   border: 2px solid transparent;
   user-select: none;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .language-option:active {
@@ -394,8 +510,6 @@ const continueToApp = () => {
   box-shadow: 0 4px 20px rgba(255, 193, 37, 0.3);
   text-transform: uppercase;
   letter-spacing: 1px;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .continue-button:disabled {
@@ -406,6 +520,12 @@ const continueToApp = () => {
   box-shadow: none;
 }
 
+.continue-button:not(:disabled):hover {
+  background: #ffd54f;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(255, 193, 37, 0.4);
+}
+
 .continue-button:not(:disabled):active {
   transform: scale(0.98);
   box-shadow: 0 2px 10px rgba(255, 193, 37, 0.2);
@@ -414,5 +534,20 @@ const continueToApp = () => {
 .language-option.ethiopic .option-text h4,
 .language-option.ethiopic .option-text p {
   font-family: "Noto Sans Ethiopic", "Inter", sans-serif;
+}
+
+@media (max-width: 768px) {
+  .unlinked-content {
+    padding: 30px 20px;
+    margin: 0 20px;
+  }
+  
+  .unlinked-title {
+    font-size: 22px;
+  }
+  
+  .unlinked-message {
+    font-size: 15px;
+  }
 }
 </style>

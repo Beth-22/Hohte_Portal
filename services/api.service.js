@@ -1,7 +1,7 @@
 // services/api.service.js
 export class ApiService {
   constructor() {
-    this.baseURL = "https://staging-hohte.batelew.com";
+    this.baseURL = "https://hohte.batelew.com";
     this.token = null;
     
     if (process.client) {

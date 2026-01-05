@@ -1,4 +1,3 @@
-// services/navigation.service.js
 export class NavigationService {
   constructor() {
     this.routes = {

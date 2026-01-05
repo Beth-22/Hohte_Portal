@@ -26,7 +26,6 @@ const { t, locale } = useLanguage()
 const { activeNav, navigateTo } = useNavigation()
 const { pendingRequestsCount } = useStudentData()
 
-// Navigation items - REMOVED "courses" from bottom nav
 const navItems = computed(() => [
   {
     id: 'home',
@@ -149,7 +148,6 @@ const navItems = computed(() => [
   50% { transform: scale(1.1); }
 }
 
-/* Responsive adjustments */
 @media (max-width: 375px) {
   .bottom-nav {
     height: 65px;

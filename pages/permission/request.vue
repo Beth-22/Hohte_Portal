@@ -1,6 +1,5 @@
 <template>
   <div class="permission-request">
-    <!-- Toast Notifications -->
     <div class="toast-container">
       <ToastNotification
         v-for="toast in toasts"
@@ -12,7 +11,6 @@
       />
     </div>
 
-    <!-- Logo at the top -->
     <div class="logo-top">
       <div class="logo-container">
         <img
@@ -68,7 +66,6 @@
         </div>
       </div>
 
-      <!-- Custom reason field - Only shown when "custom" is selected -->
       <div v-if="isCustomReason" class="custom-reason-section">
         <div class="field-header">
           <span class="field-label">{{ t('requestStatus.customReason') }}:</span>
@@ -197,7 +194,6 @@ const errors = ref({
   endDate: ''
 })
 
-// Check if custom reason is selected
 const isCustomReason = computed(() => {
   if (!formData.value.reason) return false
   
@@ -205,7 +201,6 @@ const isCustomReason = computed(() => {
   return selectedReason?.translationKey === 'custom'
 })
 
-// Watch for reason change to clear custom reason field
 watch(() => formData.value.reason, (newReason) => {
   if (!isCustomReason.value) {
     formData.value.customReason = ''
@@ -213,7 +208,6 @@ watch(() => formData.value.reason, (newReason) => {
   }
 })
 
-// Add logo error handling
 const handleLogoError = () => {
   console.error('Logo image failed to load')
 }
@@ -229,7 +223,6 @@ watch(classOptions, (newOptions) => {
   console.log('Class options updated:', newOptions)
 })
 
-// Helper function to clear error
 const clearError = (field) => {
   if (errors.value[field]) {
     errors.value[field] = ''
@@ -239,30 +232,25 @@ const clearError = (field) => {
 const validateForm = () => {
   let isValid = true
   
-  // Clear previous errors
   Object.keys(errors.value).forEach(key => {
     errors.value[key] = ''
   })
 
-  // Validate course
   if (!formData.value.course) {
     errors.value.course = t('requestStatus.errors.selectClass')
     isValid = false
   }
 
-  // Validate reason
   if (!formData.value.reason) {
     errors.value.reason = t('requestStatus.errors.selectReason')
     isValid = false
   }
 
-  // Validate custom reason if custom is selected
   if (isCustomReason.value && !formData.value.customReason.trim()) {
     errors.value.customReason = t('requestStatus.errors.customReasonRequired')
     isValid = false
   }
 
-  // Validate dates
   if (durationType.value === 'specific') {
     if (!formData.value.specificDate) {
       errors.value.specificDate = t('requestStatus.errors.selectDate')
@@ -278,7 +266,6 @@ const validateForm = () => {
       isValid = false
     }
     
-    // Validate date range (end date not before start date)
     if (formData.value.startDate && formData.value.endDate) {
       const start = new Date(formData.value.startDate)
       const end = new Date(formData.value.endDate)
@@ -293,7 +280,6 @@ const validateForm = () => {
 }
 
 const submitForm = async () => {
-  // Validate form
   if (!validateForm()) {
     showError(t('requestStatus.errors.validationFailed'), 3000)
     return
@@ -302,7 +288,6 @@ const submitForm = async () => {
   const selectedCourse = classOptions.value.find(c => c.id === formData.value.course)
   const selectedReason = permissionReasons.value.find(r => r.value === formData.value.reason)
   
-  // Use custom reason if provided, otherwise use the translated reason text
   let reasonText = ''
   if (isCustomReason.value && formData.value.customReason.trim()) {
     reasonText = formData.value.customReason.trim()
@@ -329,10 +314,8 @@ const submitForm = async () => {
     const result = await submitPermissionRequest(requestData)
     
     if (result.success) {
-      // Show success toast
       success(t('requestStatus.submissionSuccess'), 3000)
       
-      // Wait a bit for toast to show, then go back
       setTimeout(() => {
         goBack()
       }, 1500)
@@ -355,7 +338,6 @@ onMounted(async () => {
 
   console.log('Permission request page mounted')
 
-  // Fetch dynamic data with error handling
   try {
     await Promise.all([
       fetchClassOptions(),
@@ -363,13 +345,11 @@ onMounted(async () => {
     ])
     console.log('Data fetched successfully')
     
-    // Add custom option to permission reasons if not already present
     const hasCustomOption = permissionReasons.value.some(reason => 
       reason.translationKey === 'custom' || reason.category?.toLowerCase() === 'custom'
     )
     
     if (!hasCustomOption) {
-      // Add custom option at the end
       permissionReasons.value.push({
         value: 'custom',
         translationKey: 'custom',
@@ -378,12 +358,10 @@ onMounted(async () => {
       })
     }
     
-    // Set default values if available
     if (classOptions.value.length > 0) {
       formData.value.course = classOptions.value[0].id
     }
     if (permissionReasons.value.length > 0) {
-      // Don't set custom as default - set first non-custom reason
       const nonCustomReason = permissionReasons.value.find(r => r.translationKey !== 'custom')
       if (nonCustomReason) {
         formData.value.reason = nonCustomReason.value
@@ -411,7 +389,6 @@ onMounted(async () => {
   flex-direction: column;
 }
 
-/* Logo at the top */
 .logo-top {
   width: 100%;
   display: flex;

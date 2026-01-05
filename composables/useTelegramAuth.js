@@ -1,4 +1,3 @@
-// composables/useTelegramAuth.js
 import { ref, onMounted } from 'vue'
 import { useRouter } from '#app'
 import { useAuth } from './useAuth'
@@ -13,7 +12,7 @@ export const useTelegramAuth = () => {
 
   const attemptLogin = async () => {
     if (!isTelegram.value) {
-      console.log('⚠️ Not in Telegram environment')
+      console.log(' Not in Telegram environment')
       return { success: false, error: 'Not in Telegram' }
     }
     
@@ -34,26 +33,22 @@ export const useTelegramAuth = () => {
   }
 
   onMounted(() => {
-    // Check if already authenticated
     if (checkAuth()) {
-      console.log('✅ Already authenticated')
+      console.log('Already authenticated')
       router.push('/home')
       return
     }
     
-    // Try login immediately if in Telegram
     if (isTelegram.value && initData.value) {
-      console.log('🔐 Auto-attempting Telegram login...')
+      console.log(' Auto-attempting Telegram login...')
       attemptLogin().then(result => {
         if (result.success) {
-          console.log('✅ Auto-login successful')
+          console.log(' Auto-login successful')
           router.push('/home')
         } else if (result.unlinked) {
-          console.log('🔗 User needs to link account')
-          // Stay on splash page, isUnlinked ref will trigger UI change
+          console.log(' User needs to link account')
         } else {
-          console.log('❌ Login failed:', result.error)
-          // Stay on splash page with error
+          console.log(' Login failed:', result.error)
         }
       })
     }

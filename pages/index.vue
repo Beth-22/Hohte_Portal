@@ -39,19 +39,14 @@
       </div>
     </div>
 
-    <!-- Normal Splash Content (only show if NOT unlinked) -->
     <div v-else class="splash-content">
-      <!-- Loading State -->
       <div v-if="isLoading || authLoading" class="loading-state">
         <div class="spinner"></div>
         <p class="loading-text">{{ t('auth.connecting') }}</p>
       </div>
 
-      <!-- Original splash content -->
       <div v-else>
-        <!-- Header -->
         <div class="splash-header">
-          <!-- Logo -->
           <div class="logo-container">
             <div class="logo-wrapper">
               <img
@@ -189,7 +184,6 @@ onMounted(() => {
       init();
       selectedLanguage.value = locale.value;
       
-      // If already authenticated, go to home
       if (isAuthenticated.value) {
         router.push('/home');
       }
@@ -214,24 +208,19 @@ const retryLogin = async () => {
 const continueToApp = async () => {
   if (!selectedLanguage.value) return;
   
-  // If in Telegram environment, try to authenticate
   if (isTelegram.value) {
     const result = await attemptLogin();
     if (result.success) {
       router.push('/home');
     } else if (result.unlinked) {
-      // isUnlinked ref will automatically show the unlinked screen
       return;
     } else {
-      // Other error - will be shown in authError
       return;
     }
   } else {
-    // Not in Telegram, check if already authenticated
     if (isAuthenticated.value) {
       router.push('/home');
     } else {
-      // Show error that app must be opened from Telegram
       alert(t('auth.telegramOnly'));
     }
   }

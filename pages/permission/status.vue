@@ -53,7 +53,6 @@ const filteredRequests = computed(() => {
   const tabStatus = activeTab.value;
   const filtered = permissionRequests.value.filter(
     (request) => {
-      // Normalize status for comparison
       const requestStatus = request.status ? request.status.toLowerCase() : '';
       const normalizedStatus = requestStatus === 'rejected' ? 'denied' : requestStatus;
       return normalizedStatus === tabStatus;
@@ -66,7 +65,6 @@ const filteredRequests = computed(() => {
   return filtered;
 });
 
-// Get the appropriate empty state message based on active tab
 const emptyStateMessage = computed(() => {
   switch (activeTab.value) {
     case 'pending':
@@ -98,7 +96,6 @@ const getStatusText = (status) => {
   const statusLower = status.toLowerCase();
   console.log('Getting status text for:', status, '->', statusLower);
   
-  // Handle "rejected" as "denied" for display
   const normalizedStatus = statusLower === 'rejected' ? 'denied' : statusLower;
   
   switch (normalizedStatus) {
@@ -125,7 +122,6 @@ const handleImageError = (event) => {
   };
   const courseName = event.target.alt;
   event.target.style.display = 'none';
-  // Show emoji fallback
   const parent = event.target.parentElement;
   const emojiSpan = document.createElement('span');
   emojiSpan.textContent = emojis[courseName] || "📝";
@@ -145,13 +141,10 @@ const confirmCancel = async () => {
       const result = await cancelPermissionRequest(requestToCancel);
       
       if (result.success) {
-        // Show success toast
         success(t('requestStatus.cancelledSuccess'), 3000);
       } else {
-        // If the error is "Request not found", it was already cancelled
         if (result.error && result.error.includes('not found')) {
           success(t('requestStatus.cancelledSuccess') + ' (Already processed)', 3000);
-          // Refresh from API to get updated list
           await refreshPermissionRequests();
         } else {
           showError(result.error || t('requestStatus.cancellationFailed'), 4000);
@@ -159,7 +152,6 @@ const confirmCancel = async () => {
       }
     } catch (err) {
       console.error('Cancel error:', err);
-      // If it's a "not found" error, the request was already cancelled
       if (err.message && err.message.includes('not found')) {
         success(t('requestStatus.cancelledSuccess') + ' (Already processed)', 3000);
         await refreshPermissionRequests();
@@ -174,13 +166,10 @@ const confirmCancel = async () => {
   }
 };
 
-// FIXED: Removed the alert and made it navigate directly
 const resubmitRequest = () => {
-  // Simply navigate to the permission request page
   goToPermissionRequest();
 };
 
-// Manual refresh function
 const refreshPermissionRequests = async () => {
   console.log('=== MANUALLY REFRESHING PERMISSION REQUESTS ===');
   try {
@@ -196,7 +185,6 @@ onMounted(async () => {
   console.log('=== STATUS PAGE MOUNTED ===');
   console.log('Initial permissionRequests:', permissionRequests.value);
   
-  // Fetch permission requests on page load
   await refreshPermissionRequests();
   
   if (permissionRequests.value.length > 0) {
@@ -213,7 +201,6 @@ onMounted(async () => {
 
 <template>
   <div class="requests-container">
-    <!-- Toast Notifications -->
     <div class="toast-container">
       <ToastNotification
         v-for="toast in toasts"
@@ -249,7 +236,6 @@ onMounted(async () => {
       </div>
     </header>
 
-    <!-- Debug Section -->
     <div class="debug-section" v-if="permissionRequests.length === 0 && activeTab === 'all'">
       <div class="debug-info">
         <p>Debug: No permission requests loaded ({{ permissionRequests.length }} found)</p>
@@ -446,7 +432,6 @@ onMounted(async () => {
   </div>
 </template>
 
-<!-- Styles remain the same -->
 <style scoped>
 .requests-container {
   min-height: 100vh;
@@ -488,7 +473,7 @@ onMounted(async () => {
 
 .header-content {
   display: grid;
-  grid-template-columns: 40px 1fr 40px; /* Back button, title, empty space */
+  grid-template-columns: 40px 1fr 40px; 
   align-items: center;
   gap: 10px;
 }

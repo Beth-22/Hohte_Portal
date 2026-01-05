@@ -1,4 +1,3 @@
-// services/translation.service.js
 import { ref } from "vue";
 
 export class TranslationService {
@@ -10,7 +9,6 @@ export class TranslationService {
 
   async fetchTranslations(locale) {
     try {
-      // Fetch from API
       const response = await fetch(`${this.baseUrl}/translations/${locale}`);
       if (!response.ok) throw new Error("Failed to fetch translations");
 
@@ -18,7 +16,6 @@ export class TranslationService {
       this.translations.value[locale] = data;
       this.locale.value = locale;
 
-      // Save to localStorage for offline use
       if (process.client) {
         localStorage.setItem(`translations_${locale}`, JSON.stringify(data));
         localStorage.setItem("preferredLanguage", locale);
@@ -28,7 +25,6 @@ export class TranslationService {
     } catch (error) {
       console.error("Error fetching translations:", error);
 
-      // Fallback to localStorage cached translations
       if (process.client) {
         const cached = localStorage.getItem(`translations_${locale}`);
         if (cached) {

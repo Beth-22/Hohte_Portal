@@ -1,4 +1,3 @@
-// composables/useAuth.js
 import { ref, onMounted } from 'vue'
 import { useRouter } from '#app'
 import { apiService } from '~/services/api.service'
@@ -22,7 +21,7 @@ export const useAuth = () => {
       authError.value = null
       isUnlinked.value = false
       
-      console.log('🔐 Attempting Telegram login...')
+      console.log(' Attempting Telegram login...')
       const response = await apiService.telegramLogin(initData)
       console.log('Login response:', response)
       
@@ -30,19 +29,18 @@ export const useAuth = () => {
         apiService.setToken(response.token)
         isAuthenticated.value = true
         isUnlinked.value = false
-        console.log('✅ Login successful')
+        console.log(' Login successful')
         return { success: true, data: response }
       } else {
         throw new Error('No token received from server')
       }
     } catch (error) {
-      console.error('❌ Login error:', error)
+      console.error(' Login error:', error)
       authError.value = error.message
       
-      // Handle 404/401 specifically
       if (error.message.includes('404') || error.message.includes('401')) {
         isUnlinked.value = true
-        console.log('🔗 User needs to link account')
+        console.log(' User needs to link account')
         return { 
           success: false, 
           unlinked: true,

@@ -14,7 +14,6 @@ import { useLanguage } from '~/composables/useLanguage'
 
 const { locale, setLocale } = useLanguage()
 
-// Define props for customization
 const props = defineProps({
   fixed: {
     type: Boolean,
@@ -34,7 +33,7 @@ const props = defineProps({
   },
   position: {
     type: String,
-    default: 'absolute' // 'absolute', 'fixed', or 'relative'
+    default: 'absolute' 
   }
 })
 

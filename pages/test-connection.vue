@@ -1,6 +1,6 @@
 <template>
   <div class="test-page">
-    <h1>✅ API Connection Test</h1>
+    <h1> API Connection Test</h1>
     
     <div class="connection-info">
       <p><strong>Server:</strong> https://staging-hohte.batelew.com</p>
@@ -48,13 +48,13 @@ const testAll = async () => {
       results.value.push({
         endpoint: test.name,
         status: 'success',
-        message: `✅ Success (${data.length || 'data'} received)`
+        message: ` Success (${data.length || 'data'} received)`
       })
     } catch (err) {
       results.value.push({
         endpoint: test.name,
         status: 'error',
-        message: `❌ ${err.message}`
+        message: ` ${err.message}`
       })
     }
   }
@@ -64,7 +64,6 @@ const goToHome = () => {
   router.push('/home')
 }
 
-// Auto-test on page load
 testAll()
 </script>
 

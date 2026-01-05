@@ -4,39 +4,32 @@ import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
 
-// Import the class image directly
 import classImage from '~/assets/images/class_image.png'
 
 const { locale, t, setLocale } = useLanguage()
 const { goToPermissionStatus, goToCourseDetail } = useNavigation()
 const { student, courses, attendance, pendingRequestsCount, initializeData, isLoading, error } = useStudentData()
 
-// Track expanded schedules for each course
 const expandedSchedules = ref({})
 
-// 🌟 SIMPLE TOGGLE - updates GLOBAL state
 const toggleLanguage = () => {
   const newLocale = locale.value === 'en' ? 'am' : 'en'
-  setLocale(newLocale) // This affects ALL pages immediately
+  setLocale(newLocale) 
 }
 
-// Toggle schedule expansion
 const toggleSchedule = (courseId, event) => {
-  event.stopPropagation() // Prevent card click
+  event.stopPropagation() 
   expandedSchedules.value[courseId] = !expandedSchedules.value[courseId]
 }
 
-// Format schedule by day for visual display
 const formatScheduleByDay = (scheduleText) => {
   if (!scheduleText || scheduleText === 'No schedule information' || scheduleText === 'No schedule available') {
     return []
   }
   
-  // Parse schedule text into array of day-time objects
   const scheduleItems = scheduleText.split(',').map(item => {
     const trimmed = item.trim()
     
-    // Extract day abbreviation (Mon, Tue, Wed, etc.)
     let dayAbbr = ''
     let time = ''
     
@@ -62,7 +55,6 @@ const formatScheduleByDay = (scheduleText) => {
       dayAbbr = 'Sun'
       time = trimmed.replace('Sunday', '').trim()
     } else {
-      // Fallback: use first 3 letters
       dayAbbr = trimmed.substring(0, 3)
       time = trimmed.substring(3).trim()
     }
@@ -78,7 +70,6 @@ const formatScheduleByDay = (scheduleText) => {
   return scheduleItems
 }
 
-// Get full day name for expanded view
 const getFullDayName = (scheduleText) => {
   if (scheduleText.includes('Monday')) return 'Monday'
   if (scheduleText.includes('Tuesday')) return 'Tuesday'
@@ -90,46 +81,37 @@ const getFullDayName = (scheduleText) => {
   return scheduleText
 }
 
-// Check if schedule has many items (more than 2 for mobile)
 const hasManySchedules = (scheduleText) => {
   if (!scheduleText || scheduleText === 'No schedule information' || scheduleText === 'No schedule available') return false
   return scheduleText.split(',').length > 2
 }
 
-// Get schedule count
 const getScheduleCount = (scheduleText) => {
   if (!scheduleText || scheduleText === 'No schedule information' || scheduleText === 'No schedule available') return 0
   return scheduleText.split(',').length
 }
 
-// Handle image error
 const handleImageError = (event) => {
   console.error('Image failed to load:', event.target.src);
   
-  // Check if this is the profile image
   if (event.target.classList.contains('profile-image')) {
-    // Use placeholder for profile image
     event.target.src = getPlaceholderProfile();
     console.log('Falling back to placeholder for profile image');
   } else if (event.target.classList.contains('course-bg')) {
-    // This is a course background, use the imported class image
     event.target.src = classImage;
     console.log('Retrying course background image with imported path');
   }
 }
 
-// Get placeholder profile image URL
 const getPlaceholderProfile = () => {
   // Return a base64 encoded SVG as fallback
   return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNTAiIGZpbGw9IiMyQjRCODMiLz48cGF0aCBkPSJNNTAgNTVDNjAuMzU1MyA1NSA2OC44NzUgNDYuNDgwMiA2OC44NzUgMzYuMTI1QzY4Ljg3NSAyNS43Njk4IDYwLjM1NTMgMTcuMjUgNTAgMTcuMjVDMzkuNjQ0NyAxNy4yNSAzMS4xMjUgMjUuNzY5OCAzMS4xMjUgMzYuMTI1QzMxLjEyNSA0Ni40ODAyIDM5LjY0NDcgNTUgNTAgNTVaIiBmaWxsPSIjRkZGMDAwIi8+PHBhdGggZD0iTTUwIDYwQzMyLjg3NSA2MCAxOC43NSA3NC4xMjUgMTguNzUgOTEuMjVWOTJINzIuNVY5MS4yNUM3Mi41IDc0LjEyNSA1OC4zNzUgNjAgNTEuMjUgNjBINTAiIGZpbGw9IiNGRkYwMDAiLz48L3N2Zz4=';
 }
 
-// Get the class image URL - Use imported class_image.png
 const getClassImage = () => {
   return classImage;
 }
 
-// Get student profile image URL - use ERP photo_url if available
 const getStudentProfileImage = () => {
   if (student.value && student.value.profileImage) {
     const profileUrl = student.value.profileImage;
@@ -153,7 +135,7 @@ const getStudentProfileImage = () => {
 
 onMounted(async () => {
   try {
-    console.log('🏠 Home page mounted')
+    console.log(' Home page mounted')
     console.log('Initial student data:', student.value)
     console.log('Initial courses:', courses.value)
     await initializeData()
@@ -164,7 +146,6 @@ onMounted(async () => {
   }
 })
 
-// Watch for courses changes
 watch(courses, (newCourses) => {
   console.log('Courses updated:', newCourses.length)
 }, { immediate: true })
@@ -172,13 +153,11 @@ watch(courses, (newCourses) => {
 
 <template>
   <div class="dashboard-container">
-    <!-- Loading State -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="spinner"></div>
       <p class="loading-text">{{ t('common.loading') }}</p>
     </div>
 
-    <!-- Error State -->
     <div v-else-if="error" class="error-state">
       <div class="error-icon">⚠️</div>
       <h3>Failed to load data</h3>
@@ -186,7 +165,6 @@ watch(courses, (newCourses) => {
       <button class="retry-button" @click="initializeData">Retry</button>
     </div>
 
-    <!-- Normal State -->
     <div v-else>
       <div class="status-bar-padding"></div>
 
@@ -242,7 +220,6 @@ watch(courses, (newCourses) => {
             :class="{ 'expanded': expandedSchedules[course.id] }"
             @click="goToCourseDetail(course.id)"
           >
-            <!-- Use img tag for background with proper src -->
             <img 
               :src="getClassImage()" 
               alt="Course background" 
@@ -273,9 +250,7 @@ watch(courses, (newCourses) => {
                     No schedule available
                   </div>
                   <div v-else class="schedule-display">
-                    <!-- Schedule Pills -->
                     <div class="schedule-pills">
-                      <!-- Show only first 2 schedules when collapsed -->
                       <template v-if="!expandedSchedules[course.id]">
                         <div 
                           v-for="(item, index) in formatScheduleByDay(course.schedule).slice(0, 2)"
@@ -287,7 +262,6 @@ watch(courses, (newCourses) => {
                           <span class="day-time" v-if="item.time">{{ item.time }}</span>
                         </div>
                         
-                        <!-- Show more indicator -->
                         <div 
                           v-if="formatScheduleByDay(course.schedule).length > 2" 
                           class="more-pill"
@@ -297,7 +271,6 @@ watch(courses, (newCourses) => {
                         </div>
                       </template>
                       
-                      <!-- Show ALL schedules when expanded -->
                       <template v-if="expandedSchedules[course.id]">
                         <div 
                           v-for="(item, index) in formatScheduleByDay(course.schedule)"
@@ -311,7 +284,6 @@ watch(courses, (newCourses) => {
                       </template>
                     </div>
                     
-                    <!-- Expanded view with full details -->
                     <div v-if="expandedSchedules[course.id]" class="expanded-details">
                       <div class="expanded-title">Full Schedule:</div>
                       <div class="expanded-items">
@@ -853,7 +825,6 @@ watch(courses, (newCourses) => {
   height: 100px;
 }
 
-/* Mobile optimizations */
 @media (max-width: 768px) {
   .welcome-text {
     padding-left: 100px;
@@ -868,7 +839,7 @@ watch(courses, (newCourses) => {
   }
   
   .course-card.expanded {
-    min-height: auto; /* Allow dynamic height */
+    min-height: auto; 
     height: auto;
   }
 

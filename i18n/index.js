@@ -1,14 +1,11 @@
-// i18n/index.js
 import { createI18n } from "vue-i18n";
 
-// Import JSON files directly
 import enTranslations from "@/locales/en.json";
 import amTranslations from "@/locales/am.json";
 
-// Create i18n instance
 const i18n = createI18n({
   legacy: false,
-  locale: "en", // Default - will be overridden by localStorage
+  locale: "en", 
   fallbackLocale: "en",
   messages: {
     en: enTranslations,
@@ -19,7 +16,6 @@ const i18n = createI18n({
   missingWarn: false,
 });
 
-// Initialize locale from localStorage
 export const initI18n = () => {
   if (process.client) {
     const savedLang = localStorage.getItem("preferredLanguage");

@@ -1,4 +1,3 @@
-// composables/useStudentData.js
 import { ref, computed, watch } from "vue";
 import { useLanguage } from "./useLanguage";
 import { apiService } from "~/services/api.service";
@@ -6,7 +5,6 @@ import { apiService } from "~/services/api.service";
 export const useStudentData = () => {
   const { locale, t } = useLanguage();
 
-  // Reactive state
   const student = ref(null);
   const classes = ref([]);
   const permissionRequests = ref([]);
@@ -16,7 +14,6 @@ export const useStudentData = () => {
   const isLoading = ref(false);
   const error = ref(null);
 
-  // Helper function for safe translation
   const safeT = (key, fallback) => {
     try {
       const translation = t(key);
@@ -26,7 +23,6 @@ export const useStudentData = () => {
     }
   };
 
-  // Check if authenticated before making API calls
   const checkAuth = () => {
     if (!apiService.token) {
       error.value = "Not authenticated. Please login first.";
@@ -35,7 +31,6 @@ export const useStudentData = () => {
     return true;
   };
 
-  // Current classes computed property
   const currentClasses = computed(() => {
     console.log("currentClasses computed - classes.value:", classes.value);
 
@@ -47,7 +42,6 @@ export const useStudentData = () => {
     return classes.value.map((cls, index) => {
       console.log(`Processing class ${index}:`, cls);
 
-      // Format schedule - Helper function
       const formatSchedule = (schedules) => {
         console.log("Formatting schedules:", schedules);
 
@@ -56,7 +50,6 @@ export const useStudentData = () => {
           return "No schedule information";
         }
 
-        // Filter out invalid schedules
         const validSchedules = schedules.filter((schedule) => {
           const day = schedule.day_of_week || schedule.name || "";
           const timeIn = schedule.time_in || "";
@@ -64,7 +57,6 @@ export const useStudentData = () => {
 
           console.log("Schedule item:", { day, timeIn, timeOut });
 
-          // A schedule is valid if it has a day OR a time
           const isValid =
             day.trim() !== "" || timeIn.trim() !== "" || timeOut.trim() !== "";
           console.log("Is valid schedule?", isValid);
@@ -78,7 +70,6 @@ export const useStudentData = () => {
           return "No schedule information";
         }
 
-        // Format time (remove seconds if present)
         const formatTime = (timeString) => {
           if (!timeString) return "";
           if (timeString.includes(":")) {
@@ -90,7 +81,6 @@ export const useStudentData = () => {
           return timeString;
         };
 
-        // Group by day for better display
         const scheduleText = validSchedules
           .map((schedule) => {
             const day = schedule.day_of_week || schedule.name || "";
@@ -121,7 +111,6 @@ export const useStudentData = () => {
         return scheduleText || "No schedule information";
       };
 
-      // Get room info
       const getRoomInfo = (roomData) => {
         if (!roomData || roomData.trim() === "") {
           return "No room information";
@@ -129,7 +118,6 @@ export const useStudentData = () => {
         return roomData;
       };
 
-      // Get schedule text
       const scheduleText = formatSchedule(cls.schedules);
       console.log(`Class ${cls.name || cls.id} schedule:`, scheduleText);
 
@@ -160,7 +148,6 @@ export const useStudentData = () => {
     });
   });
 
-  // Current requests computed property
   const currentRequests = computed(() => {
     if (!permissionRequests.value || permissionRequests.value.length === 0) {
       console.log(safeT("api.noRequests", "No requests found"));
@@ -172,7 +159,6 @@ export const useStudentData = () => {
     return permissionRequests.value.map((request) => {
       console.log("Processing request:", request);
 
-      // Extract class name from scope field
       let className = safeT("course.class", "Class");
       if (request.scope && request.scope.includes("Class: ")) {
         className = request.scope.replace("Class: ", "");
@@ -180,11 +166,9 @@ export const useStudentData = () => {
         className = request.organization_name;
       }
 
-      // Status handling - Normalize to lowercase
       let status = request.status || "pending";
       status = status.toLowerCase();
 
-      // If API returns "rejected", convert to "denied" for consistency
       if (status === "rejected") {
         status = "denied";
       }
@@ -230,17 +214,14 @@ export const useStudentData = () => {
     return pendingCount;
   });
 
-  // Helper function to format dates
   const formatDate = (dateString) => {
     if (!dateString) return null;
     console.log("Formatting date:", dateString);
 
     try {
-      // Handle ISO format (2025-12-29T19:40:53.000000Z)
       const date = new Date(dateString);
 
       if (isNaN(date.getTime())) {
-        // Try simple date format (2025-12-29)
         const parts = dateString.split("-");
         if (parts.length === 3) {
           const year = parseInt(parts[0]);
@@ -276,14 +257,12 @@ export const useStudentData = () => {
     }
   };
 
-  // Helper function to get attendance status
   const getAttendanceStatus = (percentage) => {
     if (percentage >= 80) return "good";
     if (percentage >= 60) return "average";
     return "poor";
   };
 
-  // Fetch student profile
   const fetchStudentProfile = async () => {
     try {
       if (!checkAuth()) {
@@ -343,7 +322,6 @@ export const useStudentData = () => {
       console.log("Classes API response:", data);
       console.log("Total enrolled classes:", data?.length || 0);
 
-      // Process classes with enhanced schedule data
       if (Array.isArray(data)) {
         classes.value = await Promise.all(
           data.map(async (cls) => {
@@ -353,13 +331,11 @@ export const useStudentData = () => {
 
             let enrichedCls = { ...cls };
 
-            // If class has schedules, fetch the schedule details
             if (cls.schedules_count > 0 || cls.schedule_count > 0) {
               try {
                 console.log(`Fetching schedule details for class ${cls.id}...`);
                 const classDetails = await apiService.getClassSchedules(cls.id);
 
-                // Merge the schedule data if available
                 if (classDetails && classDetails.schedules) {
                   enrichedCls.schedules = classDetails.schedules;
                   console.log(
@@ -374,7 +350,7 @@ export const useStudentData = () => {
                   `Could not fetch schedule for class ${cls.id}:`,
                   scheduleError.message
                 );
-                // Keep the original class data without schedules
+                
               }
             }
 
@@ -564,7 +540,6 @@ export const useStudentData = () => {
         JSON.stringify(result, null, 2)
       );
 
-      // Refresh permission requests
       await fetchPermissionRequests();
 
       return { success: true, request: result };
@@ -656,19 +631,16 @@ export const useStudentData = () => {
     }
   };
 
-  // Initialize all data
   const initializeData = async () => {
     try {
       isLoading.value = true;
       error.value = null;
       console.log("Initializing student data...");
 
-      // Check authentication first
       if (!checkAuth()) {
         throw new Error("Not authenticated. Please login first.");
       }
 
-      // Fetch critical data in parallel
       await Promise.all([
         fetchStudentProfile(),
         fetchClasses(),
@@ -676,7 +648,6 @@ export const useStudentData = () => {
         fetchPermissionRequests(),
       ]);
 
-      // Fetch optional data in background
       Promise.all([fetchPermissionReasons(), fetchClassOptions()]).catch(
         (err) => console.error("Background data fetch error:", err)
       );
@@ -698,7 +669,6 @@ export const useStudentData = () => {
   };
 
   return {
-    // State
     student,
     courses: currentClasses,
     permissionRequests: currentRequests,
@@ -709,7 +679,6 @@ export const useStudentData = () => {
     isLoading,
     error,
 
-    // Methods
     fetchStudentProfile,
     fetchClasses,
     fetchAttendance,

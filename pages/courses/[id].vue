@@ -1,6 +1,5 @@
 <template>
   <div class="course-detail-page">
-    <!-- Back Button and Page Title -->
     <div class="top-bar">
       <button class="back-button" @click="goBack" @touchstart="handleTouch">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -11,12 +10,10 @@
       <div class="page-title">{{ course.name || t('course.classDetails') }}</div>
     </div>
 
-    <!-- Loading State -->
     <div v-if="isLoading" class="loading-state">
       <div class="spinner"></div>
 <p>{{ t('common.loading') }}</p>    </div>
 
-    <!-- Error State -->
     <div v-else-if="error" class="error-state">
       <div class="error-icon">⚠️</div>
       <h3>{{ t('course.courseNotFound') }}</h3>
@@ -26,9 +23,7 @@
       </button>
     </div>
 
-    <!-- Normal Course Content -->
     <div v-else>
-      <!-- Course Banner -->
       <div class="course-banner" :style="{ backgroundImage: `url('${getClassImage()}')` }">
         <div class="banner-overlay"></div>
         <div class="banner-content">
@@ -53,7 +48,6 @@
         </div>
       </div>
 
-      <!-- Main Content -->
       <div class="main-content">
         <!-- Course Description - Only show if description exists -->
         <div class="content-card" v-if="course.description && course.description.trim() !== ''">
@@ -117,7 +111,6 @@
           </div>
         </div>
 
-        <!-- Request Permission Button -->
         <button class="permission-button" @click="goToPermissionRequest" @touchstart="handleTouch">
           {{ t('course.requestPermission') }}
         </button>
@@ -156,7 +149,6 @@ const course = ref({
 const isLoading = ref(true)
 const error = ref(null)
 
-// Get the class image URL - using the same approach as home page
 const getClassImage = () => {
   return new URL('~/assets/images/class_image.png', import.meta.url).href
 }
@@ -170,13 +162,11 @@ const handleTouch = (event) => {
   }, 150)
 }
 
-// Helper function to format schedule from API response
 const formatSchedule = (schedules) => {
   if (!schedules || schedules.length === 0) {
     return 'No schedule information'
   }
   
-  // Filter out invalid schedules
   const validSchedules = schedules.filter(schedule => {
     const day = schedule.day_of_week || schedule.name || ''
     const timeIn = schedule.time_in || ''
@@ -188,13 +178,11 @@ const formatSchedule = (schedules) => {
     return 'No schedule information'
   }
   
-  // Format time (remove seconds if present)
   const formatTime = (timeString) => {
     if (!timeString) return ''
-    return timeString.substring(0, 5) // Get HH:MM format
+    return timeString.substring(0, 5) 
   }
   
-  // Group by day for better display
   const scheduleText = validSchedules.map(schedule => {
     const day = schedule.day_of_week || schedule.name || ''
     const timeIn = formatTime(schedule.time_in)
@@ -213,7 +201,6 @@ const formatSchedule = (schedules) => {
   return scheduleText
 }
 
-// Helper function to get room information
 const getRoomInfo = (roomData) => {
   if (!roomData || roomData.trim() === '') {
     return 'No room information'
@@ -229,24 +216,21 @@ onMounted(async () => {
     isLoading.value = true
     error.value = null
     
-    // First try to find in existing courses
     const foundCourse = courses.value.find(c => c.id === courseId)
     
     if (foundCourse) {
       console.log('Found course in cache:', foundCourse)
       course.value = {
         ...foundCourse,
-        bgImage: getClassImage(), // Override with our placeholder image
-        room: getRoomInfo(foundCourse.room) // Clean room data
+        bgImage: getClassImage(), 
+        room: getRoomInfo(foundCourse.room) 
       }
     } else {
-      // If not found, fetch directly from API
       const { apiService } = await import('~/services/api.service')
       const apiResponse = await apiService.getClassDetails(courseId)
       
       console.log('API Response:', apiResponse)
       
-      // Transform the API data to match your component structure
       const schedules = apiResponse.schedules || []
       const stats = apiResponse.stats || {}
       
@@ -256,7 +240,7 @@ onMounted(async () => {
         description: apiResponse.description || '',
         schedule: formatSchedule(schedules),
         room: getRoomInfo(apiResponse.room),
-        bgImage: getClassImage(), // Use our placeholder image
+        bgImage: getClassImage(), 
         attendance: {
           percentage: stats.percentage || 0,
           attended: stats.present || 0,
@@ -271,14 +255,13 @@ onMounted(async () => {
     console.error('Error loading course details:', err)
     error.value = err.message || 'Failed to load course details'
     
-    // Fallback to basic course data
     course.value = {
       id: route.params.id,
       name: 'Course Details',
       description: '',
       schedule: 'No schedule information',
       room: 'No room information',
-      bgImage: getClassImage(), // Use our placeholder image
+      bgImage: getClassImage(),
       attendance: {
         percentage: 0,
         attended: 0,
@@ -291,7 +274,6 @@ onMounted(async () => {
   }
 })
 
-// Watch for courses updates (in case they load after component mounts)
 watch(courses, (newCourses) => {
   const courseId = route.params.id
   if (newCourses.length > 0 && !course.value.id && courseId) {
@@ -299,8 +281,8 @@ watch(courses, (newCourses) => {
     if (foundCourse) {
       course.value = {
         ...foundCourse,
-        bgImage: getClassImage(), // Override with our placeholder image
-        room: getRoomInfo(foundCourse.room) // Clean room data
+        bgImage: getClassImage(), 
+        room: getRoomInfo(foundCourse.room)
       }
       error.value = null
     }

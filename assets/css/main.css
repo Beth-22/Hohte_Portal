@@ -1,4 +1,3 @@
-/* assets/css/main.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap');
 
 * {
@@ -19,8 +18,8 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #1E3971; /* HOHTE blue background */
-  color: #fff; /* White text for HOHTE theme */
+  background: #1E3971; 
+  color: #fff; 
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
@@ -28,12 +27,10 @@ body {
   transition: background-color 0.3s ease;
 }
 
-/* Telegram Mini App specific */
 body {
   overscroll-behavior: none;
 }
 
-/* Language-specific text rendering */
 .amharic-text {
   font-family: 'Noto Sans Ethiopic', 'Inter', sans-serif !important;
   letter-spacing: 0.01em;
@@ -58,7 +55,6 @@ body {
   font-family: 'Noto Sans Ethiopic', 'Inter', sans-serif;
 }
 
-/* Container styles */
 .container {
   max-width: 100%;
   margin: 0 auto;
@@ -68,10 +64,9 @@ body {
   flex-direction: column;
 }
 
-/* Button styles */
 .btn {
-  background: #FFC125; /* HOHTE yellow */
-  color: #1E3971; /* HOHTE blue text */
+  background: #FFC125; 
+  color: #1E3971; 
   border: none;
   border-radius: 12px;
   padding: 16px 24px;
@@ -100,20 +95,18 @@ body {
 
 .btn-outline {
   background: transparent;
-  border: 2px solid #FFC125; /* HOHTE yellow */
-  color: #FFC125; /* HOHTE yellow */
+  border: 2px solid #FFC125; 
+  color: #FFC125; 
 }
 
-/* Card styles */
 .card {
-  background: #2b4b8f; /* Darker blue for cards */
+  background: #2b4b8f; 
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   color: #fff;
 }
 
-/* Custom scrollbar for web */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -131,12 +124,10 @@ body {
   background: #ffd54f;
 }
 
-/* Remove focus outlines for mobile */
 :focus {
   outline: none;
 }
 
-/* Loading spinner */
 .spinner {
   width: 40px;
   height: 40px;
@@ -150,13 +141,11 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Pulsing animation */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
 
-/* Safe area for notch phones */
 .safe-area-top {
   padding-top: env(safe-area-inset-top);
 }
@@ -165,13 +154,11 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Prevent text selection */
 .no-select {
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* Smooth transitions */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
@@ -192,7 +179,6 @@ body {
   opacity: 0;
 }
 
-/* HOHTE specific theme overrides */
 :root {
   --hohte-primary: #1E3971;
   --hohte-secondary: #FFC125;
@@ -200,7 +186,6 @@ body {
   --hohte-text-light: #a0b3d9;
 }
 
-/* Responsive utilities */
 @media (max-width: 768px) {
   .container {
     padding: 15px;
@@ -216,7 +201,6 @@ body {
   }
 }
 
-/* For very small screens */
 @media (max-width: 375px) {
   .container {
     padding: 12px;
@@ -233,7 +217,6 @@ body {
   }
 }
 
-/* Utility classes */
 .text-center {
   text-align: center;
 }
@@ -293,7 +276,6 @@ body {
 .w-full { width: 100%; }
 .h-full { height: 100%; }
 
-/* HOHTE specific components */
 .hohte-bg {
   background: linear-gradient(135deg, #1e3971 0%, #0d1f40 100%);
 }

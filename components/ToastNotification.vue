@@ -8,7 +8,7 @@ const props = defineProps({
   },
   type: {
     type: String,
-    default: 'success', // 'success', 'error', 'info'
+    default: 'success', 
     validator: (value) => ['success', 'error', 'info'].includes(value)
   },
   duration: {
@@ -21,9 +21,9 @@ const emit = defineEmits(['close'])
 const isVisible = ref(true)
 const progress = ref(100)
 
-// Auto-dismiss after duration
+
 onMounted(() => {
-  const interval = 50 // Update every 50ms
+  const interval = 50 
   const steps = props.duration / interval
   const decrement = 100 / steps
   
@@ -72,13 +72,13 @@ const getTypeLabel = () => {
 const getBorderColor = () => {
   switch (props.type) {
     case 'success':
-      return '#10b981' // emerald-500
+      return '#10b981' 
     case 'error':
-      return '#ef4444' // red-500
+      return '#ef4444' 
     case 'info':
-      return '#3b82f6' // blue-500
+      return '#3b82f6' 
     default:
-      return '#6b7280' // gray-500
+      return '#6b7280' 
   }
 }
 

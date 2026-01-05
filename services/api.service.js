@@ -1,4 +1,3 @@
-// services/api.service.js
 export class ApiService {
   constructor() {
     this.baseURL = "https://hohte.batelew.com";
@@ -8,7 +7,7 @@ export class ApiService {
       this.token = localStorage.getItem('auth_token');
     }
 
-    console.log("🔑 API Service Initialized");
+    console.log(" API Service Initialized");
     console.log("Server:", this.baseURL);
     console.log("Token loaded:", !!this.token);
   }
@@ -18,7 +17,7 @@ export class ApiService {
     if (process.client) {
       localStorage.setItem('auth_token', token);
     }
-    console.log("✅ Token set");
+    console.log(" Token set");
   }
 
   clearToken() {
@@ -26,7 +25,7 @@ export class ApiService {
     if (process.client) {
       localStorage.removeItem('auth_token');
     }
-    console.log("✅ Token cleared");
+    console.log(" Token cleared");
   }
 
   async request(endpoint, options = {}) {
@@ -47,19 +46,17 @@ export class ApiService {
       headers,
     };
 
-    console.log(`🌐 API ${config.method || "GET"} ${url}`);
+    console.log(` API ${config.method || "GET"} ${url}`);
 
     try {
       const response = await fetch(url, config);
 
-      console.log(`📊 Response: ${response.status} ${response.statusText}`);
+      console.log(` Response: ${response.status} ${response.statusText}`);
 
-      // Check for 401/404 specifically for auth
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error Response:", errorText);
 
-        // Special handling for authentication endpoints
         if (endpoint.includes('/auth/telegram/login')) {
           if (response.status === 404 || response.status === 401) {
             throw new Error(`HTTP ${response.status}: User not linked. Please share contact in Telegram bot.`);
@@ -79,10 +76,10 @@ export class ApiService {
       }
 
       const data = await response.json();
-      console.log("✅ API Success");
+      console.log(" API Success");
       return data;
     } catch (error) {
-      console.error("❌ API Request failed:", error);
+      console.error(" API Request failed:", error);
       throw error;
     }
   }

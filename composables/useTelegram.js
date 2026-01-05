@@ -1,4 +1,3 @@
-// composables/useTelegram.js
 import { ref, onMounted } from "vue";
 
 export const useTelegram = () => {
@@ -16,16 +15,13 @@ export const useTelegram = () => {
       initData.value = webApp.value.initData;
       themeParams.value = webApp.value.themeParams;
 
-      // Initialize the WebApp
       webApp.value.ready();
 
-      // Expand the app to full height
       webApp.value.expand();
 
-      // Set theme colors
       setThemeColors();
 
-      console.log("✅ Telegram WebApp initialized");
+      console.log("Telegram WebApp initialized");
       console.log("User ID:", userId.value);
       console.log("Theme params:", themeParams.value);
     }

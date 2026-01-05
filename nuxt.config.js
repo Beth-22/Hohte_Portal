@@ -1,9 +1,9 @@
-// nuxt.config.js
+
 export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ["~/assets/css/main.css"],
 
-  // Add plugins
+
   plugins: ["~/plugins/language.client.js"],
 
   app: {
@@ -17,7 +17,7 @@ export default defineNuxtConfig({
         },
         { charset: "utf-8" },
       ],
-      // Add Telegram WebApp script
+      
       script: [
         {
           src: "https://telegram.org/js/telegram-web-app.js",
@@ -26,12 +26,12 @@ export default defineNuxtConfig({
     },
   },
 
-  // Route rules for client-side rendering
+  
   routeRules: {
     "/home/**": { ssr: false },
     "/**": { ssr: false },
   },
 
-  // Enable components auto-import
+  
   components: true,
 });

@@ -1,4 +1,3 @@
-// composables/useToast.js
 import { ref } from "vue";
 
 export const useToast = () => {
@@ -16,7 +15,6 @@ export const useToast = () => {
 
     toasts.value.push(toast);
 
-    // Auto-remove after duration
     setTimeout(() => {
       removeToast(id);
     }, duration);

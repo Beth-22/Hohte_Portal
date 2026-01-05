@@ -1,4 +1,3 @@
-// composables/useNavigation.js
 import { ref, watch } from "vue";
 import { useRoute } from "#app";
 
@@ -29,7 +28,6 @@ export const useNavigation = () => {
     }
   };
 
-  // Watch for route changes
   watch(
     () => route?.path,
     (newPath, oldPath) => {
@@ -44,11 +42,9 @@ export const useNavigation = () => {
 
     isLoading.value = true;
 
-    // Use Nuxt navigation
     const router = useRouter();
     router.push(path);
 
-    // Reset loading after navigation
     setTimeout(() => {
       isLoading.value = false;
     }, 300);
@@ -59,7 +55,6 @@ export const useNavigation = () => {
     router.back();
   };
 
-  // Specific navigation functions
   const goToHome = () => navigateTo("/home");
   const goToCourses = () => navigateTo("/courses");
   const goToCourseDetail = (courseId) => navigateTo(`/courses/${courseId}`);

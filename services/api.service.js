@@ -1,38 +1,37 @@
 // services/api.service.js
-import { useSchool } from '~/composables/useSchool'
-
 export class ApiService {
   constructor() {
-    this.baseURL = null
     this.token = null
-    this.school = null
     
     if (process.client) {
       this.token = localStorage.getItem('auth_token')
-      
-      // Initialize school from localStorage
-      const savedSchool = localStorage.getItem('selected_school')
-      if (savedSchool) {
-        this.setSchool(savedSchool)
-      }
     }
 
     console.log(" API Service Initialized")
     console.log("Token loaded:", !!this.token)
   }
 
-  setSchool(schoolId) {
-    // Import dynamically to avoid circular dependency
-    const { SCHOOLS } = require('~/config/schools')
-    
-    if (SCHOOLS[schoolId]) {
-      this.school = schoolId
-      this.baseURL = SCHOOLS[schoolId].apiBaseURL
-      console.log(` School set to: ${schoolId}, API URL: ${this.baseURL}`)
-      return true
+  // Helper method to get the current baseURL based on school
+  getBaseURL() {
+    if (process.client) {
+      // Always check localStorage for the current school
+      const savedSchool = localStorage.getItem('selected_school')
+      
+      // Import SCHOOLS dynamically to avoid circular dependency
+      const { SCHOOLS } = require('~/config/schools')
+      
+      if (savedSchool && SCHOOLS[savedSchool]) {
+        console.log(`Using API URL for school: ${savedSchool} -> ${SCHOOLS[savedSchool].apiBaseURL}`)
+        return SCHOOLS[savedSchool].apiBaseURL
+      }
+      
+      // Default to hohte
+      console.log('No school found, defaulting to hohte API URL')
+      return SCHOOLS.hohte.apiBaseURL
     }
-    console.error(` Invalid school ID: ${schoolId}`)
-    return false
+    
+    // Fallback for SSR
+    return 'https://hohte.batelew.com'
   }
 
   setToken(token) {
@@ -52,18 +51,9 @@ export class ApiService {
   }
 
   async request(endpoint, options = {}) {
-    // Ensure baseURL is set
-    if (!this.baseURL && process.client) {
-      const savedSchool = localStorage.getItem('selected_school')
-      if (savedSchool) {
-        this.setSchool(savedSchool)
-      } else {
-        // Default to hohte
-        this.setSchool('hohte')
-      }
-    }
-
-    const url = `${this.baseURL}${endpoint}`
+    // Get the current baseURL based on school
+    const baseURL = this.getBaseURL()
+    const url = `${baseURL}${endpoint}`
 
     const headers = {
       Accept: "application/json",

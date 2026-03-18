@@ -14,38 +14,68 @@ export const useSchool = () => {
   const initializeSchool = () => {
     if (process.client) {
       try {
-        // 1️⃣ ALWAYS check URL parameter FIRST (this comes from the bot)
+        // 🔍 DEBUG: Log the entire route query
+        console.log('🔍 Full route query:', route.query)
+        console.log('🔍 School param specifically:', route.query.school)
+        
+        // 1️⃣ ALWAYS check URL parameter FIRST
         const urlSchool = route.query.school
         
-        if (urlSchool && VALID_SCHOOLS.includes(urlSchool)) {
-          currentSchoolId.value = urlSchool
-          schoolConfig.value = SCHOOLS[urlSchool]
-          // Save to localStorage as backup ONLY AFTER setting from URL
-          localStorage.setItem('selected_school', urlSchool)
-          apiService.setSchool(urlSchool)
-          console.log(`✅ School from BOT: ${urlSchool}`)
+        if (urlSchool) {
+          console.log(`📌 Found URL school parameter: "${urlSchool}"`)
+          
+          if (VALID_SCHOOLS.includes(urlSchool)) {
+            currentSchoolId.value = urlSchool
+            schoolConfig.value = SCHOOLS[urlSchool]
+            localStorage.setItem('selected_school', urlSchool)
+            apiService.setSchool(urlSchool)
+            console.log(`✅ School set from URL: ${urlSchool}, logo: ${schoolConfig.value.logoPath}`)
+          } else {
+            console.warn(`⚠️ Invalid school in URL: "${urlSchool}", falling back`)
+            // Fall through to next options
+            const savedSchool = localStorage.getItem('selected_school')
+            if (savedSchool && VALID_SCHOOLS.includes(savedSchool)) {
+              currentSchoolId.value = savedSchool
+              schoolConfig.value = SCHOOLS[savedSchool]
+              apiService.setSchool(savedSchool)
+              console.log(`📁 Fallback to localStorage: ${savedSchool}`)
+            } else {
+              currentSchoolId.value = DEFAULT_SCHOOL
+              schoolConfig.value = SCHOOLS[DEFAULT_SCHOOL]
+              localStorage.setItem('selected_school', DEFAULT_SCHOOL)
+              apiService.setSchool(DEFAULT_SCHOOL)
+              console.log(`⚠️ Default to: ${DEFAULT_SCHOOL}`)
+            }
+          }
         } else {
-          // 2️⃣ Only use localStorage if NO URL parameter (direct browser access)
+          console.log('📌 No school parameter in URL')
+          // No URL parameter, use localStorage or default
           const savedSchool = localStorage.getItem('selected_school')
           if (savedSchool && VALID_SCHOOLS.includes(savedSchool)) {
             currentSchoolId.value = savedSchool
             schoolConfig.value = SCHOOLS[savedSchool]
             apiService.setSchool(savedSchool)
-            console.log(`📁 School from localStorage: ${savedSchool}`)
+            console.log(`📁 Using localStorage: ${savedSchool}`)
           } else {
-            // 3️⃣ Default to hohte
             currentSchoolId.value = DEFAULT_SCHOOL
             schoolConfig.value = SCHOOLS[DEFAULT_SCHOOL]
             localStorage.setItem('selected_school', DEFAULT_SCHOOL)
             apiService.setSchool(DEFAULT_SCHOOL)
-            console.log(`⚠️ Default school: ${DEFAULT_SCHOOL}`)
+            console.log(`⚠️ Default to: ${DEFAULT_SCHOOL}`)
           }
         }
+        
+        // 🔍 DEBUG: Final school config
+        console.log('🏫 Final school config:', {
+          id: currentSchoolId.value,
+          name: schoolConfig.value?.name,
+          logo: schoolConfig.value?.logoPath
+        })
         
         isInitialized.value = true
         schoolError.value = null
       } catch (error) {
-        console.error('Error initializing school:', error)
+        console.error('❌ Error initializing school:', error)
         schoolError.value = 'Failed to initialize school configuration'
         currentSchoolId.value = DEFAULT_SCHOOL
         schoolConfig.value = SCHOOLS[DEFAULT_SCHOOL]
@@ -74,7 +104,11 @@ export const useSchool = () => {
   }
 
   const getSchoolLogo = () => {
-    if (!schoolConfig.value) return '/assets/images/logo2-modified.png'
+    if (!schoolConfig.value) {
+      console.warn('No school config, using default logo')
+      return '/assets/images/logo2-modified.png'
+    }
+    console.log('Getting logo for school:', schoolConfig.value.id, schoolConfig.value.logoPath)
     return schoolConfig.value.logoPath
   }
 

@@ -1,5 +1,5 @@
 // composables/useSchool.js
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from '#app'
 import { SCHOOLS, DEFAULT_SCHOOL, VALID_SCHOOLS } from '~/config/schools'
 
@@ -13,23 +13,24 @@ export const useSchool = () => {
   const initializeSchool = () => {
     if (process.client) {
       try {
-        // Check URL parameter first
+        // ALWAYS check URL parameter FIRST - this is the source of truth
         const urlSchool = route.query.school
         
         if (urlSchool && VALID_SCHOOLS.includes(urlSchool)) {
           currentSchoolId.value = urlSchool
           schoolConfig.value = SCHOOLS[urlSchool]
+          // Save to localStorage ONLY AFTER setting from URL
           localStorage.setItem('selected_school', urlSchool)
           console.log(`School initialized from URL: ${urlSchool}`)
         } else {
-          // Fallback to localStorage
+          // Only fallback to localStorage if NO URL parameter
           const savedSchool = localStorage.getItem('selected_school')
           if (savedSchool && VALID_SCHOOLS.includes(savedSchool)) {
             currentSchoolId.value = savedSchool
             schoolConfig.value = SCHOOLS[savedSchool]
             console.log(`School initialized from localStorage: ${savedSchool}`)
           } else {
-            // Default to hohte
+            // Default to hohte only if nothing else works
             currentSchoolId.value = DEFAULT_SCHOOL
             schoolConfig.value = SCHOOLS[DEFAULT_SCHOOL]
             localStorage.setItem('selected_school', DEFAULT_SCHOOL)
@@ -106,6 +107,21 @@ export const useSchool = () => {
       return true // Fail open for now
     }
   }
+
+  // Watch for route changes to detect school parameter changes
+  watch(() => route.query.school, (newSchool) => {
+    if (process.client && newSchool && VALID_SCHOOLS.includes(newSchool)) {
+      if (currentSchoolId.value !== newSchool) {
+        console.log(`School parameter changed to: ${newSchool}`)
+        currentSchoolId.value = newSchool
+        schoolConfig.value = SCHOOLS[newSchool]
+        localStorage.setItem('selected_school', newSchool)
+        
+        // Force a page reload to ensure all API calls use the new school
+        window.location.reload()
+      }
+    }
+  })
 
   onMounted(() => {
     if (!isInitialized.value) {

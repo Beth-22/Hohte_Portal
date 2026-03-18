@@ -1,4 +1,3 @@
-
 <template>
   <NuxtLayout>
     <NuxtPage />
@@ -8,12 +7,22 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useTelegram } from '~/composables/useTelegram'
+import { useSchool } from '~/composables/useSchool'
 
 const { isTelegram } = useTelegram()
+const { initializeSchool, isInitialized, schoolError } = useSchool()
 
 onMounted(() => {
+  // Initialize school configuration
+  initializeSchool()
+  
   if (isTelegram.value) {
     document.documentElement.style.setProperty('--tg-viewport-height', window.innerHeight + 'px')
+  }
+  
+  // Handle invalid school parameter
+  if (schoolError.value) {
+    console.error('School initialization error:', schoolError.value)
   }
 })
 </script>

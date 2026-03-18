@@ -14,8 +14,8 @@
     <div class="logo-top">
       <div class="logo-container">
         <img
-          src="~/assets/images/logo2-modified.png"
-          alt="HOHTE Logo"
+          :src="getSchoolLogo()"
+          :alt="getSchoolName() + ' Logo'"
           class="logo-image-top"
           @error="handleLogoError"
         />
@@ -159,6 +159,7 @@ import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
 import { useToast } from '~/composables/useToast'
+import { useSchool } from '~/composables/useSchool'
 import ToastNotification from '~/components/ToastNotification.vue'
 
 const { locale, t, setLocale } = useLanguage()
@@ -171,6 +172,7 @@ const {
   fetchPermissionReasons,
   isLoading 
 } = useStudentData()
+const { getSchoolLogo, getSchoolName } = useSchool()
 
 const { toasts, success, error: showError, removeToast } = useToast()
 
@@ -210,6 +212,11 @@ watch(() => formData.value.reason, (newReason) => {
 
 const handleLogoError = () => {
   console.error('Logo image failed to load')
+  // Fallback to default logo
+  const img = document.querySelector('.logo-image-top')
+  if (img) {
+    img.src = '/assets/images/logo2-modified.png'
+  }
 }
 
 watch(permissionReasons, (newReasons) => {

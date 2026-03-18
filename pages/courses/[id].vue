@@ -12,7 +12,8 @@
 
     <div v-if="isLoading" class="loading-state">
       <div class="spinner"></div>
-<p>{{ t('common.loading') }}</p>    </div>
+      <p>{{ t('common.loading') }}</p>
+    </div>
 
     <div v-else-if="error" class="error-state">
       <div class="error-icon">⚠️</div>

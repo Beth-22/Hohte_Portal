@@ -1,36 +1,69 @@
+// services/api.service.js
+import { useSchool } from '~/composables/useSchool'
 
 export class ApiService {
   constructor() {
-    this.baseURL = "https://hohte.batelew.com";
-    this.token = null;
+    this.baseURL = null
+    this.token = null
+    this.school = null
     
     if (process.client) {
-      this.token = localStorage.getItem('auth_token');
+      this.token = localStorage.getItem('auth_token')
+      
+      // Initialize school from localStorage
+      const savedSchool = localStorage.getItem('selected_school')
+      if (savedSchool) {
+        this.setSchool(savedSchool)
+      }
     }
 
-    console.log(" API Service Initialized");
-    console.log("Server:", this.baseURL);
-    console.log("Token loaded:", !!this.token);
+    console.log(" API Service Initialized")
+    console.log("Token loaded:", !!this.token)
+  }
+
+  setSchool(schoolId) {
+    // Import dynamically to avoid circular dependency
+    const { SCHOOLS } = require('~/config/schools')
+    
+    if (SCHOOLS[schoolId]) {
+      this.school = schoolId
+      this.baseURL = SCHOOLS[schoolId].apiBaseURL
+      console.log(` School set to: ${schoolId}, API URL: ${this.baseURL}`)
+      return true
+    }
+    console.error(` Invalid school ID: ${schoolId}`)
+    return false
   }
 
   setToken(token) {
-    this.token = token;
+    this.token = token
     if (process.client) {
-      localStorage.setItem('auth_token', token);
+      localStorage.setItem('auth_token', token)
     }
-    console.log(" Token set");
+    console.log(" Token set")
   }
 
   clearToken() {
-    this.token = null;
+    this.token = null
     if (process.client) {
-      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_token')
     }
-    console.log(" Token cleared");
+    console.log(" Token cleared")
   }
 
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
+    // Ensure baseURL is set
+    if (!this.baseURL && process.client) {
+      const savedSchool = localStorage.getItem('selected_school')
+      if (savedSchool) {
+        this.setSchool(savedSchool)
+      } else {
+        // Default to hohte
+        this.setSchool('hohte')
+      }
+    }
+
+    const url = `${this.baseURL}${endpoint}`
 
     const headers = {
       Accept: "application/json",

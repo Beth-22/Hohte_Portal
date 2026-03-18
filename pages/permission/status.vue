@@ -4,6 +4,7 @@ import { useLanguage } from "~/composables/useLanguage";
 import { useNavigation } from "~/composables/useNavigation";
 import { useStudentData } from "~/composables/useStudentData";
 import { useToast } from '~/composables/useToast'
+import { useSchool } from '~/composables/useSchool'
 import ToastNotification from '~/components/ToastNotification.vue'
 
 const { locale, t, setLocale } = useLanguage();
@@ -14,6 +15,7 @@ const {
   pendingRequestsCount, 
   fetchPermissionRequests 
 } = useStudentData();
+const { getSchoolLogo, getSchoolName } = useSchool();
 
 const { toasts, success, error: showError, removeToast } = useToast()
 
@@ -129,6 +131,12 @@ const handleImageError = (event) => {
   parent.appendChild(emojiSpan);
 };
 
+const handleLogoError = (event) => {
+  console.error('Logo failed to load:', event.target.src);
+  // Fallback to default logo
+  event.target.src = '/assets/images/logo2-modified.png';
+};
+
 const cancelRequest = (id) => {
   requestToCancel = id;
   showCancelModal.value = true;
@@ -215,9 +223,10 @@ onMounted(async () => {
     <header class="requests-header">
       <div class="logo-center">
         <img
-          src="~/assets/images/logo2-modified.png"
-          alt="HOHTE Logo"
+          :src="getSchoolLogo()"
+          :alt="getSchoolName() + ' Logo'"
           class="logo-image"
+          @error="handleLogoError"
         />
       </div>
 

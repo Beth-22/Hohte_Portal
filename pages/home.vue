@@ -3,12 +3,14 @@ import { onMounted, ref, watch } from 'vue'
 import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
+import { useSchool } from '~/composables/useSchool'
 
 import classImage from '~/assets/images/class_image.png'
 
 const { locale, t, setLocale } = useLanguage()
 const { goToPermissionStatus, goToCourseDetail } = useNavigation()
 const { student, courses, attendance, pendingRequestsCount, initializeData, isLoading, error } = useStudentData()
+const { getSchoolLogo, getSchoolName, currentSchoolId } = useSchool()
 
 const expandedSchedules = ref({})
 
@@ -100,6 +102,10 @@ const handleImageError = (event) => {
   } else if (event.target.classList.contains('course-bg')) {
     event.target.src = classImage;
     console.log('Retrying course background image with imported path');
+  } else if (event.target.classList.contains('logo-image')) {
+    // Fallback to default logo
+    event.target.src = '/assets/images/logo2-modified.png';
+    console.log('Falling back to default logo');
   }
 }
 

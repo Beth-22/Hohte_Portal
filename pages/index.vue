@@ -39,6 +39,14 @@
       </div>
     </div>
 
+    <div v-else-if="schoolError" class="splash-content">
+      <div class="error-state">
+        <div class="error-icon">⚠️</div>
+        <h3>Invalid School Access</h3>
+        <p>Please access this app through the official Telegram bot.</p>
+      </div>
+    </div>
+
     <div v-else class="splash-content">
       <div v-if="isLoading || authLoading" class="loading-state">
         <div class="spinner"></div>
@@ -50,8 +58,8 @@
           <div class="logo-container">
             <div class="logo-wrapper">
               <img
-                src="~/assets/images/logo2-modified.png"
-                alt="HOHTE Logo"
+                :src="getSchoolLogo()"
+                :alt="getSchoolName() + ' Logo'"
                 class="logo-image"
                 @error="handleImageError"
               />
@@ -59,7 +67,7 @@
           </div>
 
           <div class="app-title-section">
-            <h1 class="app-title-main">HOHTE STUDENT</h1>
+            <h1 class="app-title-main">{{ getSchoolName() }} STUDENT</h1>
             <h2 class="app-title-sub">PORTAL</h2>
           </div>
 
@@ -162,11 +170,14 @@ import { useRouter } from "#app";
 import { useLanguage } from "~/composables/useLanguage";
 import { useTelegramAuth } from "~/composables/useTelegramAuth";
 import { useAuth } from "~/composables/useAuth";
+import { useSchool } from "~/composables/useSchool";
+import { apiService } from "~/services/api.service";
 
 const router = useRouter();
 const { t, setLocale, init, locale } = useLanguage();
 const { isUnlinked, authLoading, isTelegram, attemptLogin, shareContactInstruction } = useTelegramAuth();
 const { isAuthenticated, authError, isLoading: authIsLoading } = useAuth();
+const { getSchoolLogo, getSchoolName, currentSchoolId, schoolError, isInitialized } = useSchool();
 
 const selectedLanguage = ref(locale.value);
 const splashLoading = ref(true);
@@ -174,6 +185,8 @@ const imageError = ref(false);
 
 const handleImageError = () => {
   imageError.value = true;
+  // Fallback to default logo
+  console.error('Logo failed to load');
 };
 
 onMounted(() => {
@@ -183,6 +196,11 @@ onMounted(() => {
     if (process.client) {
       init();
       selectedLanguage.value = locale.value;
+      
+      // Update API service with current school
+      if (currentSchoolId.value) {
+        apiService.setSchool(currentSchoolId.value);
+      }
       
       if (isAuthenticated.value) {
         router.push('/home');
@@ -383,6 +401,36 @@ const continueToApp = async () => {
 
 .retry-link:hover {
   color: #ffd54f;
+}
+
+/* Error State */
+.error-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  color: white;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.error-state h3 {
+  font-size: 24px;
+  color: #FFC125;
+  margin-bottom: 10px;
+}
+
+.error-state p {
+  font-size: 16px;
+  color: #a0b3d9;
+  max-width: 300px;
+  line-height: 1.5;
 }
 
 /* Loading State */

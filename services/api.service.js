@@ -1,31 +1,60 @@
+// Centralized Configuration for Schools
+const TENANT_CONFIG = {
+  hohte: {
+    baseURL: "https://hohte.batelew.com",
+    name: "HOHTE",
+    logo: "logo2-modified.png", // Ensure this exists in assets/images/
+  },
+  fikure: {
+    baseURL: "https://fikure.batelew.com",
+    name: "FIKURE",
+    logo: "logo-fikure.jpg", // Update this when i have the Fikure logo
+  }
+};
+
 export class ApiService {
   constructor() {
-    this.baseURL = "https://hohte.batelew.com";
+    this.tenant = 'hohte'; // Default
+    this.baseURL = TENANT_CONFIG.hohte.baseURL;
     this.token = null;
     
     if (process.client) {
-      this.token = localStorage.getItem('auth_token');
+      // 1. Check URL for ?school=xxx
+      const urlParams = new URLSearchParams(window.location.search);
+      const schoolParam = urlParams.get('school');
+
+      if (schoolParam && TENANT_CONFIG[schoolParam]) {
+        this.tenant = schoolParam;
+        localStorage.setItem('active_tenant', schoolParam);
+      } else {
+        // 2. Fallback to last used tenant (useful for refreshes)
+        this.tenant = localStorage.getItem('active_tenant') || 'hohte';
+      }
+
+      this.baseURL = TENANT_CONFIG[this.tenant].baseURL;
+      // 3. Load namespaced token (e.g., hohte_auth_token)
+      this.token = localStorage.getItem(`${this.tenant}_auth_token`);
     }
 
-    console.log(" API Service Initialized");
-    console.log("Server:", this.baseURL);
-    console.log("Token loaded:", !!this.token);
+    console.log(`🚀 API Service: ${this.tenant.toUpperCase()} Mode Active`);
+  }
+
+  getTenantInfo() {
+    return TENANT_CONFIG[this.tenant];
   }
 
   setToken(token) {
     this.token = token;
     if (process.client) {
-      localStorage.setItem('auth_token', token);
+      localStorage.setItem(`${this.tenant}_auth_token`, token);
     }
-    console.log(" Token set");
   }
 
   clearToken() {
     this.token = null;
     if (process.client) {
-      localStorage.removeItem('auth_token');
+      localStorage.removeItem(`${this.tenant}_auth_token`);
     }
-    console.log(" Token cleared");
   }
 
   async request(endpoint, options = {}) {
@@ -41,49 +70,34 @@ export class ApiService {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
 
-    const config = {
-      ...options,
-      headers,
-    };
-
-    console.log(` API ${config.method || "GET"} ${url}`);
+    const config = { ...options, headers };
 
     try {
       const response = await fetch(url, config);
 
-      console.log(` Response: ${response.status} ${response.statusText}`);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("API Error Response:", errorText);
-
         if (endpoint.includes('/auth/telegram/login')) {
           if (response.status === 404 || response.status === 401) {
-            throw new Error(`HTTP ${response.status}: User not linked. Please share contact in Telegram bot.`);
+            throw new Error(`HTTP ${response.status}: User not linked.`);
           }
         }
 
         let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = {
-            message: `HTTP ${response.status}: ${errorText || "Unknown error"}`,
-          };
-        }
+        try { errorData = JSON.parse(errorText); } 
+        catch { errorData = { message: `HTTP ${response.status}: ${errorText || "Error"}` }; }
 
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log(" API Success");
-      return data;
+      return await response.json();
     } catch (error) {
-      console.error(" API Request failed:", error);
+      console.error("❌ API Request failed:", error);
       throw error;
     }
   }
 
+  // --- Auth Methods ---
   async telegramLogin(initData) {
     return this.request("/api/v1/auth/telegram/login", {
       method: "POST",
@@ -91,70 +105,22 @@ export class ApiService {
     });
   }
 
-  async getProfile() {
-    return this.request("/api/v1/student/profile");
-  }
-
-  async getMyClasses() {
-    return this.request("/api/v1/student/classes");
-  }
-
+  // --- Student Data Methods ---
+  async getProfile() { return this.request("/api/v1/student/profile"); }
+  async getMyClasses() { return this.request("/api/v1/student/classes"); }
+  
   async getClassDetails(classId, startDate = null, endDate = null) {
     let endpoint = `/api/v1/student/classes/${classId}`;
-
     const params = new URLSearchParams();
     if (startDate) params.append("start_date", startDate);
     if (endDate) params.append("end_date", endDate);
-
-    const queryString = params.toString();
-    if (queryString) {
-      endpoint += `?${queryString}`;
-    }
-
-    return this.request(endpoint);
+    const query = params.toString();
+    return this.request(query ? `${endpoint}?${query}` : endpoint);
   }
+
+  async getAttendanceSummary() { return this.request("/api/v1/student/attendance/summary"); }
+  async getPermissionRequests() { return this.request("/api/v1/student/permission-requests"); }
   
-  async getClassSchedules(classId) {
-    return this.request(`/api/v1/student/classes/${classId}`);
-  }
-  
-  async getAttendanceRecords(filters = {}) {
-    const params = new URLSearchParams();
-
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        params.append(key, value);
-      }
-    });
-
-    const queryString = params.toString();
-    const endpoint = `/api/v1/student/attendance/records${
-      queryString ? `?${queryString}` : ""
-    }`;
-
-    return this.request(endpoint);
-  }
-
-  async getAttendanceSummary() {
-    return this.request("/api/v1/student/attendance/summary");
-  }
-
-  async getPermissionReasons() {
-    return this.request("/api/v1/student/config/permission-reasons");
-  }
-
-  async getClassOptions() {
-    return this.request("/api/v1/student/config/classes/options");
-  }
-
-  async getPermissionRequests() {
-    return this.request("/api/v1/student/permission-requests");
-  }
-
-  async getPendingPermissionCount() {
-    return this.request("/api/v1/student/permission-requests/pending-count");
-  }
-
   async createPermissionRequest(data) {
     return this.request("/api/v1/student/permission-requests", {
       method: "POST",
@@ -163,9 +129,7 @@ export class ApiService {
   }
 
   async cancelPermissionRequest(id) {
-    return this.request(`/api/v1/student/permission-requests/${id}`, {
-      method: "DELETE",
-    });
+    return this.request(`/api/v1/student/permission-requests/${id}`, { method: "DELETE" });
   }
 }
 

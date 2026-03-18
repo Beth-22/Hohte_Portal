@@ -1,6 +1,5 @@
 <template>
   <div class="splash-container">
-    <!-- Authentication Unlinked State -->
     <div v-if="isUnlinked" class="unlinked-container">
       <div class="unlinked-content">
         <div class="unlinked-icon">
@@ -9,33 +8,15 @@
           </svg>
         </div>
         <h2 class="unlinked-title">{{ t('auth.unlinkedTitle') }}</h2>
-        <p class="unlinked-message">
-          {{ t('auth.unlinkedMessage') }}
-        </p>
+        <p class="unlinked-message">{{ t('auth.unlinkedMessage') }}</p>
         <div class="unlinked-instructions">
-          <div class="instruction-step">
-            <span class="step-number">1</span>
-            <span class="step-text">{{ t('auth.stepClose') }}</span>
-          </div>
-          <div class="instruction-step">
-            <span class="step-number">2</span>
-            <span class="step-text">{{ t('auth.stepFindBot') }}</span>
-          </div>
-          <div class="instruction-step">
-            <span class="step-number">3</span>
-            <span class="step-text">{{ t('auth.stepTapShare') }}</span>
-          </div>
-          <div class="instruction-step">
-            <span class="step-number">4</span>
-            <span class="step-text">{{ t('auth.stepReopen') }}</span>
-          </div>
+          <div class="instruction-step"><span class="step-number">1</span><span class="step-text">{{ t('auth.stepClose') }}</span></div>
+          <div class="instruction-step"><span class="step-number">2</span><span class="step-text">{{ t('auth.stepFindBot') }}</span></div>
+          <div class="instruction-step"><span class="step-number">3</span><span class="step-text">{{ t('auth.stepTapShare') }}</span></div>
+          <div class="instruction-step"><span class="step-number">4</span><span class="step-text">{{ t('auth.stepReopen') }}</span></div>
         </div>
-        <button class="unlinked-button" @click="shareContactInstruction">
-          {{ t('auth.closeAndShare') }}
-        </button>
-        <button class="unlinked-retry" @click="retryLogin">
-          {{ t('auth.alreadyShared') }}
-        </button>
+        <button class="unlinked-button" @click="shareContactInstruction">{{ t('auth.closeAndShare') }}</button>
+        <button class="unlinked-retry" @click="retryLogin">{{ t('auth.alreadyShared') }}</button>
       </div>
     </div>
 
@@ -50,8 +31,8 @@
           <div class="logo-container">
             <div class="logo-wrapper">
               <img
-                src="~/assets/images/logo2-modified.png"
-                alt="HOHTE Logo"
+                :src="logoPath"
+                :alt="`${tenantInfo.name} Logo`"
                 class="logo-image"
                 @error="handleImageError"
               />
@@ -59,14 +40,13 @@
           </div>
 
           <div class="app-title-section">
-            <h1 class="app-title-main">HOHTE STUDENT</h1>
+            <h1 class="app-title-main">{{ tenantInfo.name }} STUDENT</h1>
             <h2 class="app-title-sub">PORTAL</h2>
           </div>
 
           <p class="version-text">v1.0.0</p>
         </div>
 
-        <!-- Language Selection -->
         <div class="language-section">
           <div class="language-header">
             <h3 class="language-title">{{ t('splash.selectLanguage') }}</h3>
@@ -74,81 +54,30 @@
           </div>
 
           <div class="language-options">
-            <!-- English -->
-            <button
-              class="language-option"
-              :class="{ selected: selectedLanguage === 'en' }"
-              @click="selectLanguage('en')"
-            >
-              <div class="option-content">
-                <div class="option-text">
-                  <h4>{{ t('splash.english') }}</h4>
-                  <p>English</p>
-                </div>
-              </div>
+            <button class="language-option" :class="{ selected: selectedLanguage === 'en' }" @click="selectLanguage('en')">
+              <div class="option-content"><div class="option-text"><h4>{{ t('splash.english') }}</h4><p>English</p></div></div>
               <div v-if="selectedLanguage === 'en'" class="option-check">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="11" fill="#FFC125" />
-                  <path
-                    d="M7 12L10 15L17 9"
-                    stroke="white"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#FFC125" /><path d="M7 12L10 15L17 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
               </div>
             </button>
 
-            <!-- Amharic -->
-            <button
-              class="language-option ethiopic"
-              :class="{ selected: selectedLanguage === 'am' }"
-              @click="selectLanguage('am')"
-            >
-              <div class="option-content">
-                <div class="option-text">
-                  <h4>{{ t('splash.amharic') }}</h4>
-                  <p>አማርኛ</p>
-                </div>
-              </div>
+            <button class="language-option ethiopic" :class="{ selected: selectedLanguage === 'am' }" @click="selectLanguage('am')">
+              <div class="option-content"><div class="option-text"><h4>{{ t('splash.amharic') }}</h4><p>አማርኛ</p></div></div>
               <div v-if="selectedLanguage === 'am'" class="option-check">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="11" fill="#FFC125" />
-                  <path
-                    d="M7 12L10 15L17 9"
-                    stroke="white"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#FFC125" /><path d="M7 12L10 15L17 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
               </div>
             </button>
           </div>
         </div>
 
-        <!-- Continue Button -->
         <div class="action-section">
-          <button
-            class="continue-button"
-            @click="continueToApp"
-            :disabled="!selectedLanguage || authLoading"
-            :class="{ enabled: selectedLanguage && !authLoading }"
-          >
+          <button class="continue-button" @click="continueToApp" :disabled="!selectedLanguage || authLoading" :class="{ enabled: selectedLanguage && !authLoading }">
             {{ t('splash.continue') }}
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M4.16663 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M10 4.16666L15.8333 10L10 15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4.16663 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 4.16666L15.8333 10L10 15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
-          
-          <!-- Error message -->
           <div v-if="authError && !isUnlinked" class="auth-error">
             <p>{{ authError }}</p>
-            <button @click="retryLogin" class="retry-link">
-              {{ t('auth.retry') }}
-            </button>
+            <button @click="retryLogin" class="retry-link">{{ t('auth.retry') }}</button>
           </div>
         </div>
       </div>
@@ -157,36 +86,44 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "#app";
 import { useLanguage } from "~/composables/useLanguage";
 import { useTelegramAuth } from "~/composables/useTelegramAuth";
 import { useAuth } from "~/composables/useAuth";
+import { apiService } from "~/services/api.service";
 
 const router = useRouter();
 const { t, setLocale, init, locale } = useLanguage();
 const { isUnlinked, authLoading, isTelegram, attemptLogin, shareContactInstruction } = useTelegramAuth();
-const { isAuthenticated, authError, isLoading: authIsLoading } = useAuth();
+const { isAuthenticated, authError } = useAuth();
 
 const selectedLanguage = ref(locale.value);
 const splashLoading = ref(true);
 const imageError = ref(false);
 
-const handleImageError = () => {
-  imageError.value = true;
-};
+// Multi-tenant Branding
+const tenantInfo = apiService.getTenantInfo();
+
+// Dynamic Logo Logic
+const logoPath = computed(() => {
+  try {
+    // This assumes your logos are in assets/images/
+    return new URL(`../assets/images/${tenantInfo.logo}`, import.meta.url).href;
+  } catch (e) {
+    return '/logo2-modified.png'; // Fallback
+  }
+});
+
+const handleImageError = () => { imageError.value = true; };
 
 onMounted(() => {
   setTimeout(() => {
     splashLoading.value = false;
-    
     if (process.client) {
       init();
       selectedLanguage.value = locale.value;
-      
-      if (isAuthenticated.value) {
-        router.push('/home');
-      }
+      if (isAuthenticated.value) { router.push('/home'); }
     }
   }, 1500);
 });
@@ -199,30 +136,18 @@ const selectLanguage = (lang) => {
 const retryLogin = async () => {
   if (isTelegram.value) {
     const result = await attemptLogin();
-    if (result.success) {
-      router.push('/home');
-    }
+    if (result.success) router.push('/home');
   }
 };
 
 const continueToApp = async () => {
   if (!selectedLanguage.value) return;
-  
   if (isTelegram.value) {
     const result = await attemptLogin();
-    if (result.success) {
-      router.push('/home');
-    } else if (result.unlinked) {
-      return;
-    } else {
-      return;
-    }
+    if (result.success) router.push('/home');
   } else {
-    if (isAuthenticated.value) {
-      router.push('/home');
-    } else {
-      alert(t('auth.telegramOnly'));
-    }
+    if (isAuthenticated.value) { router.push('/home'); } 
+    else { alert(t('auth.telegramOnly')); }
   }
 };
 </script>

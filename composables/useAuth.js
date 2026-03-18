@@ -10,6 +10,7 @@ export const useAuth = () => {
   const isUnlinked = ref(false)
 
   const checkAuth = () => {
+    // apiService handles namespaced token internally
     const hasToken = !!apiService.token
     isAuthenticated.value = hasToken
     return hasToken
@@ -21,33 +22,21 @@ export const useAuth = () => {
       authError.value = null
       isUnlinked.value = false
       
-      console.log(' Attempting Telegram login...')
       const response = await apiService.telegramLogin(initData)
-      console.log('Login response:', response)
       
       if (response && response.token) {
         apiService.setToken(response.token)
         isAuthenticated.value = true
-        isUnlinked.value = false
-        console.log(' Login successful')
         return { success: true, data: response }
       } else {
         throw new Error('No token received from server')
       }
     } catch (error) {
-      console.error(' Login error:', error)
       authError.value = error.message
-      
       if (error.message.includes('404') || error.message.includes('401')) {
         isUnlinked.value = true
-        console.log(' User needs to link account')
-        return { 
-          success: false, 
-          unlinked: true,
-          error: 'User not linked. Please share contact in Telegram bot.'
-        }
+        return { success: false, unlinked: true, error: error.message }
       }
-      
       return { success: false, error: error.message }
     } finally {
       isLoading.value = false
@@ -57,13 +46,10 @@ export const useAuth = () => {
   const logout = () => {
     apiService.clearToken()
     isAuthenticated.value = false
-    isUnlinked.value = false
-    router.push('/')
+    router.push(`/?school=${apiService.tenant}`)
   }
 
-  onMounted(() => {
-    checkAuth()
-  })
+  onMounted(() => { checkAuth() })
 
   return {
     isAuthenticated,

@@ -3,12 +3,12 @@ const TENANT_CONFIG = {
   hohte: {
     baseURL: "https://hohte.batelew.com",
     name: "HOHTE",
-    logo: "logo2-modified.png", // Ensure this exists in assets/images/
+    logo: "logo2-modified.png",
   },
   fikure: {
     baseURL: "https://fikure.batelew.com",
     name: "FIKURE",
-    logo: "logo-fikure.jpg", // Update this when i have the Fikure logo
+    logo: "logo2-modified.png", // Update this when you have the Fikure logo
   }
 };
 
@@ -19,7 +19,7 @@ export class ApiService {
     this.token = null;
     
     if (process.client) {
-      // 1. Check URL for ?school=xxx
+      // 1. Check URL for ?school=xxx (This is the "Source of Truth")
       const urlParams = new URLSearchParams(window.location.search);
       const schoolParam = urlParams.get('school');
 
@@ -27,7 +27,7 @@ export class ApiService {
         this.tenant = schoolParam;
         localStorage.setItem('active_tenant', schoolParam);
       } else {
-        // 2. Fallback to last used tenant (useful for refreshes)
+        // 2. Fallback to last used tenant
         this.tenant = localStorage.getItem('active_tenant') || 'hohte';
       }
 
@@ -37,6 +37,7 @@ export class ApiService {
     }
 
     console.log(`🚀 API Service: ${this.tenant.toUpperCase()} Mode Active`);
+    console.log(`🔗 Backend: ${this.baseURL}`);
   }
 
   getTenantInfo() {
@@ -77,15 +78,20 @@ export class ApiService {
 
       if (!response.ok) {
         const errorText = await response.text();
+        
+        // Specific error handling for Telegram Login
         if (endpoint.includes('/auth/telegram/login')) {
           if (response.status === 404 || response.status === 401) {
-            throw new Error(`HTTP ${response.status}: User not linked.`);
+            throw new Error(`HTTP ${response.status}: User not linked. Please share contact.`);
           }
         }
 
         let errorData;
-        try { errorData = JSON.parse(errorText); } 
-        catch { errorData = { message: `HTTP ${response.status}: ${errorText || "Error"}` }; }
+        try { 
+          errorData = JSON.parse(errorText); 
+        } catch { 
+          errorData = { message: `HTTP ${response.status}: ${errorText || "Error"}` }; 
+        }
 
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
@@ -97,7 +103,9 @@ export class ApiService {
     }
   }
 
-  // --- Auth Methods ---
+  // ==========================================
+  // AUTHENTICATION
+  // ==========================================
   async telegramLogin(initData) {
     return this.request("/api/v1/auth/telegram/login", {
       method: "POST",
@@ -105,9 +113,16 @@ export class ApiService {
     });
   }
 
-  // --- Student Data Methods ---
-  async getProfile() { return this.request("/api/v1/student/profile"); }
-  async getMyClasses() { return this.request("/api/v1/student/classes"); }
+  // ==========================================
+  // STUDENT PROFILE & CLASSES
+  // ==========================================
+  async getProfile() { 
+    return this.request("/api/v1/student/profile"); 
+  }
+
+  async getMyClasses() { 
+    return this.request("/api/v1/student/classes"); 
+  }
   
   async getClassDetails(classId, startDate = null, endDate = null) {
     let endpoint = `/api/v1/student/classes/${classId}`;
@@ -118,9 +133,44 @@ export class ApiService {
     return this.request(query ? `${endpoint}?${query}` : endpoint);
   }
 
-  async getAttendanceSummary() { return this.request("/api/v1/student/attendance/summary"); }
-  async getPermissionRequests() { return this.request("/api/v1/student/permission-requests"); }
+  // REQUIRED BY useStudentData.js
+  async getClassSchedules(classId) {
+    return this.request(`/api/v1/student/classes/${classId}/schedules`);
+  }
+
+  // REQUIRED BY Permission Page
+  async getClassOptions() {
+    return this.request("/api/v1/student/class-options");
+  }
+
+  // ==========================================
+  // ATTENDANCE
+  // ==========================================
+  async getAttendanceSummary() { 
+    return this.request("/api/v1/student/attendance/summary"); 
+  }
+
+  async getAttendanceRecords(classId, startDate = null, endDate = null) {
+    let endpoint = `/api/v1/student/classes/${classId}/attendance`;
+    const params = new URLSearchParams();
+    if (startDate) params.append("start_date", startDate);
+    if (endDate) params.append("end_date", endDate);
+    const query = params.toString();
+    return this.request(query ? `${endpoint}?${query}` : endpoint);
+  }
+
+  // ==========================================
+  // PERMISSION REQUESTS
+  // ==========================================
+  async getPermissionRequests() { 
+    return this.request("/api/v1/student/permission-requests"); 
+  }
   
+  // REQUIRED BY Permission Form
+  async getPermissionReasons() {
+    return this.request("/api/v1/student/permission-reasons");
+  }
+
   async createPermissionRequest(data) {
     return this.request("/api/v1/student/permission-requests", {
       method: "POST",
@@ -129,7 +179,9 @@ export class ApiService {
   }
 
   async cancelPermissionRequest(id) {
-    return this.request(`/api/v1/student/permission-requests/${id}`, { method: "DELETE" });
+    return this.request(`/api/v1/student/permission-requests/${id}`, { 
+      method: "DELETE" 
+    });
   }
 }
 

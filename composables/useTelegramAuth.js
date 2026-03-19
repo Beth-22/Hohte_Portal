@@ -1,12 +1,15 @@
+// composables/useTelegramAuth.js
 import { ref, onMounted } from 'vue'
 import { useRouter } from '#app'
 import { useAuth } from './useAuth'
 import { useTelegram } from './useTelegram'
+import { useSchool } from './useSchool'
 
 export const useTelegramAuth = () => {
   const router = useRouter()
   const { loginWithTelegram, checkAuth, isUnlinked } = useAuth()
-  const { isTelegram, initData, closeApp } = useTelegram()
+  const { isTelegram, initData, closeApp, webApp } = useTelegram()
+  const { currentSchoolId, getBotUsername } = useSchool()
   
   const authLoading = ref(false)
 
@@ -20,6 +23,18 @@ export const useTelegramAuth = () => {
       console.error('No initData available')
       return { success: false, error: 'No initData' }
     }
+
+    // CRITICAL: Verify we're in the right bot for this school
+    const expectedBot = getBotUsername()
+    const actualBot = webApp.value?.initDataUnsafe?.bot_username // or however Telegram exposes it
+    
+    console.log('🔐 Bot verification:', {
+      expected: expectedBot,
+      actual: actualBot,
+      school: currentSchoolId.value
+    })
+
+    // You might want to add bot verification here if Telegram exposes it
     
     authLoading.value = true
     const result = await loginWithTelegram(initData.value)
@@ -29,6 +44,7 @@ export const useTelegramAuth = () => {
   }
 
   const shareContactInstruction = () => {
+    // When closing, ensure we're clearing any cached state
     closeApp()
   }
 

@@ -7,25 +7,23 @@ export const useTelegram = () => {
   const initData = ref("");
   const themeParams = ref({});
 
-  onMounted(() => {
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      webApp.value = window.Telegram.WebApp;
-      isTelegram.value = true;
-      userId.value = webApp.value.initDataUnsafe?.user?.id;
-      initData.value = webApp.value.initData;
-      themeParams.value = webApp.value.themeParams;
-
-      webApp.value.ready();
-
-      webApp.value.expand();
-
-      setThemeColors();
-
-      console.log("Telegram WebApp initialized");
-      console.log("User ID:", userId.value);
-      console.log("Theme params:", themeParams.value);
-    }
-  });
+ // composables/useTelegram.js (ensure this section is correct)
+onMounted(() => {
+  if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+    webApp.value = window.Telegram.WebApp;
+    isTelegram.value = true;
+    userId.value = webApp.value.initDataUnsafe?.user?.id;
+    initData.value = webApp.value.initData; // This should be the RAW initData string
+    
+    console.log("Telegram WebApp initialized");
+    console.log("User ID:", userId.value);
+    console.log("InitData length:", initData.value?.length);
+    console.log("Bot info:", webApp.value.initDataUnsafe?.bot_username); // See if this exists
+    
+    webApp.value.ready();
+    webApp.value.expand();
+  }
+});
 
   const setThemeColors = () => {
     if (!webApp.value) return;

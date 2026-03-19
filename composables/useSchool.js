@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from '#app'
 import { SCHOOLS, DEFAULT_SCHOOL, VALID_SCHOOLS } from '~/config/schools'
+import { apiService } from '~/services/api.service'
 
 // Import the images directly
 import hohteLogo from '~/assets/images/logo2-modified.png'
@@ -29,45 +30,38 @@ export const useSchool = () => {
         
         // ALWAYS check URL parameter FIRST
         const urlSchool = route.query.school
+        let selectedSchool = null
         
         if (urlSchool) {
           console.log(`📌 Found URL school parameter: "${urlSchool}"`)
           
           if (VALID_SCHOOLS.includes(urlSchool)) {
-            currentSchoolId.value = urlSchool
-            schoolConfig.value = SCHOOLS[urlSchool]
-            localStorage.setItem('selected_school', urlSchool)
+            selectedSchool = urlSchool
             console.log(`✅ School set from URL: ${urlSchool}`)
           } else {
             console.warn(`⚠️ Invalid school in URL: "${urlSchool}", falling back`)
-            // Fall through to next options
-            const savedSchool = localStorage.getItem('selected_school')
-            if (savedSchool && VALID_SCHOOLS.includes(savedSchool)) {
-              currentSchoolId.value = savedSchool
-              schoolConfig.value = SCHOOLS[savedSchool]
-              console.log(`📁 Fallback to localStorage: ${savedSchool}`)
-            } else {
-              currentSchoolId.value = DEFAULT_SCHOOL
-              schoolConfig.value = SCHOOLS[DEFAULT_SCHOOL]
-              localStorage.setItem('selected_school', DEFAULT_SCHOOL)
-              console.log(`⚠️ Default to: ${DEFAULT_SCHOOL}`)
-            }
           }
-        } else {
-          console.log('📌 No school parameter in URL')
-          // No URL parameter, use localStorage or default
+        }
+        
+        // If no valid URL school, try localStorage
+        if (!selectedSchool) {
           const savedSchool = localStorage.getItem('selected_school')
           if (savedSchool && VALID_SCHOOLS.includes(savedSchool)) {
-            currentSchoolId.value = savedSchool
-            schoolConfig.value = SCHOOLS[savedSchool]
+            selectedSchool = savedSchool
             console.log(`📁 Using localStorage: ${savedSchool}`)
           } else {
-            currentSchoolId.value = DEFAULT_SCHOOL
-            schoolConfig.value = SCHOOLS[DEFAULT_SCHOOL]
-            localStorage.setItem('selected_school', DEFAULT_SCHOOL)
+            selectedSchool = DEFAULT_SCHOOL
             console.log(`⚠️ Default to: ${DEFAULT_SCHOOL}`)
           }
         }
+        
+        // Set the school
+        currentSchoolId.value = selectedSchool
+        schoolConfig.value = SCHOOLS[selectedSchool]
+        localStorage.setItem('selected_school', selectedSchool)
+        
+        // CRITICAL: Update API service with the selected school
+        apiService.setSchool(selectedSchool)
         
         // Final debug
         console.log('🏫 Final school config:', {
@@ -82,6 +76,7 @@ export const useSchool = () => {
         schoolError.value = 'Failed to initialize school configuration'
         currentSchoolId.value = DEFAULT_SCHOOL
         schoolConfig.value = SCHOOLS[DEFAULT_SCHOOL]
+        apiService.setSchool(DEFAULT_SCHOOL)
         isInitialized.value = true
       }
     }
@@ -98,6 +93,8 @@ export const useSchool = () => {
     
     if (process.client) {
       localStorage.setItem('selected_school', schoolId)
+      // CRITICAL: Update API service when school changes
+      apiService.setSchool(schoolId)
     }
     
     console.log(`School changed to: ${schoolId}`)

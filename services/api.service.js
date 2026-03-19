@@ -31,12 +31,23 @@ export class ApiService {
     }
   }
 
-  // Set school manually
+  // Set school manually and validate token
   setSchool(schoolId) {
     if (process.client) {
       if (SCHOOLS[schoolId]) {
-        this.baseURL = SCHOOLS[schoolId].apiBaseURL
+        const newBaseURL = SCHOOLS[schoolId].apiBaseURL
+        const oldBaseURL = this.baseURL
+        
+        this.baseURL = newBaseURL
         console.log(` API Service manually set to: ${schoolId}, URL: ${this.baseURL}`)
+        
+        // CRITICAL: If school changed AND we have a token, clear it
+        // because tokens are school-specific
+        if (oldBaseURL && oldBaseURL !== newBaseURL && this.token) {
+          console.log(`⚠️ School changed from ${oldBaseURL} to ${newBaseURL}, clearing token`)
+          this.clearToken()
+        }
+        
         return true
       }
     }
@@ -48,7 +59,7 @@ export class ApiService {
     if (process.client) {
       localStorage.setItem('auth_token', token)
     }
-    console.log(" Token set")
+    console.log(" Token set for school:", this.baseURL)
   }
 
   clearToken() {
@@ -60,6 +71,7 @@ export class ApiService {
   }
 
   async request(endpoint, options = {}) {
+    // Ensure baseURL is set
     if (!this.baseURL) {
       this.updateBaseURLFromStorage()
     }
@@ -89,6 +101,12 @@ export class ApiService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error Response:", errorText);
+
+        // If we get a 401, token is invalid for this school
+        if (response.status === 401) {
+          console.log('🔐 Token invalid for this school, clearing...')
+          this.clearToken()
+        }
 
         if (endpoint.includes('/auth/telegram/login')) {
           if (response.status === 404 || response.status === 401) {

@@ -1,37 +1,46 @@
 // services/api.service.js
+// Import SCHOOLS directly
+import { SCHOOLS } from '~/config/schools'
+
 export class ApiService {
   constructor() {
+    this.baseURL = null
     this.token = null
     
     if (process.client) {
       this.token = localStorage.getItem('auth_token')
+      this.updateBaseURLFromStorage()
     }
 
     console.log(" API Service Initialized")
     console.log("Token loaded:", !!this.token)
   }
 
-  // Helper method to get the current baseURL based on school
-  getBaseURL() {
+  // Update baseURL from localStorage
+  updateBaseURLFromStorage() {
     if (process.client) {
-      // Always check localStorage for the current school
       const savedSchool = localStorage.getItem('selected_school')
       
-      // Import SCHOOLS dynamically to avoid circular dependency
-      const { SCHOOLS } = require('~/config/schools')
-      
       if (savedSchool && SCHOOLS[savedSchool]) {
-        console.log(`Using API URL for school: ${savedSchool} -> ${SCHOOLS[savedSchool].apiBaseURL}`)
-        return SCHOOLS[savedSchool].apiBaseURL
+        this.baseURL = SCHOOLS[savedSchool].apiBaseURL
+        console.log(` API Service baseURL set to: ${this.baseURL} for school: ${savedSchool}`)
+      } else {
+        this.baseURL = SCHOOLS.hohte.apiBaseURL
+        console.log(` API Service defaulting to: ${this.baseURL}`)
       }
-      
-      // Default to hohte
-      console.log('No school found, defaulting to hohte API URL')
-      return SCHOOLS.hohte.apiBaseURL
     }
-    
-    // Fallback for SSR
-    return 'https://hohte.batelew.com'
+  }
+
+  // Set school manually
+  setSchool(schoolId) {
+    if (process.client) {
+      if (SCHOOLS[schoolId]) {
+        this.baseURL = SCHOOLS[schoolId].apiBaseURL
+        console.log(` API Service manually set to: ${schoolId}, URL: ${this.baseURL}`)
+        return true
+      }
+    }
+    return false
   }
 
   setToken(token) {
@@ -51,9 +60,11 @@ export class ApiService {
   }
 
   async request(endpoint, options = {}) {
-    // Get the current baseURL based on school
-    const baseURL = this.getBaseURL()
-    const url = `${baseURL}${endpoint}`
+    if (!this.baseURL) {
+      this.updateBaseURLFromStorage()
+    }
+
+    const url = `${this.baseURL}${endpoint}`
 
     const headers = {
       Accept: "application/json",
@@ -74,8 +85,6 @@ export class ApiService {
 
     try {
       const response = await fetch(url, config);
-
-      console.log(` Response: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -100,7 +109,6 @@ export class ApiService {
       }
 
       const data = await response.json();
-      console.log(" API Success");
       return data;
     } catch (error) {
       console.error(" API Request failed:", error);

@@ -2,7 +2,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from '#app'
 import { SCHOOLS, DEFAULT_SCHOOL, VALID_SCHOOLS } from '~/config/schools'
-import { apiService } from '~/services/api.service'
+
+// Import the images directly
+import hohteLogo from '~/assets/images/logo2-modified.png'
+import fikureLogo from '~/assets/images/logo-fikure.jpg'
 
 export const useSchool = () => {
   const route = useRoute()
@@ -11,14 +14,20 @@ export const useSchool = () => {
   const isInitialized = ref(false)
   const schoolError = ref(null)
 
+  // Map school IDs to imported images
+  const logoMap = {
+    hohte: hohteLogo,
+    fikure: fikureLogo
+  }
+
   const initializeSchool = () => {
     if (process.client) {
       try {
-        // 🔍 DEBUG: Log the entire route query
+        // Debug logs
         console.log('🔍 Full route query:', route.query)
         console.log('🔍 School param specifically:', route.query.school)
         
-        // 1️⃣ ALWAYS check URL parameter FIRST
+        // ALWAYS check URL parameter FIRST
         const urlSchool = route.query.school
         
         if (urlSchool) {
@@ -28,8 +37,7 @@ export const useSchool = () => {
             currentSchoolId.value = urlSchool
             schoolConfig.value = SCHOOLS[urlSchool]
             localStorage.setItem('selected_school', urlSchool)
-            apiService.setSchool(urlSchool)
-            console.log(`✅ School set from URL: ${urlSchool}, logo: ${schoolConfig.value.logoPath}`)
+            console.log(`✅ School set from URL: ${urlSchool}`)
           } else {
             console.warn(`⚠️ Invalid school in URL: "${urlSchool}", falling back`)
             // Fall through to next options
@@ -37,13 +45,11 @@ export const useSchool = () => {
             if (savedSchool && VALID_SCHOOLS.includes(savedSchool)) {
               currentSchoolId.value = savedSchool
               schoolConfig.value = SCHOOLS[savedSchool]
-              apiService.setSchool(savedSchool)
               console.log(`📁 Fallback to localStorage: ${savedSchool}`)
             } else {
               currentSchoolId.value = DEFAULT_SCHOOL
               schoolConfig.value = SCHOOLS[DEFAULT_SCHOOL]
               localStorage.setItem('selected_school', DEFAULT_SCHOOL)
-              apiService.setSchool(DEFAULT_SCHOOL)
               console.log(`⚠️ Default to: ${DEFAULT_SCHOOL}`)
             }
           }
@@ -54,22 +60,19 @@ export const useSchool = () => {
           if (savedSchool && VALID_SCHOOLS.includes(savedSchool)) {
             currentSchoolId.value = savedSchool
             schoolConfig.value = SCHOOLS[savedSchool]
-            apiService.setSchool(savedSchool)
             console.log(`📁 Using localStorage: ${savedSchool}`)
           } else {
             currentSchoolId.value = DEFAULT_SCHOOL
             schoolConfig.value = SCHOOLS[DEFAULT_SCHOOL]
             localStorage.setItem('selected_school', DEFAULT_SCHOOL)
-            apiService.setSchool(DEFAULT_SCHOOL)
             console.log(`⚠️ Default to: ${DEFAULT_SCHOOL}`)
           }
         }
         
-        // 🔍 DEBUG: Final school config
+        // Final debug
         console.log('🏫 Final school config:', {
           id: currentSchoolId.value,
-          name: schoolConfig.value?.name,
-          logo: schoolConfig.value?.logoPath
+          name: schoolConfig.value?.name
         })
         
         isInitialized.value = true
@@ -79,7 +82,6 @@ export const useSchool = () => {
         schoolError.value = 'Failed to initialize school configuration'
         currentSchoolId.value = DEFAULT_SCHOOL
         schoolConfig.value = SCHOOLS[DEFAULT_SCHOOL]
-        apiService.setSchool(DEFAULT_SCHOOL)
         isInitialized.value = true
       }
     }
@@ -96,7 +98,6 @@ export const useSchool = () => {
     
     if (process.client) {
       localStorage.setItem('selected_school', schoolId)
-      apiService.setSchool(schoolId)
     }
     
     console.log(`School changed to: ${schoolId}`)
@@ -104,12 +105,17 @@ export const useSchool = () => {
   }
 
   const getSchoolLogo = () => {
-    if (!schoolConfig.value) {
-      console.warn('No school config, using default logo')
-      return '/assets/images/logo2-modified.png'
+    if (!currentSchoolId.value) {
+      console.warn('No school ID, using default hohte logo')
+      return hohteLogo
     }
-    console.log('Getting logo for school:', schoolConfig.value.id, schoolConfig.value.logoPath)
-    return schoolConfig.value.logoPath
+    const logo = logoMap[currentSchoolId.value]
+    if (!logo) {
+      console.warn(`No logo found for school: ${currentSchoolId.value}, using default`)
+      return hohteLogo
+    }
+    console.log(`Getting logo for school: ${currentSchoolId.value}`)
+    return logo
   }
 
   const getSchoolName = () => {
@@ -125,6 +131,27 @@ export const useSchool = () => {
   const getApiBaseUrl = () => {
     if (!schoolConfig.value) return SCHOOLS.hohte.apiBaseURL
     return schoolConfig.value.apiBaseURL
+  }
+
+  const getBotUsername = () => {
+    if (!schoolConfig.value) return SCHOOLS.hohte.botUsername
+    return schoolConfig.value.botUsername
+  }
+
+  const validateBot = (initData) => {
+    if (!process.client || !initData) return true
+    
+    try {
+      // You can add bot validation here if needed
+      return true
+    } catch (error) {
+      console.error('Bot validation error:', error)
+      return true
+    }
+  }
+
+  const isValidSchool = (schoolId) => {
+    return VALID_SCHOOLS.includes(schoolId)
   }
 
   onMounted(() => {
@@ -144,7 +171,9 @@ export const useSchool = () => {
     getSchoolName,
     getAppName,
     getApiBaseUrl,
-    isValidSchool: (schoolId) => VALID_SCHOOLS.includes(schoolId),
+    getBotUsername,
+    validateBot,
+    isValidSchool,
     availableSchools: VALID_SCHOOLS
   }
 }

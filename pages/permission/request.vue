@@ -110,22 +110,28 @@
             <input
               type="date"
               v-model="formData.specificDate"
+              :min="minDate"
               class="date-input"
               :class="{ error: errors.specificDate }"
+              @change="validateSpecificDate"
             />
             <span v-if="errors.specificDate" class="error-message">{{ errors.specificDate }}</span>
           </div>
 
           <div v-else class="date-range-input">
             <p class="date-hint">{{ t('requestStatus.dateRangeHint') }}</p>
+            <div class="range-hint-text">{{ t('requestStatus.rangeLimitHint') }}</div>
             <div class="range-inputs">
               <div class="range-field">
                 <input
                   type="date"
                   v-model="formData.startDate"
+                  :min="minDate"
+                  :max="maxStartDate"
                   :placeholder="t('requestStatus.startDate')"
                   class="date-input"
                   :class="{ error: errors.startDate }"
+                  @change="validateStartDate"
                 />
                 <span v-if="errors.startDate" class="error-message">{{ errors.startDate }}</span>
               </div>
@@ -133,9 +139,12 @@
                 <input
                   type="date"
                   v-model="formData.endDate"
+                  :min="minEndDate"
+                  :max="maxEndDate"
                   :placeholder="t('requestStatus.endDate')"
                   class="date-input"
                   :class="{ error: errors.endDate }"
+                  @change="validateEndDate"
                 />
                 <span v-if="errors.endDate" class="error-message">{{ errors.endDate }}</span>
               </div>
@@ -196,12 +205,124 @@ const errors = ref({
   endDate: ''
 })
 
+// Get today's date in local timezone (YYYY-MM-DD format)
+const getTodayLocal = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const minDate = ref(getTodayLocal())
+
+// Add 6 calendar months to a date
+const addSixMonths = (dateString) => {
+  if (!dateString) return null
+  const date = new Date(dateString)
+  date.setMonth(date.getMonth() + 6)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// Calculate max start date (today + 6 months)
+const maxStartDate = computed(() => {
+  return addSixMonths(minDate.value)
+})
+
+// Calculate min end date (must be >= start date)
+const minEndDate = computed(() => {
+  if (durationType.value === 'range' && formData.value.startDate) {
+    return formData.value.startDate
+  }
+  return minDate.value
+})
+
+// Calculate max end date (start date + 6 months)
+const maxEndDate = computed(() => {
+  if (durationType.value === 'range' && formData.value.startDate) {
+    return addSixMonths(formData.value.startDate)
+  }
+  return addSixMonths(minDate.value)
+})
+
 const isCustomReason = computed(() => {
   if (!formData.value.reason) return false
   
   const selectedReason = permissionReasons.value.find(r => r.value === formData.value.reason)
   return selectedReason?.translationKey === 'custom'
 })
+
+// Validate specific date (can't be in the past)
+const validateSpecificDate = () => {
+  if (formData.value.specificDate && formData.value.specificDate < minDate.value) {
+    errors.value.specificDate = t('requestStatus.errors.dateCannotBePast')
+    return false
+  }
+  errors.value.specificDate = ''
+  return true
+}
+
+// Validate start date (can't be in the past or > today + 6 months)
+const validateStartDate = () => {
+  if (!formData.value.startDate) {
+    errors.value.startDate = ''
+    return true
+  }
+  
+  if (formData.value.startDate < minDate.value) {
+    errors.value.startDate = t('requestStatus.errors.dateCannotBePast')
+    return false
+  }
+  
+  if (maxStartDate.value && formData.value.startDate > maxStartDate.value) {
+    errors.value.startDate = t('requestStatus.errors.dateExceedsSixMonths', { maxDate: maxStartDate.value })
+    return false
+  }
+  
+  // If start date changes, reset end date to start date or clear validation
+  if (formData.value.endDate && formData.value.endDate < formData.value.startDate) {
+    formData.value.endDate = formData.value.startDate
+    errors.value.endDate = ''
+  }
+  
+  // Check if existing end date exceeds 6 months from new start date
+  if (formData.value.endDate && maxEndDate.value && formData.value.endDate > maxEndDate.value) {
+    formData.value.endDate = maxEndDate.value
+    errors.value.endDate = ''
+  }
+  
+  errors.value.startDate = ''
+  return true
+}
+
+// Validate end date (must be >= start date, <= start date + 6 months)
+const validateEndDate = () => {
+  if (!formData.value.endDate) {
+    errors.value.endDate = ''
+    return true
+  }
+  
+  if (!formData.value.startDate) {
+    errors.value.endDate = t('requestStatus.errors.selectStartDateFirst')
+    return false
+  }
+  
+  if (formData.value.endDate < formData.value.startDate) {
+    errors.value.endDate = t('requestStatus.errors.endDateBeforeStart')
+    return false
+  }
+  
+  if (maxEndDate.value && formData.value.endDate > maxEndDate.value) {
+    errors.value.endDate = t('requestStatus.errors.rangeExceedsSixMonths', { maxDate: maxEndDate.value })
+    return false
+  }
+  
+  errors.value.endDate = ''
+  return true
+}
 
 watch(() => formData.value.reason, (newReason) => {
   if (!isCustomReason.value) {
@@ -212,7 +333,6 @@ watch(() => formData.value.reason, (newReason) => {
 
 const handleLogoError = () => {
   console.error('Logo image failed to load')
-  // Fallback to default logo
   const img = document.querySelector('.logo-image-top')
   if (img) {
     img.src = '/assets/images/logo2-modified.png'
@@ -262,24 +382,22 @@ const validateForm = () => {
     if (!formData.value.specificDate) {
       errors.value.specificDate = t('requestStatus.errors.selectDate')
       isValid = false
+    } else if (!validateSpecificDate()) {
+      isValid = false
     }
   } else {
     if (!formData.value.startDate) {
       errors.value.startDate = t('requestStatus.errors.selectStartDate')
       isValid = false
-    }
-    if (!formData.value.endDate) {
-      errors.value.endDate = t('requestStatus.errors.selectEndDate')
+    } else if (!validateStartDate()) {
       isValid = false
     }
     
-    if (formData.value.startDate && formData.value.endDate) {
-      const start = new Date(formData.value.startDate)
-      const end = new Date(formData.value.endDate)
-      if (end < start) {
-        errors.value.endDate = t('requestStatus.errors.endDateBeforeStart')
-        isValid = false
-      }
+    if (!formData.value.endDate) {
+      errors.value.endDate = t('requestStatus.errors.selectEndDate')
+      isValid = false
+    } else if (!validateEndDate()) {
+      isValid = false
     }
   }
 
@@ -338,7 +456,7 @@ const submitForm = async () => {
 }
 
 onMounted(async () => {
-  const today = new Date().toISOString().split('T')[0]
+  const today = getTodayLocal()
   formData.value.specificDate = today
   formData.value.startDate = today
   formData.value.endDate = today
@@ -633,6 +751,17 @@ onMounted(async () => {
   color: #b1afaf;
   margin-bottom: 15px;
   font-style: italic;
+}
+
+.range-hint-text {
+  font-size: 13px;
+  color: #FFC125;
+  margin-bottom: 15px;
+  font-weight: 500;
+  background: rgba(255, 193, 37, 0.1);
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
 }
 
 .date-input {

@@ -82,11 +82,16 @@
       "selectDate": "እባክዎ ቀን ይምረጡ",
       "selectStartDate": "እባክዎ የመጀመሪያ ቀን ይምረጡ",
       "selectEndDate": "እባክዎ የመጨረሻ ቀን ይምረጡ",
-      "endDateBeforeStart": "የመጨረሻ ቀን ከመጀመሪያ ቀን በፊት ሊሆን አይችልም"
+      "endDateBeforeStart": "የመጨረሻ ቀን ከመጀመሪያ ቀን በፊት ሊሆን አይችልም",
+      "dateCannotBePast": "ያለፈ ቀን መምረጥ አይቻልም",
+      "dateExceedsSixMonths": "ከዛሬ በላይ 6 ወራት ያለፈ ቀን መምረጥ አይቻልም (ከፍተኛ: {maxDate})",
+      "selectStartDateFirst": "እባክዎ በመጀመሪያ የመጀመሪያ ቀን ይምረጡ",
+      "rangeExceedsSixMonths": "የመጨረሻ ቀን ከመጀመሪያ ቀን በላይ 6 ወራት መሆን አይችልም (ከፍተኛ: {maxDate})"
     },
     "customReason": "የራስዎ ምክንያት",
     "customReasonHint": "እባክዎ ለፈቃድ ጥያቄዎ ምክንያት ይግለጹ",
     "customReasonPlaceholder": "የራስዎን ምክንያት እዚህ ያስገቡ...",
+    "rangeLimitHint": "ከፍተኛ የጊዜ ገደብ: 6 የቀን መቁጠሪያ ወራት",
     "samples": {
       "mezmu": "መዝሙር ጥብቅ",
       "kedamay": "ከዳማይ ኮርስ",

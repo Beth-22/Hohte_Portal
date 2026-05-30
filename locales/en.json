@@ -82,11 +82,16 @@
       "selectDate": "Please select a date",
       "selectStartDate": "Please select a start date",
       "selectEndDate": "Please select an end date",
-      "endDateBeforeStart": "End date cannot be before start date"
+      "endDateBeforeStart": "End date cannot be before start date",
+      "dateCannotBePast": "Cannot select a date in the past",
+      "dateExceedsSixMonths": "Cannot select a date more than 6 months from today (max: {maxDate})",
+      "selectStartDateFirst": "Please select a start date first",
+      "rangeExceedsSixMonths": "End date cannot be more than 6 months after start date (max: {maxDate})"
     },
     "customReason": "Custom Reason",
     "customReasonHint": "Please describe your reason for requesting permission",
     "customReasonPlaceholder": "Enter your custom reason here...",
+    "rangeLimitHint": "Maximum range: 6 calendar months",
     "samples": {
       "mezmu": "MezmuT That",
       "kedamay": "Kedamay Course",

@@ -88,6 +88,12 @@
       "selectStartDateFirst": "እባክዎ በመጀመሪያ የመጀመሪያ ቀን ይምረጡ",
       "rangeExceedsSixMonths": "የመጨረሻ ቀን ከመጀመሪያ ቀን በላይ 6 ወራት መሆን አይችልም (ከፍተኛ: {maxDate})"
     },
+    "dateLimitHint": "ከዛሬ ጀምሮ ባሉት 6 ወራት ውስጥ ብቻ ቀን መምረጥ ይችላሉ (ከፍተኛ: {maxDate})",
+    "tooltips": {
+      "dateExceedsLimit": "ከ {maxDate} በላይ ቀን መምረጥ አይቻልም (የ6 ወር ገደብ)",
+      "endDateBeforeStart": "የመጨረሻ ቀን ከመጀመሪያ ቀን በፊት ሊሆን አይችልም",
+      "rangeExceedsLimit": "የቀን ክልል ከ6 ወራት መብለጥ አይችልም (ከፍተኛ: {maxDate})"
+    },
     "customReason": "የራስዎ ምክንያት",
     "customReasonHint": "እባክዎ ለፈቃድ ጥያቄዎ ምክንያት ይግለጹ",
     "customReasonPlaceholder": "የራስዎን ምክንያት እዚህ ያስገቡ...",

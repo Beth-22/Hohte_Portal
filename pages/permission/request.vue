@@ -107,15 +107,24 @@
         <div class="date-input-section">
           <div v-if="durationType === 'specific'" class="single-date-input">
             <p class="date-hint">{{ t('requestStatus.singleDateHint') }}</p>
-            <input
-              type="date"
-              v-model="formData.specificDate"
-              :min="minDate"
-              class="date-input"
-              :class="{ error: errors.specificDate }"
-              @change="validateSpecificDate"
-            />
+            <div class="date-input-wrapper">
+              <input
+                type="date"
+                v-model="formData.specificDate"
+                :min="minDate"
+                :max="maxStartDate"
+                class="date-input"
+                :class="{ error: errors.specificDate }"
+                @change="validateSpecificDate"
+                @input="showDateTooltip = true"
+                @blur="showDateTooltip = false"
+              />
+              <div v-if="showDateTooltip && formData.specificDate > maxStartDate" class="tooltip-message">
+                ⚠️ {{ t('requestStatus.tooltips.dateExceedsLimit', { maxDate: formatDateForDisplay(maxStartDate) }) }}
+              </div>
+            </div>
             <span v-if="errors.specificDate" class="error-message">{{ errors.specificDate }}</span>
+            <div class="info-hint">{{ t('requestStatus.dateLimitHint', { maxDate: formatDateForDisplay(maxStartDate) }) }}</div>
           </div>
 
           <div v-else class="date-range-input">
@@ -123,29 +132,46 @@
             <div class="range-hint-text">{{ t('requestStatus.rangeLimitHint') }}</div>
             <div class="range-inputs">
               <div class="range-field">
-                <input
-                  type="date"
-                  v-model="formData.startDate"
-                  :min="minDate"
-                  :max="maxStartDate"
-                  :placeholder="t('requestStatus.startDate')"
-                  class="date-input"
-                  :class="{ error: errors.startDate }"
-                  @change="validateStartDate"
-                />
+                <div class="date-input-wrapper">
+                  <input
+                    type="date"
+                    v-model="formData.startDate"
+                    :min="minDate"
+                    :max="maxStartDate"
+                    :placeholder="t('requestStatus.startDate')"
+                    class="date-input"
+                    :class="{ error: errors.startDate }"
+                    @change="validateStartDate"
+                    @input="showStartDateTooltip = true"
+                    @blur="showStartDateTooltip = false"
+                  />
+                  <div v-if="showStartDateTooltip && formData.startDate > maxStartDate" class="tooltip-message">
+                    ⚠️ {{ t('requestStatus.tooltips.dateExceedsLimit', { maxDate: formatDateForDisplay(maxStartDate) }) }}
+                  </div>
+                </div>
                 <span v-if="errors.startDate" class="error-message">{{ errors.startDate }}</span>
               </div>
               <div class="range-field">
-                <input
-                  type="date"
-                  v-model="formData.endDate"
-                  :min="minEndDate"
-                  :max="maxEndDate"
-                  :placeholder="t('requestStatus.endDate')"
-                  class="date-input"
-                  :class="{ error: errors.endDate }"
-                  @change="validateEndDate"
-                />
+                <div class="date-input-wrapper">
+                  <input
+                    type="date"
+                    v-model="formData.endDate"
+                    :min="minEndDate"
+                    :max="maxEndDate"
+                    :placeholder="t('requestStatus.endDate')"
+                    class="date-input"
+                    :class="{ error: errors.endDate }"
+                    @change="validateEndDate"
+                    @input="showEndDateTooltip = true"
+                    @blur="showEndDateTooltip = false"
+                  />
+                  <div v-if="showEndDateTooltip && formData.endDate && formData.endDate < formData.startDate" class="tooltip-message">
+                    ⚠️ {{ t('requestStatus.tooltips.endDateBeforeStart') }}
+                  </div>
+                  <div v-if="showEndDateTooltip && formData.endDate && maxEndDate && formData.endDate > maxEndDate" class="tooltip-message">
+                    ⚠️ {{ t('requestStatus.tooltips.rangeExceedsLimit', { maxDate: formatDateForDisplay(maxEndDate) }) }}
+                  </div>
+                </div>
                 <span v-if="errors.endDate" class="error-message">{{ errors.endDate }}</span>
               </div>
             </div>
@@ -187,6 +213,10 @@ const { toasts, success, error: showError, removeToast } = useToast()
 
 const durationType = ref('specific')
 const isSubmitting = ref(false)
+const showDateTooltip = ref(false)
+const showStartDateTooltip = ref(false)
+const showEndDateTooltip = ref(false)
+
 const formData = ref({
   course: '',
   reason: '',
@@ -212,6 +242,17 @@ const getTodayLocal = () => {
   const month = String(today.getMonth() + 1).padStart(2, '0')
   const day = String(today.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+// Format date for display (YYYY-MM-DD to readable format)
+const formatDateForDisplay = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleDateString(locale.value, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
 }
 
 const minDate = ref(getTodayLocal())
@@ -255,10 +296,14 @@ const isCustomReason = computed(() => {
   return selectedReason?.translationKey === 'custom'
 })
 
-// Validate specific date (can't be in the past)
+// Validate specific date (can't be in the past or > 6 months)
 const validateSpecificDate = () => {
   if (formData.value.specificDate && formData.value.specificDate < minDate.value) {
     errors.value.specificDate = t('requestStatus.errors.dateCannotBePast')
+    return false
+  }
+  if (formData.value.specificDate && maxStartDate.value && formData.value.specificDate > maxStartDate.value) {
+    errors.value.specificDate = t('requestStatus.errors.dateExceedsSixMonths', { maxDate: formatDateForDisplay(maxStartDate.value) })
     return false
   }
   errors.value.specificDate = ''
@@ -278,7 +323,7 @@ const validateStartDate = () => {
   }
   
   if (maxStartDate.value && formData.value.startDate > maxStartDate.value) {
-    errors.value.startDate = t('requestStatus.errors.dateExceedsSixMonths', { maxDate: maxStartDate.value })
+    errors.value.startDate = t('requestStatus.errors.dateExceedsSixMonths', { maxDate: formatDateForDisplay(maxStartDate.value) })
     return false
   }
   
@@ -316,7 +361,7 @@ const validateEndDate = () => {
   }
   
   if (maxEndDate.value && formData.value.endDate > maxEndDate.value) {
-    errors.value.endDate = t('requestStatus.errors.rangeExceedsSixMonths', { maxDate: maxEndDate.value })
+    errors.value.endDate = t('requestStatus.errors.rangeExceedsSixMonths', { maxDate: formatDateForDisplay(maxEndDate.value) })
     return false
   }
   
@@ -469,6 +514,19 @@ onMounted(async () => {
       fetchPermissionReasons()
     ])
     console.log('Data fetched successfully')
+    
+    // Add default reasons if API returns empty
+    if (permissionReasons.value.length === 0) {
+      console.log('API returned no reasons, using default options')
+      permissionReasons.value = [
+        { value: 'health_issue', translationKey: 'health_issue', category: 'Health Issue' },
+        { value: 'family_emergency', translationKey: 'family_emergency', category: 'Family Emergency' },
+        { value: 'sickness', translationKey: 'sickness', category: 'Sickness' },
+        { value: 'personal_matter', translationKey: 'personal_matter', category: 'Personal Matter' },
+        { value: 'custom', translationKey: 'custom', category: 'Custom' },
+        { value: 'other', translationKey: 'other', category: 'Other' }
+      ]
+    }
     
     const hasCustomOption = permissionReasons.value.some(reason => 
       reason.translationKey === 'custom' || reason.category?.toLowerCase() === 'custom'
@@ -764,6 +822,18 @@ onMounted(async () => {
   border-radius: 20px;
 }
 
+.info-hint {
+  font-size: 12px;
+  color: #b1afaf;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.date-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .date-input {
   width: 100%;
   padding: 12px 15px;
@@ -790,6 +860,34 @@ onMounted(async () => {
   color: #aba9a9;
 }
 
+.tooltip-message {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background-color: #333;
+  color: #FFC125;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 5px;
+  z-index: 10;
+  animation: fadeIn 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  white-space: nowrap;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .range-inputs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -801,6 +899,11 @@ onMounted(async () => {
   .range-inputs {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+  
+  .tooltip-message {
+    white-space: normal;
+    font-size: 11px;
   }
 }
 
@@ -816,7 +919,6 @@ onMounted(async () => {
   margin-top: 6px;
   font-weight: 500;
 }
-
 
 .submit-section {
   text-align: center;

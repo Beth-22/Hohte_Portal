@@ -88,6 +88,12 @@
       "selectStartDateFirst": "Please select a start date first",
       "rangeExceedsSixMonths": "End date cannot be more than 6 months after start date (max: {maxDate})"
     },
+    "dateLimitHint": "You can only select dates within 6 months from today (max: {maxDate})",
+    "tooltips": {
+      "dateExceedsLimit": "Cannot select date beyond {maxDate} (6 month limit)",
+      "endDateBeforeStart": "End date cannot be before start date",
+      "rangeExceedsLimit": "Date range cannot exceed 6 months (max: {maxDate})"
+    },
     "customReason": "Custom Reason",
     "customReasonHint": "Please describe your reason for requesting permission",
     "customReasonPlaceholder": "Enter your custom reason here...",

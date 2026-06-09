@@ -58,7 +58,7 @@
             <select v-model="formData.reason" class="select-input" :class="{ error: errors.reason }">
               <option value="" disabled selected>{{ t('requestStatus.selectReason') }}</option>
               <option v-for="reason in permissionReasons" :key="reason.value" :value="reason.value">
-                {{ reason.category }}
+                {{ t(`permissionReasons.${reason.translationKey}`) }}
               </option>
             </select>
             <span v-if="errors.reason" class="error-message">{{ errors.reason }}</span>
@@ -462,7 +462,7 @@ const submitForm = async () => {
   if (isCustomReason.value && formData.value.customReason.trim()) {
     reasonText = formData.value.customReason.trim()
   } else {
-    reasonText = selectedReason ? selectedReason.category : t('requestStatus.samples.sickness')
+    reasonText = selectedReason ? t(`permissionReasons.${selectedReason.translationKey}`) : t('requestStatus.samples.sickness')
   }
   
   const requestData = {
@@ -514,32 +514,6 @@ onMounted(async () => {
       fetchPermissionReasons()
     ])
     console.log('Data fetched successfully')
-    
-    // Add default reasons if API returns empty
-    if (permissionReasons.value.length === 0) {
-      console.log('API returned no reasons, using default options')
-      permissionReasons.value = [
-        { value: 'health_issue', translationKey: 'health_issue', category: 'Health Issue' },
-        { value: 'family_emergency', translationKey: 'family_emergency', category: 'Family Emergency' },
-        { value: 'sickness', translationKey: 'sickness', category: 'Sickness' },
-        { value: 'personal_matter', translationKey: 'personal_matter', category: 'Personal Matter' },
-        { value: 'custom', translationKey: 'custom', category: 'Custom' },
-        { value: 'other', translationKey: 'other', category: 'Other' }
-      ]
-    }
-    
-    const hasCustomOption = permissionReasons.value.some(reason => 
-      reason.translationKey === 'custom' || reason.category?.toLowerCase() === 'custom'
-    )
-    
-    if (!hasCustomOption) {
-      permissionReasons.value.push({
-        value: 'custom',
-        translationKey: 'custom',
-        category: 'Custom',
-        raw: { id: 'custom', name: 'Custom' }
-      })
-    }
     
     if (classOptions.value.length > 0) {
       formData.value.course = classOptions.value[0].id

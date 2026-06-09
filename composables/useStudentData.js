@@ -462,22 +462,35 @@ export const useStudentData = () => {
 
       console.log("Raw permission reasons data:", data);
 
+      // Map Amharic categories to translation keys
+      const categoryToKey = {
+        'ጤና ችግር': 'health_issue',
+        'የግል ጉዳይ': 'personal_matter'
+      };
+
       permissionReasons.value = Array.isArray(data)
         ? data.map((reason) => {
             const id = reason.id
               ? reason.id.toString()
               : reason.value || Math.random().toString();
+            const category = reason.category || reason.name || "";
 
             return {
               value: id,
-              translationKey: (reason.category || reason.name || "")
-                .toLowerCase()
-                .replace(/ /g, "_"),
-              category: reason.category || reason.name || "",
+              translationKey: categoryToKey[category] || 'other',
+              category: category,
               raw: reason,
             };
           })
         : [];
+
+      // Add custom reason option
+      permissionReasons.value.push({
+        value: 'custom',
+        translationKey: 'custom',
+        category: 'Custom',
+        raw: { id: 'custom', name: 'Custom' }
+      });
 
       console.log("Processed permission reasons:", permissionReasons.value);
       return permissionReasons.value;

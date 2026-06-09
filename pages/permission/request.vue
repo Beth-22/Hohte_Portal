@@ -58,7 +58,7 @@
             <select v-model="formData.reason" class="select-input" :class="{ error: errors.reason }">
               <option value="" disabled selected>{{ t('requestStatus.selectReason') }}</option>
               <option v-for="reason in permissionReasons" :key="reason.value" :value="reason.value">
-                {{ t(`permissionReasons.${reason.translationKey}`) }}
+                {{ reason.category }}
               </option>
             </select>
             <span v-if="errors.reason" class="error-message">{{ errors.reason }}</span>
@@ -462,7 +462,7 @@ const submitForm = async () => {
   if (isCustomReason.value && formData.value.customReason.trim()) {
     reasonText = formData.value.customReason.trim()
   } else {
-    reasonText = selectedReason ? t(`permissionReasons.${selectedReason.translationKey}`) : t('requestStatus.samples.sickness')
+    reasonText = selectedReason ? selectedReason.category : t('requestStatus.samples.sickness')
   }
   
   const requestData = {

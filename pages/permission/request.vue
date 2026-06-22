@@ -410,15 +410,25 @@ const submitForm = async () => {
 
   const selectedCourse = classOptions.value.find(c => c.id === formData.value.course)
   
+  // Prepare dates based on duration type
+  let startDate, endDate
+  
+  if (durationType.value === 'specific') {
+    startDate = formData.value.specificDate
+    endDate = formData.value.specificDate
+  } else {
+    startDate = formData.value.startDate
+    endDate = formData.value.endDate
+  }
+  
   const requestData = {
     title: formData.value.reason.trim(),
     course: selectedCourse?.name || 'Class',
     courseId: formData.value.course,
     reason: formData.value.reason.trim(),
     durationType: durationType.value,
-    specificDate: formData.value.specificDate,
-    startDate: formData.value.startDate,
-    endDate: formData.value.endDate,
+    startDate: startDate,
+    endDate: endDate,
     reasonId: null // No predefined reason ID
   }
 

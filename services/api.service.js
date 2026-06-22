@@ -189,10 +189,6 @@ export class ApiService {
     return this.request("/api/v1/student/attendance/summary");
   }
 
-  async getPermissionReasons() {
-    return this.request("/api/v1/student/config/permission-reasons");
-  }
-
   async getClassOptions() {
     return this.request("/api/v1/student/config/classes/options");
   }
@@ -206,9 +202,17 @@ export class ApiService {
   }
 
   async createPermissionRequest(data) {
+    // Clean up data - remove any undefined or null values
+    const cleanData = {};
+    Object.keys(data).forEach(key => {
+      if (data[key] !== undefined && data[key] !== null) {
+        cleanData[key] = data[key];
+      }
+    });
+
     return this.request("/api/v1/student/permission-requests", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(cleanData),
     });
   }
 

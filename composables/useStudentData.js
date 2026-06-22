@@ -9,7 +9,6 @@ export const useStudentData = () => {
   const classes = ref([]);
   const permissionRequests = ref([]);
   const attendance = ref(null);
-  const permissionReasons = ref([]);
   const classOptions = ref([]);
   const isLoading = ref(false);
   const error = ref(null);
@@ -450,58 +449,6 @@ export const useStudentData = () => {
     }
   };
 
-  const fetchPermissionReasons = async () => {
-    try {
-      if (!checkAuth()) {
-        throw new Error("Not authenticated");
-      }
-
-      error.value = null;
-      console.log("Fetching permission reasons...");
-      const data = await apiService.getPermissionReasons();
-
-      console.log("Raw permission reasons data:", data);
-
-      // Map Amharic categories to translation keys
-      const categoryToKey = {
-        'ጤና ችግር': 'health_issue',
-        'የግል ጉዳይ': 'personal_matter'
-      };
-
-      permissionReasons.value = Array.isArray(data)
-        ? data.map((reason) => {
-            const id = reason.id
-              ? reason.id.toString()
-              : reason.value || Math.random().toString();
-            const category = reason.category || reason.name || "";
-
-            return {
-              value: id,
-              translationKey: categoryToKey[category] || 'other',
-              category: category,
-              raw: reason,
-            };
-          })
-        : [];
-
-      // Add custom reason option
-      permissionReasons.value.push({
-        value: 'custom',
-        translationKey: 'custom',
-        category: 'Custom',
-        raw: { id: 'custom', name: 'Custom' }
-      });
-
-      console.log("Processed permission reasons:", permissionReasons.value);
-      return permissionReasons.value;
-    } catch (err) {
-      error.value = err.message;
-      console.error("Error fetching permission reasons:", err);
-      permissionReasons.value = [];
-      return permissionReasons.value;
-    }
-  };
-
   const fetchClassOptions = async () => {
     try {
       if (!checkAuth()) {
@@ -541,9 +488,13 @@ export const useStudentData = () => {
         class_id: parseInt(requestData.courseId),
         start_date: requestData.startDate || requestData.specificDate,
         end_date: requestData.endDate || requestData.specificDate,
-        reason: requestData.note || requestData.reason,
-        permission_reason_id: parseInt(requestData.reasonId || 1),
+        reason: requestData.reason, // Custom reason text from textarea
       };
+
+      // Only add permission_reason_id if it exists and is not null
+      if (requestData.reasonId) {
+        apiData.permission_reason_id = parseInt(requestData.reasonId);
+      }
 
       console.log("API payload:", apiData);
 
@@ -661,7 +612,8 @@ export const useStudentData = () => {
         fetchPermissionRequests(),
       ]);
 
-      Promise.all([fetchPermissionReasons(), fetchClassOptions()]).catch(
+      // Only fetch class options (permission reasons no longer needed)
+      fetchClassOptions().catch(
         (err) => console.error("Background data fetch error:", err)
       );
 
@@ -686,7 +638,6 @@ export const useStudentData = () => {
     courses: currentClasses,
     permissionRequests: currentRequests,
     attendance,
-    permissionReasons,
     classOptions,
     pendingRequestsCount,
     isLoading,
@@ -696,7 +647,6 @@ export const useStudentData = () => {
     fetchClasses,
     fetchAttendance,
     fetchPermissionRequests,
-    fetchPermissionReasons,
     fetchClassOptions,
     submitPermissionRequest,
     cancelPermissionRequest,

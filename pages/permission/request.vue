@@ -50,37 +50,24 @@
             </select>
             <span v-if="errors.course" class="error-message">{{ errors.course }}</span>
           </div>
+        </div>
 
-          <div class="form-field">
-            <div class="field-header">
-              <span class="field-label">{{ t('requestStatus.reason') }}</span>
-            </div>
-            <select v-model="formData.reason" class="select-input" :class="{ error: errors.reason }">
-              <option value="" disabled selected>{{ t('requestStatus.selectReason') }}</option>
-              <option v-for="reason in permissionReasons" :key="reason.value" :value="reason.value">
-                {{ t(`permissionReasons.${reason.translationKey}`) }}
-              </option>
-            </select>
-            <span v-if="errors.reason" class="error-message">{{ errors.reason }}</span>
+        <div class="form-field">
+          <div class="field-header">
+            <span class="field-label">{{ t('requestStatus.reason') }}</span>
+            <span class="required-asterisk">*</span>
           </div>
+          <p class="custom-reason-hint">{{ t('requestStatus.customReasonHint') }}</p>
+          <textarea
+            v-model="formData.reason"
+            class="custom-reason-textarea"
+            rows="3"
+            :placeholder="t('requestStatus.customReasonPlaceholder')"
+            :class="{ error: errors.reason }"
+            @input="clearError('reason')"
+          ></textarea>
+          <span v-if="errors.reason" class="error-message">{{ errors.reason }}</span>
         </div>
-      </div>
-
-      <div v-if="isCustomReason" class="custom-reason-section">
-        <div class="field-header">
-          <span class="field-label">{{ t('requestStatus.customReason') }}:</span>
-          <span class="required-asterisk">*</span>
-        </div>
-        <p class="custom-reason-hint">{{ t('requestStatus.customReasonHint') }}</p>
-        <textarea
-          v-model="formData.customReason"
-          class="custom-reason-textarea"
-          rows="3"
-          :placeholder="t('requestStatus.customReasonPlaceholder')"
-          :class="{ error: errors.customReason }"
-          @input="clearError('customReason')"
-        ></textarea>
-        <span v-if="errors.customReason" class="error-message">{{ errors.customReason }}</span>
       </div>
 
       <div class="duration-section">
@@ -201,10 +188,8 @@ const { locale, t, setLocale } = useLanguage()
 const { goBack } = useNavigation()
 const { 
   classOptions, 
-  permissionReasons, 
   submitPermissionRequest,
   fetchClassOptions,
-  fetchPermissionReasons,
   isLoading 
 } = useStudentData()
 const { getSchoolLogo, getSchoolName } = useSchool()
@@ -220,7 +205,6 @@ const showEndDateTooltip = ref(false)
 const formData = ref({
   course: '',
   reason: '',
-  customReason: '',
   specificDate: '',
   startDate: '',
   endDate: ''
@@ -229,7 +213,6 @@ const formData = ref({
 const errors = ref({
   course: '',
   reason: '',
-  customReason: '',
   specificDate: '',
   startDate: '',
   endDate: ''
@@ -287,13 +270,6 @@ const maxEndDate = computed(() => {
     return addSixMonths(formData.value.startDate)
   }
   return addSixMonths(minDate.value)
-})
-
-const isCustomReason = computed(() => {
-  if (!formData.value.reason) return false
-  
-  const selectedReason = permissionReasons.value.find(r => r.value === formData.value.reason)
-  return selectedReason?.translationKey === 'custom'
 })
 
 // Validate specific date (can't be in the past or > 6 months)
@@ -369,13 +345,6 @@ const validateEndDate = () => {
   return true
 }
 
-watch(() => formData.value.reason, (newReason) => {
-  if (!isCustomReason.value) {
-    formData.value.customReason = ''
-    clearError('customReason')
-  }
-})
-
 const handleLogoError = () => {
   console.error('Logo image failed to load')
   const img = document.querySelector('.logo-image-top')
@@ -383,17 +352,6 @@ const handleLogoError = () => {
     img.src = '/assets/images/logo2-modified.png'
   }
 }
-
-watch(permissionReasons, (newReasons) => {
-  console.log('Permission reasons updated:', newReasons)
-  if (newReasons.length > 0) {
-    console.log('First reason translation:', t(`permissionReasons.${newReasons[0].translationKey}`))
-  }
-})
-
-watch(classOptions, (newOptions) => {
-  console.log('Class options updated:', newOptions)
-})
 
 const clearError = (field) => {
   if (errors.value[field]) {
@@ -413,13 +371,8 @@ const validateForm = () => {
     isValid = false
   }
 
-  if (!formData.value.reason) {
-    errors.value.reason = t('requestStatus.errors.selectReason')
-    isValid = false
-  }
-
-  if (isCustomReason.value && !formData.value.customReason.trim()) {
-    errors.value.customReason = t('requestStatus.errors.customReasonRequired')
+  if (!formData.value.reason || !formData.value.reason.trim()) {
+    errors.value.reason = t('requestStatus.errors.customReasonRequired')
     isValid = false
   }
 
@@ -456,25 +409,17 @@ const submitForm = async () => {
   }
 
   const selectedCourse = classOptions.value.find(c => c.id === formData.value.course)
-  const selectedReason = permissionReasons.value.find(r => r.value === formData.value.reason)
-  
-  let reasonText = ''
-  if (isCustomReason.value && formData.value.customReason.trim()) {
-    reasonText = formData.value.customReason.trim()
-  } else {
-    reasonText = selectedReason ? t(`permissionReasons.${selectedReason.translationKey}`) : t('requestStatus.samples.sickness')
-  }
   
   const requestData = {
-    title: reasonText,
+    title: formData.value.reason.trim(),
     course: selectedCourse?.name || 'Class',
     courseId: formData.value.course,
-    reason: reasonText,
+    reason: formData.value.reason.trim(),
     durationType: durationType.value,
     specificDate: formData.value.specificDate,
     startDate: formData.value.startDate,
     endDate: formData.value.endDate,
-    reasonId: formData.value.reason
+    reasonId: null // No predefined reason ID
   }
 
   console.log('Submitting request data:', requestData)
@@ -509,22 +454,11 @@ onMounted(async () => {
   console.log('Permission request page mounted')
 
   try {
-    await Promise.all([
-      fetchClassOptions(),
-      fetchPermissionReasons()
-    ])
+    await fetchClassOptions()
     console.log('Data fetched successfully')
     
     if (classOptions.value.length > 0) {
       formData.value.course = classOptions.value[0].id
-    }
-    if (permissionReasons.value.length > 0) {
-      const nonCustomReason = permissionReasons.value.find(r => r.translationKey !== 'custom')
-      if (nonCustomReason) {
-        formData.value.reason = nonCustomReason.value
-      } else {
-        formData.value.reason = permissionReasons.value[0].value
-      }
     }
   } catch (err) {
     console.error('Failed to fetch data:', err)
@@ -685,10 +619,6 @@ onMounted(async () => {
 
 .select-input.error {
   border-color: #ff3b30;
-}
-
-.custom-reason-section {
-  margin-bottom: 30px;
 }
 
 .custom-reason-hint {

@@ -86,7 +86,9 @@
       "dateCannotBePast": "ያለፈ ቀን መምረጥ አይቻልም",
       "dateExceedsSixMonths": "ከዛሬ በላይ 6 ወራት ያለፈ ቀን መምረጥ አይቻልም (ከፍተኛ: {maxDate})",
       "selectStartDateFirst": "እባክዎ በመጀመሪያ የመጀመሪያ ቀን ይምረጡ",
-      "rangeExceedsSixMonths": "የመጨረሻ ቀን ከመጀመሪያ ቀን በላይ 6 ወራት መሆን አይችልም (ከፍተኛ: {maxDate})"
+      "rangeExceedsSixMonths": "የመጨረሻ ቀን ከመጀመሪያ ቀን በላይ 6 ወራት መሆን አይችልም (ከፍተኛ: {maxDate})",
+      "notScheduledDay": "ይህ ቀን ቀጠሮ ያለው ክፍል የለውም",
+      "noScheduledDaysInRange": "በዚህ ጊዜ ውስጥ ምንም የቀጠሮ ቀናት የሉም"
     },
     "dateLimitHint": "ከዛሬ ጀምሮ ባሉት 6 ወራት ውስጥ ብቻ ቀን መምረጥ ይችላሉ (ከፍተኛ: {maxDate})",
     "tooltips": {
@@ -98,6 +100,13 @@
     "customReasonHint": "እባክዎ ለፈቃድ ጥያቄዎ ምክንያት ይግለጹ",
     "customReasonPlaceholder": "የራስዎን ምክንያት እዚህ ያስገቡ...",
     "rangeLimitHint": "ከፍተኛ የጊዜ ገደብ: 6 የቀን መቁጠሪያ ወራት",
+    "scheduledClass": "● ቀጠሮ ያለው ክፍል",
+    "classRunsOn": "ክፍል የሚካሄደው",
+    "onlyScheduledDays": "ለቀጠሮ በተያዙ ቀናት ብቻ ፈቃድ መጠየቅ ይችላሉ",
+    "upcomingScheduled": "በቅርቡ የሚመጡ የቀጠሮ ቀናት",
+    "affectedSessions": "የሚነኩ የክፍል ክፍለ ጊዜዎች",
+    "totalSessions": "ጠቅላላ ክፍለ ጊዜዎች",
+    "noScheduledDays": "በዚህ ጊዜ ውስጥ ምንም የቀጠሮ ቀናት የሉም",
     "samples": {
       "mezmu": "መዝሙር ጥብቅ",
       "kedamay": "ከዳማይ ኮርስ",

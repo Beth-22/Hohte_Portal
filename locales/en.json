@@ -86,7 +86,9 @@
       "dateCannotBePast": "Cannot select a date in the past",
       "dateExceedsSixMonths": "Cannot select a date more than 6 months from today (max: {maxDate})",
       "selectStartDateFirst": "Please select a start date first",
-      "rangeExceedsSixMonths": "End date cannot be more than 6 months after start date (max: {maxDate})"
+      "rangeExceedsSixMonths": "End date cannot be more than 6 months after start date (max: {maxDate})",
+      "notScheduledDay": "This date does not have a scheduled class",
+      "noScheduledDaysInRange": "No scheduled class days in this range"
     },
     "dateLimitHint": "You can only select dates within 6 months from today (max: {maxDate})",
     "tooltips": {
@@ -98,6 +100,13 @@
     "customReasonHint": "Please describe your reason for requesting permission",
     "customReasonPlaceholder": "Enter your custom reason here...",
     "rangeLimitHint": "Maximum range: 6 calendar months",
+    "scheduledClass": "● Scheduled class",
+    "classRunsOn": "Class runs on",
+    "onlyScheduledDays": "You can only request permission for scheduled class days",
+    "upcomingScheduled": "Upcoming scheduled dates",
+    "affectedSessions": "Affected class sessions",
+    "totalSessions": "Total sessions",
+    "noScheduledDays": "No scheduled class days in this range",
     "samples": {
       "mezmu": "MezmuT That",
       "kedamay": "Kedamay Course",

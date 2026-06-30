@@ -122,13 +122,6 @@
                   readonly
                 />
                 <span class="calendar-icon">📅</span>
-                <button 
-                  v-if="formData.specificDate" 
-                  class="clear-button" 
-                  @click.stop="clearSpecificDate"
-                >
-                  ✕
-                </button>
               </div>
               
               <!-- Calendar Dropdown -->
@@ -157,6 +150,9 @@
                       {{ day.day }}
                     </div>
                   </div>
+                  <div class="calendar-footer">
+                    <button class="clear-calendar-btn" @click="clearSpecificDate">Clear</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -184,13 +180,6 @@
                       readonly
                     />
                     <span class="calendar-icon">📅</span>
-                    <button 
-                      v-if="formData.startDate" 
-                      class="clear-button" 
-                      @click.stop="clearStartDate"
-                    >
-                      ✕
-                    </button>
                   </div>
                   
                   <div v-if="showStartCalendar" class="calendar-dropdown" :style="startDropdownStyle">
@@ -218,6 +207,9 @@
                           {{ day.day }}
                         </div>
                       </div>
+                      <div class="calendar-footer">
+                        <button class="clear-calendar-btn" @click="clearStartDate">Clear</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -237,13 +229,6 @@
                       readonly
                     />
                     <span class="calendar-icon">📅</span>
-                    <button 
-                      v-if="formData.endDate" 
-                      class="clear-button" 
-                      @click.stop="clearEndDate"
-                    >
-                      ✕
-                    </button>
                   </div>
                   
                   <div v-if="showEndCalendar" class="calendar-dropdown" :style="endDropdownStyle">
@@ -270,6 +255,9 @@
                         >
                           {{ day.day }}
                         </div>
+                      </div>
+                      <div class="calendar-footer">
+                        <button class="clear-calendar-btn" @click="clearEndDate">Clear</button>
                       </div>
                     </div>
                   </div>
@@ -312,7 +300,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
@@ -953,7 +941,7 @@ onMounted(async () => {
   padding: 20px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   position: relative;
   flex-direction: column;
@@ -1002,6 +990,7 @@ onMounted(async () => {
   position: relative;
   z-index: 1;
   overflow: visible !important;
+  margin-bottom: 40px;
 }
 
 .header-section {
@@ -1283,7 +1272,7 @@ onMounted(async () => {
 
 .date-input {
   width: 100%;
-  padding: 12px 60px 12px 15px;
+  padding: 12px 45px 12px 15px;
   border: 2px solid #e0e0e0;
   border-radius: 6px;
   font-size: 15px;
@@ -1315,24 +1304,6 @@ onMounted(async () => {
   transform: translateY(-50%);
   font-size: 18px;
   pointer-events: none;
-}
-
-.clear-button {
-  position: absolute;
-  right: 38px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #999;
-  padding: 4px;
-  z-index: 2;
-}
-
-.clear-button:hover {
-  color: #333;
 }
 
 /* Calendar Dropdown */
@@ -1455,6 +1426,29 @@ onMounted(async () => {
 .calendar-day.disabled.scheduled::after {
   background: #e0e0e0;
   border-color: #e0e0e0;
+}
+
+.calendar-footer {
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid #eee;
+  text-align: left;
+}
+
+.clear-calendar-btn {
+  background: none;
+  border: none;
+  color: #1e3971;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 8px;
+  transition: color 0.2s;
+}
+
+.clear-calendar-btn:hover {
+  color: #ff3b30;
+  text-decoration: underline;
 }
 
 /* Range Calendar */

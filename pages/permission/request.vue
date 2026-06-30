@@ -538,7 +538,7 @@ const endCalendarDays = computed(() => {
   return getRangeCalendarDays(endMonth.value, formData.value.endDate)
 })
 
-// Toggle calendars with positioning
+// Toggle calendars - using absolute positioning
 const toggleSpecificCalendar = (event) => {
   if (showSpecificCalendar.value) {
     showSpecificCalendar.value = false
@@ -546,12 +546,15 @@ const toggleSpecificCalendar = (event) => {
   }
   
   const rect = event.currentTarget.getBoundingClientRect()
+  const parentRect = event.currentTarget.closest('.date-picker-wrapper').getBoundingClientRect()
+  
   dropdownStyle.value = {
-    position: 'fixed',
-    top: (rect.bottom + window.scrollY + 4) + 'px',
-    left: (rect.left + window.scrollX) + 'px',
-    width: Math.max(rect.width, 280) + 'px',
-    zIndex: 9999
+    position: 'absolute',
+    top: '100%',
+    left: '0',
+    width: '100%',
+    zIndex: 9999,
+    marginTop: '4px'
   }
   showSpecificCalendar.value = true
 }
@@ -562,13 +565,13 @@ const toggleStartCalendar = (event) => {
     return
   }
   
-  const rect = event.currentTarget.getBoundingClientRect()
-  startDropdownStyle.value = {
-    position: 'fixed',
-    top: (rect.bottom + window.scrollY + 4) + 'px',
-    left: (rect.left + window.scrollX) + 'px',
-    width: Math.max(rect.width, 280) + 'px',
-    zIndex: 9999
+  dropdownStyle.value = {
+    position: 'absolute',
+    top: '100%',
+    left: '0',
+    width: '100%',
+    zIndex: 9999,
+    marginTop: '4px'
   }
   showStartCalendar.value = true
 }
@@ -579,13 +582,13 @@ const toggleEndCalendar = (event) => {
     return
   }
   
-  const rect = event.currentTarget.getBoundingClientRect()
-  endDropdownStyle.value = {
-    position: 'fixed',
-    top: (rect.bottom + window.scrollY + 4) + 'px',
-    left: (rect.left + window.scrollX) + 'px',
-    width: Math.max(rect.width, 280) + 'px',
-    zIndex: 9999
+  dropdownStyle.value = {
+    position: 'absolute',
+    top: '100%',
+    left: '0',
+    width: '100%',
+    zIndex: 9999,
+    marginTop: '4px'
   }
   showEndCalendar.value = true
 }
@@ -1309,15 +1312,20 @@ onMounted(async () => {
   pointer-events: none;
 }
 
-/* Calendar Dropdown */
+/* Calendar Dropdown - Now position: absolute */
 .calendar-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   min-width: 280px;
   max-height: 380px;
   overflow-y: auto;
-  width: 100%;
+  z-index: 9999;
+  margin-top: 4px;
 }
 
 .custom-calendar {

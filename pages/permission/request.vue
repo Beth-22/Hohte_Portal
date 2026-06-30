@@ -296,6 +296,9 @@
         </button>
       </div>
     </div>
+    
+    <!-- Extra spacer when calendar is open to allow scrolling -->
+    <div v-if="showSpecificCalendar || showStartCalendar || showEndCalendar" class="calendar-spacer"></div>
   </div>
 </template>
 
@@ -1587,6 +1590,13 @@ onMounted(async () => {
   transform: translateY(0);
 }
 
+/* Calendar Spacer - pushes page down when calendar is open */
+.calendar-spacer {
+  height: 400px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
 @media (max-width: 480px) {
   .form-card {
     padding: 25px 20px;
@@ -1622,6 +1632,10 @@ onMounted(async () => {
   
   .calendar-dropdown {
     min-width: 200px;
+  }
+  
+  .calendar-spacer {
+    height: 350px;
   }
 }
 </style>

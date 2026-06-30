@@ -94,7 +94,7 @@
         <!-- Schedule Info & Legend -->
         <div v-if="scheduleDays.length > 0" class="schedule-info">
           <div class="schedule-legend">
-           <!-- <span class="legend-dot"></span>--> 
+            <span class="legend-dot"></span>
             <span class="legend-text">{{ t('requestStatus.scheduledClass') }}</span>
           </div>
           <div class="schedule-days">
@@ -112,7 +112,7 @@
             <p class="date-hint">{{ t('requestStatus.singleDateHint') }}</p>
             
             <div class="date-picker-wrapper">
-              <div class="date-input-container" @click="toggleSpecificCalendar">
+              <div class="date-input-container" @click="toggleSpecificCalendar" ref="specificInputRef">
                 <input
                   type="text"
                   :value="formData.specificDate ? formatDateForDisplay(formData.specificDate) : ''"
@@ -122,10 +122,17 @@
                   readonly
                 />
                 <span class="calendar-icon">📅</span>
+                <button 
+                  v-if="formData.specificDate" 
+                  class="clear-button" 
+                  @click.stop="clearSpecificDate"
+                >
+                  ✕
+                </button>
               </div>
               
               <!-- Calendar Dropdown -->
-              <div v-if="showSpecificCalendar" class="calendar-dropdown">
+              <div v-if="showSpecificCalendar" class="calendar-dropdown" :style="dropdownStyle">
                 <div class="custom-calendar">
                   <div class="calendar-header">
                     <button class="calendar-nav" @click="prevMonth">‹</button>
@@ -167,7 +174,7 @@
               <div class="range-field">
                 <label class="range-label">{{ t('requestStatus.startDate') }}</label>
                 <div class="date-picker-wrapper">
-                  <div class="date-input-container" @click="toggleStartCalendar">
+                  <div class="date-input-container" @click="toggleStartCalendar" ref="startInputRef">
                     <input
                       type="text"
                       :value="formData.startDate ? formatDateForDisplay(formData.startDate) : ''"
@@ -177,9 +184,16 @@
                       readonly
                     />
                     <span class="calendar-icon">📅</span>
+                    <button 
+                      v-if="formData.startDate" 
+                      class="clear-button" 
+                      @click.stop="clearStartDate"
+                    >
+                      ✕
+                    </button>
                   </div>
                   
-                  <div v-if="showStartCalendar" class="calendar-dropdown">
+                  <div v-if="showStartCalendar" class="calendar-dropdown" :style="startDropdownStyle">
                     <div class="custom-calendar">
                       <div class="calendar-header">
                         <button class="calendar-nav" @click="prevRangeMonth('start')">‹</button>
@@ -213,7 +227,7 @@
               <div class="range-field">
                 <label class="range-label">{{ t('requestStatus.endDate') }}</label>
                 <div class="date-picker-wrapper">
-                  <div class="date-input-container" @click="toggleEndCalendar">
+                  <div class="date-input-container" @click="toggleEndCalendar" ref="endInputRef">
                     <input
                       type="text"
                       :value="formData.endDate ? formatDateForDisplay(formData.endDate) : ''"
@@ -223,9 +237,16 @@
                       readonly
                     />
                     <span class="calendar-icon">📅</span>
+                    <button 
+                      v-if="formData.endDate" 
+                      class="clear-button" 
+                      @click.stop="clearEndDate"
+                    >
+                      ✕
+                    </button>
                   </div>
                   
-                  <div v-if="showEndCalendar" class="calendar-dropdown">
+                  <div v-if="showEndCalendar" class="calendar-dropdown" :style="endDropdownStyle">
                     <div class="custom-calendar">
                       <div class="calendar-header">
                         <button class="calendar-nav" @click="prevRangeMonth('end')">‹</button>
@@ -291,7 +312,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
@@ -320,6 +341,16 @@ const scheduleDays = ref([])
 const showSpecificCalendar = ref(false)
 const showStartCalendar = ref(false)
 const showEndCalendar = ref(false)
+
+// Refs for input elements
+const specificInputRef = ref(null)
+const startInputRef = ref(null)
+const endInputRef = ref(null)
+
+// Dropdown position styles
+const dropdownStyle = ref({})
+const startDropdownStyle = ref({})
+const endDropdownStyle = ref({})
 
 const formData = ref({
   course: '',
@@ -516,17 +547,75 @@ const endCalendarDays = computed(() => {
   return getRangeCalendarDays(endMonth.value, formData.value.endDate)
 })
 
-// Toggle calendars
-const toggleSpecificCalendar = () => {
-  showSpecificCalendar.value = !showSpecificCalendar.value
+// Toggle calendars with positioning
+const toggleSpecificCalendar = (event) => {
+  if (showSpecificCalendar.value) {
+    showSpecificCalendar.value = false
+    return
+  }
+  
+  const rect = event.currentTarget.getBoundingClientRect()
+  dropdownStyle.value = {
+    position: 'fixed',
+    top: (rect.bottom + window.scrollY + 4) + 'px',
+    left: (rect.left + window.scrollX) + 'px',
+    width: Math.max(rect.width, 280) + 'px',
+    zIndex: 9999
+  }
+  showSpecificCalendar.value = true
 }
 
-const toggleStartCalendar = () => {
-  showStartCalendar.value = !showStartCalendar.value
+const toggleStartCalendar = (event) => {
+  if (showStartCalendar.value) {
+    showStartCalendar.value = false
+    return
+  }
+  
+  const rect = event.currentTarget.getBoundingClientRect()
+  startDropdownStyle.value = {
+    position: 'fixed',
+    top: (rect.bottom + window.scrollY + 4) + 'px',
+    left: (rect.left + window.scrollX) + 'px',
+    width: Math.max(rect.width, 280) + 'px',
+    zIndex: 9999
+  }
+  showStartCalendar.value = true
 }
 
-const toggleEndCalendar = () => {
-  showEndCalendar.value = !showEndCalendar.value
+const toggleEndCalendar = (event) => {
+  if (showEndCalendar.value) {
+    showEndCalendar.value = false
+    return
+  }
+  
+  const rect = event.currentTarget.getBoundingClientRect()
+  endDropdownStyle.value = {
+    position: 'fixed',
+    top: (rect.bottom + window.scrollY + 4) + 'px',
+    left: (rect.left + window.scrollX) + 'px',
+    width: Math.max(rect.width, 280) + 'px',
+    zIndex: 9999
+  }
+  showEndCalendar.value = true
+}
+
+// Clear functions
+const clearSpecificDate = () => {
+  formData.value.specificDate = ''
+  errors.value.specificDate = ''
+  showSpecificCalendar.value = false
+}
+
+const clearStartDate = () => {
+  formData.value.startDate = ''
+  errors.value.startDate = ''
+  showStartCalendar.value = false
+}
+
+const clearEndDate = () => {
+  formData.value.endDate = ''
+  errors.value.endDate = ''
+  showEndCalendar.value = false
 }
 
 const closeDropdowns = () => {
@@ -603,7 +692,7 @@ const getScheduledDatesInRange = computed(() => {
   return dates
 })
 
-// Load schedule for selected class - FIXED to use raw API endpoint
+// Load schedule for selected class
 const loadClassSchedule = async (classId) => {
   try {
     if (!classId) {
@@ -613,7 +702,6 @@ const loadClassSchedule = async (classId) => {
     
     console.log('Loading schedule for class:', classId)
     
-    // Use the raw API endpoint directly
     const response = await apiService.request(`/api/v1/student/classes/${classId}`)
     
     console.log('Class API response:', response)
@@ -1195,7 +1283,7 @@ onMounted(async () => {
 
 .date-input {
   width: 100%;
-  padding: 12px 40px 12px 15px;
+  padding: 12px 60px 12px 15px;
   border: 2px solid #e0e0e0;
   border-radius: 6px;
   font-size: 15px;
@@ -1229,17 +1317,31 @@ onMounted(async () => {
   pointer-events: none;
 }
 
+.clear-button {
+  position: absolute;
+  right: 38px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #999;
+  padding: 4px;
+  z-index: 2;
+}
+
+.clear-button:hover {
+  color: #333;
+}
+
 /* Calendar Dropdown */
 .calendar-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 9999;
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   min-width: 280px;
-  max-height: 350px;
+  max-height: 380px;
   overflow-y: auto;
   width: 100%;
 }
@@ -1379,8 +1481,6 @@ onMounted(async () => {
 
 .range-field .calendar-dropdown {
   min-width: 250px;
-  left: 0;
-  right: 0;
 }
 
 .range-field .custom-calendar {

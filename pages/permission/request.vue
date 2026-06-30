@@ -297,14 +297,14 @@ import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
 import { useToast } from '~/composables/useToast'
 import { useSchool } from '~/composables/useSchool'
+import { apiService } from '~/services/api.service'
 import ToastNotification from '~/components/ToastNotification.vue'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameMonth, isToday, isBefore, isAfter, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, addDays, getDate, getMonth, getYear } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore, isAfter, addMonths, subMonths, startOfWeek, endOfWeek, getDate, getMonth, getYear } from 'date-fns'
 
 const { locale, t, setLocale } = useLanguage()
 const { goBack } = useNavigation()
 const { 
   classOptions, 
-  classes,
   submitPermissionRequest,
   fetchClassOptions,
   fetchClasses,
@@ -381,13 +381,6 @@ const maxStartDate = computed(() => {
   return addSixMonths(minDate.value)
 })
 
-const minEndDate = computed(() => {
-  if (durationType.value === 'range' && formData.value.startDate) {
-    return formData.value.startDate
-  }
-  return minDate.value
-})
-
 const maxEndDate = computed(() => {
   if (durationType.value === 'range' && formData.value.startDate) {
     return addSixMonths(formData.value.startDate)
@@ -425,7 +418,6 @@ const getCalendarDays = (monthDate) => {
     const isScheduled = isScheduledDate(date)
     const isSelected = dateStr === formData.value.specificDate
     
-    // Check if date is within 6 months from today
     const maxDate = new Date(maxStartDate.value)
     const isDisabled = isPast || isAfter(date, maxDate)
     
@@ -455,14 +447,12 @@ const getRangeCalendarDays = (monthDate, selectedDate) => {
     
     let isDisabled = isPast
     
-    // Check min/max for start date
     if (selectedDate === formData.value.startDate) {
       if (isBefore(date, new Date(minDate.value)) || isAfter(date, new Date(maxStartDate.value))) {
         isDisabled = true
       }
     }
     
-    // Check min/max for end date
     if (selectedDate === formData.value.endDate) {
       if (formData.value.startDate) {
         if (isBefore(date, new Date(formData.value.startDate)) || isAfter(date, new Date(maxEndDate.value))) {
@@ -539,7 +529,6 @@ const toggleEndCalendar = () => {
   showEndCalendar.value = !showEndCalendar.value
 }
 
-// Close dropdowns when clicking outside
 const closeDropdowns = () => {
   showSpecificCalendar.value = false
   showStartCalendar.value = false
@@ -614,20 +603,31 @@ const getScheduledDatesInRange = computed(() => {
   return dates
 })
 
-// Load schedule for selected class
+// Load schedule for selected class - FIXED to use raw API endpoint
 const loadClassSchedule = async (classId) => {
   try {
-    // Fetch classes to get schedule data
-    const classesData = await fetchClasses()
-    const classData = classesData.find(c => c.id === classId)
+    if (!classId) {
+      scheduleDays.value = []
+      return
+    }
     
-    if (classData && classData.raw && classData.raw.schedules) {
-      const days = classData.raw.schedules.map(s => s.day_of_week).filter(Boolean)
+    console.log('Loading schedule for class:', classId)
+    
+    // Use the raw API endpoint directly
+    const response = await apiService.request(`/api/v1/student/classes/${classId}`)
+    
+    console.log('Class API response:', response)
+    
+    if (response && response.schedules && Array.isArray(response.schedules)) {
+      const days = response.schedules
+        .map(s => s.day_of_week)
+        .filter(Boolean)
+      
       scheduleDays.value = days
-      console.log('Schedule days loaded:', days)
+      console.log('✅ Schedule days loaded:', days)
     } else {
       scheduleDays.value = []
-      console.log('No schedule found for class')
+      console.log('No schedules found in response')
     }
   } catch (err) {
     console.error('Failed to load class schedule:', err)
@@ -846,7 +846,6 @@ onMounted(async () => {
       await loadClassSchedule(formData.value.course)
     }
     
-    // Close dropdowns on click outside
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.date-picker-wrapper')) {
         closeDropdowns()
@@ -1235,6 +1234,9 @@ onMounted(async () => {
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   min-width: 280px;
+  max-height: 400px;
+  overflow-y: auto;
+  width: 100%;
 }
 
 .custom-calendar {

@@ -110,36 +110,35 @@
           <!-- Specific Date -->
           <div v-if="durationType === 'specific'" class="single-date-input">
             <p class="date-hint">{{ t('requestStatus.singleDateHint') }}</p>
-            <div class="date-input-wrapper">
-              <ClientOnly>
-                <VueDatePicker
-                  v-model="formData.specificDate"
-                  :min-date="minDate"
-                  :max-date="maxStartDate"
-                  :enable-time-picker="false"
-                  :auto-apply="true"
-                  :clearable="false"
-                  :format="dateFormat"
-                  :day-cell-class="getDayCellClass"
-                  @update:model-value="validateSpecificDate"
-                  @open="showDateTooltip = false"
+            
+            <!-- Custom Calendar -->
+            <div class="custom-calendar">
+              <div class="calendar-header">
+                <button class="calendar-nav" @click="prevMonth">‹</button>
+                <span class="calendar-month">{{ currentMonthName }} {{ currentYear }}</span>
+                <button class="calendar-nav" @click="nextMonth">›</button>
+              </div>
+              <div class="calendar-grid">
+                <div class="calendar-weekday" v-for="day in weekDays" :key="day">{{ day }}</div>
+                <div
+                  v-for="day in calendarDays"
+                  :key="day.date"
+                  class="calendar-day"
+                  :class="{
+                    'other-month': day.isOtherMonth,
+                    'scheduled': day.isScheduled,
+                    'selected': day.isSelected,
+                    'past': day.isPast,
+                    'disabled': day.isDisabled
+                  }"
+                  @click="selectSpecificDate(day)"
                 >
-                  <template #trigger>
-                    <input
-                      type="text"
-                      :value="formData.specificDate ? formatDateForDisplay(formData.specificDate) : ''"
-                      placeholder="Select date"
-                      class="date-input"
-                      :class="{ error: errors.specificDate }"
-                      readonly
-                    />
-                  </template>
-                </VueDatePicker>
-              </ClientOnly>
-              <div v-if="showDateTooltip && formData.specificDate > maxStartDate" class="tooltip-message">
-                ⚠️ {{ t('requestStatus.tooltips.dateExceedsLimit', { maxDate: formatDateForDisplay(maxStartDate) }) }}
+                  {{ day.day }}
+                  <span v-if="day.isScheduled" class="scheduled-dot"></span>
+                </div>
               </div>
             </div>
+
             <span v-if="errors.specificDate" class="error-message">{{ errors.specificDate }}</span>
             <div class="info-hint">{{ t('requestStatus.dateLimitHint', { maxDate: formatDateForDisplay(maxStartDate) }) }}</div>
           </div>
@@ -148,78 +147,71 @@
           <div v-else class="date-range-input">
             <p class="date-hint">{{ t('requestStatus.dateRangeHint') }}</p>
             <div class="range-hint-text">{{ t('requestStatus.rangeLimitHint') }}</div>
-            <div class="range-inputs">
+            
+            <div class="range-calendars">
               <div class="range-field">
-                <div class="date-input-wrapper">
-                  <ClientOnly>
-                    <VueDatePicker
-                      v-model="formData.startDate"
-                      :min-date="minDate"
-                      :max-date="maxStartDate"
-                      :enable-time-picker="false"
-                      :auto-apply="true"
-                      :clearable="false"
-                      :format="dateFormat"
-                      :day-cell-class="getDayCellClass"
-                      @update:model-value="validateStartDate"
-                      @open="showStartDateTooltip = false"
+                <label class="range-label">{{ t('requestStatus.startDate') }}</label>
+                <div class="custom-calendar range-calendar">
+                  <div class="calendar-header">
+                    <button class="calendar-nav" @click="prevRangeMonth('start')">‹</button>
+                    <span class="calendar-month">{{ startMonthName }} {{ startYear }}</span>
+                    <button class="calendar-nav" @click="nextRangeMonth('start')">›</button>
+                  </div>
+                  <div class="calendar-grid">
+                    <div class="calendar-weekday" v-for="day in weekDays" :key="day">{{ day }}</div>
+                    <div
+                      v-for="day in startCalendarDays"
+                      :key="day.date"
+                      class="calendar-day"
+                      :class="{
+                        'other-month': day.isOtherMonth,
+                        'scheduled': day.isScheduled,
+                        'selected': day.isSelected,
+                        'past': day.isPast,
+                        'disabled': day.isDisabled
+                      }"
+                      @click="selectStartDate(day)"
                     >
-                      <template #trigger>
-                        <input
-                          type="text"
-                          :value="formData.startDate ? formatDateForDisplay(formData.startDate) : ''"
-                          :placeholder="t('requestStatus.startDate')"
-                          class="date-input"
-                          :class="{ error: errors.startDate }"
-                          readonly
-                        />
-                      </template>
-                    </VueDatePicker>
-                  </ClientOnly>
-                  <div v-if="showStartDateTooltip && formData.startDate > maxStartDate" class="tooltip-message">
-                    ⚠️ {{ t('requestStatus.tooltips.dateExceedsLimit', { maxDate: formatDateForDisplay(maxStartDate) }) }}
+                      {{ day.day }}
+                      <span v-if="day.isScheduled" class="scheduled-dot"></span>
+                    </div>
                   </div>
                 </div>
                 <span v-if="errors.startDate" class="error-message">{{ errors.startDate }}</span>
               </div>
+
               <div class="range-field">
-                <div class="date-input-wrapper">
-                  <ClientOnly>
-                    <VueDatePicker
-                      v-model="formData.endDate"
-                      :min-date="minEndDate"
-                      :max-date="maxEndDate"
-                      :enable-time-picker="false"
-                      :auto-apply="true"
-                      :clearable="false"
-                      :format="dateFormat"
-                      :day-cell-class="getDayCellClass"
-                      @update:model-value="validateEndDate"
-                      @open="showEndDateTooltip = false"
-                    >
-                      <template #trigger>
-                        <input
-                          type="text"
-                          :value="formData.endDate ? formatDateForDisplay(formData.endDate) : ''"
-                          :placeholder="t('requestStatus.endDate')"
-                          class="date-input"
-                          :class="{ error: errors.endDate }"
-                          readonly
-                        />
-                      </template>
-                    </VueDatePicker>
-                  </ClientOnly>
-                  <div v-if="showEndDateTooltip && formData.endDate && formData.endDate < formData.startDate" class="tooltip-message">
-                    ⚠️ {{ t('requestStatus.tooltips.endDateBeforeStart') }}
+                <label class="range-label">{{ t('requestStatus.endDate') }}</label>
+                <div class="custom-calendar range-calendar">
+                  <div class="calendar-header">
+                    <button class="calendar-nav" @click="prevRangeMonth('end')">‹</button>
+                    <span class="calendar-month">{{ endMonthName }} {{ endYear }}</span>
+                    <button class="calendar-nav" @click="nextRangeMonth('end')">›</button>
                   </div>
-                  <div v-if="showEndDateTooltip && formData.endDate && maxEndDate && formData.endDate > maxEndDate" class="tooltip-message">
-                    ⚠️ {{ t('requestStatus.tooltips.rangeExceedsLimit', { maxDate: formatDateForDisplay(maxEndDate) }) }}
+                  <div class="calendar-grid">
+                    <div class="calendar-weekday" v-for="day in weekDays" :key="day">{{ day }}</div>
+                    <div
+                      v-for="day in endCalendarDays"
+                      :key="day.date"
+                      class="calendar-day"
+                      :class="{
+                        'other-month': day.isOtherMonth,
+                        'scheduled': day.isScheduled,
+                        'selected': day.isSelected,
+                        'past': day.isPast,
+                        'disabled': day.isDisabled
+                      }"
+                      @click="selectEndDate(day)"
+                    >
+                      {{ day.day }}
+                      <span v-if="day.isScheduled" class="scheduled-dot"></span>
+                    </div>
                   </div>
                 </div>
                 <span v-if="errors.endDate" class="error-message">{{ errors.endDate }}</span>
               </div>
             </div>
-            
+
             <!-- Range Summary -->
             <div v-if="formData.startDate && formData.endDate" class="range-summary">
               <div class="range-summary-label">{{ t('requestStatus.affectedSessions') }}:</div>
@@ -254,15 +246,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useLanguage } from '~/composables/useLanguage'
 import { useNavigation } from '~/composables/useNavigation'
 import { useStudentData } from '~/composables/useStudentData'
 import { useToast } from '~/composables/useToast'
 import { useSchool } from '~/composables/useSchool'
 import ToastNotification from '~/components/ToastNotification.vue'
-import VueDatePicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameMonth, isToday, isBefore, isAfter, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, addDays, getDate, getMonth, getYear } from 'date-fns'
 
 const { locale, t, setLocale } = useLanguage()
 const { goBack } = useNavigation()
@@ -278,11 +269,7 @@ const { toasts, success, error: showError, removeToast } = useToast()
 
 const durationType = ref('specific')
 const isSubmitting = ref(false)
-const showDateTooltip = ref(false)
-const showStartDateTooltip = ref(false)
-const showEndDateTooltip = ref(false)
 const scheduleDays = ref([])
-const selectedClassSchedule = ref(null)
 
 const formData = ref({
   course: '',
@@ -300,18 +287,14 @@ const errors = ref({
   endDate: ''
 })
 
-// Date format for display
-const dateFormat = (date) => {
-  if (!date) return ''
-  const d = new Date(date)
-  return d.toLocaleDateString(locale.value, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
+// Calendar state
+const currentMonth = ref(new Date())
+const startMonth = ref(new Date())
+const endMonth = ref(new Date())
 
-// Get today's date in local timezone (YYYY-MM-DD format)
+const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+// Get today's date
 const getTodayLocal = () => {
   const today = new Date()
   const year = today.getFullYear()
@@ -320,7 +303,7 @@ const getTodayLocal = () => {
   return `${year}-${month}-${day}`
 }
 
-// Format date for display (YYYY-MM-DD to readable format)
+// Format date for display
 const formatDateForDisplay = (dateString) => {
   if (!dateString) return ''
   const date = new Date(dateString)
@@ -333,7 +316,7 @@ const formatDateForDisplay = (dateString) => {
 
 const minDate = ref(getTodayLocal())
 
-// Add 6 calendar months to a date
+// Add 6 calendar months
 const addSixMonths = (dateString) => {
   if (!dateString) return null
   const date = new Date(dateString)
@@ -344,12 +327,10 @@ const addSixMonths = (dateString) => {
   return `${year}-${month}-${day}`
 }
 
-// Calculate max start date (today + 6 months)
 const maxStartDate = computed(() => {
   return addSixMonths(minDate.value)
 })
 
-// Calculate min end date (must be >= start date)
 const minEndDate = computed(() => {
   if (durationType.value === 'range' && formData.value.startDate) {
     return formData.value.startDate
@@ -357,7 +338,6 @@ const minEndDate = computed(() => {
   return minDate.value
 })
 
-// Calculate max end date (start date + 6 months)
 const maxEndDate = computed(() => {
   if (durationType.value === 'range' && formData.value.startDate) {
     return addSixMonths(formData.value.startDate)
@@ -365,33 +345,182 @@ const maxEndDate = computed(() => {
   return addSixMonths(minDate.value)
 })
 
-// Format schedule days for display
+// Format schedule days
 const formatScheduleDays = computed(() => {
   if (!scheduleDays.value || scheduleDays.value.length === 0) return ''
   return scheduleDays.value.join(', ')
 })
 
-// Get day of week from date string (0=Sunday, 1=Monday, etc.)
-const getDayOfWeek = (dateString) => {
-  const date = new Date(dateString)
-  return date.getDay()
-}
-
-// Get day name from day number
+// Get day name
 const getDayName = (dayNumber) => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
   return days[dayNumber]
 }
 
-// Check if a date matches the schedule days
-const isScheduledDate = (dateString) => {
+// Check if date is scheduled
+const isScheduledDate = (date) => {
   if (!scheduleDays.value || scheduleDays.value.length === 0) return false
-  const dayOfWeek = getDayOfWeek(dateString)
-  const dayName = getDayName(dayOfWeek)
+  const dayName = getDayName(date.getDay())
   return scheduleDays.value.includes(dayName)
 }
 
-// Get scheduled dates within selected range
+// Get calendar days
+const getCalendarDays = (monthDate) => {
+  const start = startOfWeek(startOfMonth(monthDate), { weekStartsOn: 0 })
+  const end = endOfWeek(endOfMonth(monthDate), { weekStartsOn: 0 })
+  
+  return eachDayOfInterval({ start, end }).map(date => {
+    const dateStr = format(date, 'yyyy-MM-dd')
+    const isPast = isBefore(date, new Date()) && !isToday(date)
+    const isScheduled = isScheduledDate(date)
+    const isSelected = dateStr === formData.value.specificDate
+    
+    // Check if date is within 6 months from today
+    const maxDate = new Date(maxStartDate.value)
+    const isDisabled = isPast || isAfter(date, maxDate)
+    
+    return {
+      date: dateStr,
+      day: getDate(date),
+      isOtherMonth: !isSameMonth(date, monthDate),
+      isScheduled: isScheduled,
+      isSelected: isSelected,
+      isPast: isPast,
+      isDisabled: isDisabled,
+      fullDate: date
+    }
+  })
+}
+
+// Get range calendar days
+const getRangeCalendarDays = (monthDate, selectedDate) => {
+  const start = startOfWeek(startOfMonth(monthDate), { weekStartsOn: 0 })
+  const end = endOfWeek(endOfMonth(monthDate), { weekStartsOn: 0 })
+  
+  return eachDayOfInterval({ start, end }).map(date => {
+    const dateStr = format(date, 'yyyy-MM-dd')
+    const isPast = isBefore(date, new Date()) && !isToday(date)
+    const isScheduled = isScheduledDate(date)
+    const isSelected = dateStr === selectedDate
+    
+    let isDisabled = isPast
+    
+    // Check min/max for start date
+    if (selectedDate === formData.value.startDate) {
+      if (isBefore(date, new Date(minDate.value)) || isAfter(date, new Date(maxStartDate.value))) {
+        isDisabled = true
+      }
+    }
+    
+    // Check min/max for end date
+    if (selectedDate === formData.value.endDate) {
+      if (formData.value.startDate) {
+        if (isBefore(date, new Date(formData.value.startDate)) || isAfter(date, new Date(maxEndDate.value))) {
+          isDisabled = true
+        }
+      } else {
+        if (isBefore(date, new Date(minDate.value)) || isAfter(date, new Date(maxStartDate.value))) {
+          isDisabled = true
+        }
+      }
+    }
+    
+    return {
+      date: dateStr,
+      day: getDate(date),
+      isOtherMonth: !isSameMonth(date, monthDate),
+      isScheduled: isScheduled,
+      isSelected: isSelected,
+      isPast: isPast,
+      isDisabled: isDisabled,
+      fullDate: date
+    }
+  })
+}
+
+// Specific date calendar
+const currentMonthName = computed(() => {
+  return format(currentMonth.value, 'MMMM')
+})
+
+const currentYear = computed(() => {
+  return getYear(currentMonth.value)
+})
+
+const calendarDays = computed(() => {
+  return getCalendarDays(currentMonth.value)
+})
+
+// Range calendar
+const startMonthName = computed(() => {
+  return format(startMonth.value, 'MMMM')
+})
+
+const startYear = computed(() => {
+  return getYear(startMonth.value)
+})
+
+const endMonthName = computed(() => {
+  return format(endMonth.value, 'MMMM')
+})
+
+const endYear = computed(() => {
+  return getYear(endMonth.value)
+})
+
+const startCalendarDays = computed(() => {
+  return getRangeCalendarDays(startMonth.value, formData.value.startDate)
+})
+
+const endCalendarDays = computed(() => {
+  return getRangeCalendarDays(endMonth.value, formData.value.endDate)
+})
+
+// Navigation
+const prevMonth = () => {
+  currentMonth.value = subMonths(currentMonth.value, 1)
+}
+
+const nextMonth = () => {
+  currentMonth.value = addMonths(currentMonth.value, 1)
+}
+
+const prevRangeMonth = (type) => {
+  if (type === 'start') {
+    startMonth.value = subMonths(startMonth.value, 1)
+  } else {
+    endMonth.value = subMonths(endMonth.value, 1)
+  }
+}
+
+const nextRangeMonth = (type) => {
+  if (type === 'start') {
+    startMonth.value = addMonths(startMonth.value, 1)
+  } else {
+    endMonth.value = addMonths(endMonth.value, 1)
+  }
+}
+
+// Date selection
+const selectSpecificDate = (day) => {
+  if (day.isDisabled || day.isPast) return
+  formData.value.specificDate = day.date
+  validateSpecificDate()
+}
+
+const selectStartDate = (day) => {
+  if (day.isDisabled || day.isPast) return
+  formData.value.startDate = day.date
+  validateStartDate()
+}
+
+const selectEndDate = (day) => {
+  if (day.isDisabled || day.isPast) return
+  formData.value.endDate = day.date
+  validateEndDate()
+}
+
+// Get scheduled dates in range
 const getScheduledDatesInRange = computed(() => {
   if (!scheduleDays.value || scheduleDays.value.length === 0) return []
   if (!formData.value.startDate || !formData.value.endDate) return []
@@ -403,9 +532,8 @@ const getScheduledDatesInRange = computed(() => {
   let currentDate = new Date(start)
   
   while (currentDate <= end) {
-    const dateStr = currentDate.toISOString().split('T')[0]
-    if (isScheduledDate(dateStr)) {
-      dates.push(dateStr)
+    if (isScheduledDate(currentDate)) {
+      dates.push(format(currentDate, 'yyyy-MM-dd'))
     }
     currentDate.setDate(currentDate.getDate() + 1)
   }
@@ -413,30 +541,9 @@ const getScheduledDatesInRange = computed(() => {
   return dates
 })
 
-// Get day cell class for calendar
-const getDayCellClass = (date) => {
-  const dateStr = date.toISOString().split('T')[0]
-  const dayOfWeek = date.getDay()
-  const dayName = getDayName(dayOfWeek)
-  
-  // Check if it's a scheduled day
-  if (scheduleDays.value.includes(dayName)) {
-    return 'scheduled-day'
-  }
-  return ''
-}
-
 // Load schedule for selected class
 const loadClassSchedule = async (classId) => {
   try {
-    const selectedClass = classOptions.value.find(c => c.id === classId)
-    if (!selectedClass) {
-      scheduleDays.value = []
-      selectedClassSchedule.value = null
-      return
-    }
-    
-    // Fetch full class details including schedules
     const { fetchClasses } = useStudentData()
     const classesData = await fetchClasses()
     const classData = classesData.find(c => c.id === classId)
@@ -444,15 +551,12 @@ const loadClassSchedule = async (classId) => {
     if (classData && classData.raw && classData.raw.schedules) {
       const days = classData.raw.schedules.map(s => s.day_of_week).filter(Boolean)
       scheduleDays.value = days
-      selectedClassSchedule.value = classData.raw.schedules
     } else {
       scheduleDays.value = []
-      selectedClassSchedule.value = null
     }
   } catch (err) {
     console.error('Failed to load class schedule:', err)
     scheduleDays.value = []
-    selectedClassSchedule.value = null
   }
 }
 
@@ -463,7 +567,7 @@ const onClassChange = () => {
   }
 }
 
-// Validate specific date (can't be in the past or > 6 months, and must be scheduled)
+// Validation functions
 const validateSpecificDate = () => {
   if (formData.value.specificDate && formData.value.specificDate < minDate.value) {
     errors.value.specificDate = t('requestStatus.errors.dateCannotBePast')
@@ -473,7 +577,7 @@ const validateSpecificDate = () => {
     errors.value.specificDate = t('requestStatus.errors.dateExceedsSixMonths', { maxDate: formatDateForDisplay(maxStartDate.value) })
     return false
   }
-  if (formData.value.specificDate && !isScheduledDate(formData.value.specificDate)) {
+  if (formData.value.specificDate && !isScheduledDate(new Date(formData.value.specificDate))) {
     errors.value.specificDate = t('requestStatus.errors.notScheduledDay')
     return false
   }
@@ -481,7 +585,6 @@ const validateSpecificDate = () => {
   return true
 }
 
-// Validate start date (can't be in the past or > today + 6 months)
 const validateStartDate = () => {
   if (!formData.value.startDate) {
     errors.value.startDate = ''
@@ -512,7 +615,6 @@ const validateStartDate = () => {
   return true
 }
 
-// Validate end date (must be >= start date, <= start date + 6 months)
 const validateEndDate = () => {
   if (!formData.value.endDate) {
     errors.value.endDate = ''
@@ -995,88 +1097,148 @@ onMounted(async () => {
   font-style: italic;
 }
 
-.date-input-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.date-input {
-  width: 100%;
-  padding: 12px 15px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 15px;
-  color: #333;
+/* Custom Calendar */
+.custom-calendar {
   background: white;
-  outline: none;
-  transition: all 0.3s;
-  font-family: 'Inter', sans-serif;
+  border-radius: 8px;
+  padding: 12px;
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.calendar-nav {
+  background: none;
+  border: none;
+  font-size: 20px;
   cursor: pointer;
+  color: #1e3971;
+  padding: 4px 12px;
+  border-radius: 4px;
+  transition: background 0.2s;
 }
 
-.date-input:focus {
-  border-color: #FFC125;
-  box-shadow: 0 0 0 3px rgba(255, 193, 37, 0.1);
+.calendar-nav:hover {
+  background: rgba(30, 57, 113, 0.1);
 }
 
-.date-input.error {
-  border-color: #ff3b30;
+.calendar-month {
+  font-weight: 600;
+  color: #1e3971;
 }
 
-.date-input::placeholder {
-  color: #aba9a9;
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
 }
 
-.tooltip-message {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  background-color: #333;
-  color: #FFC125;
+.calendar-weekday {
+  text-align: center;
   font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  margin-bottom: 5px;
-  z-index: 10;
-  animation: fadeIn 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  white-space: nowrap;
+  font-weight: 600;
+  color: #666;
+  padding: 4px 0;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.calendar-day {
+  position: relative;
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s;
 }
 
-.range-inputs {
+.calendar-day:hover:not(.disabled):not(.past) {
+  background: rgba(255, 193, 37, 0.2);
+}
+
+.calendar-day.other-month {
+  color: #ccc;
+}
+
+.calendar-day.scheduled {
+  color: #1e3971;
+  font-weight: 500;
+}
+
+.calendar-day.scheduled::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #FFC125;
+}
+
+.calendar-day.selected {
+  background: #FFC125;
+  color: #1e3971 !important;
+  font-weight: 600;
+}
+
+.calendar-day.selected::after {
+  background: #1e3971;
+}
+
+.calendar-day.past {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.calendar-day.disabled {
+  color: #e0e0e0;
+  cursor: not-allowed;
+}
+
+.calendar-day.disabled.scheduled::after {
+  background: #e0e0e0;
+}
+
+.scheduled-dot {
+  display: none;
+}
+
+.range-calendars {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 25px;
+  gap: 20px;
   margin-top: 10px;
 }
 
 @media (max-width: 768px) {
-  .range-inputs {
+  .range-calendars {
     grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .tooltip-message {
-    white-space: normal;
-    font-size: 11px;
   }
 }
 
-.range-field {
-  width: 100%;
-  position: relative;
+.range-field .range-label {
+  display: block;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.range-calendar .custom-calendar {
+  max-width: 100%;
+}
+
+.range-calendar .calendar-day {
+  padding: 6px 2px;
+  font-size: 12px;
 }
 
 .error-message {
@@ -1203,52 +1365,14 @@ onMounted(async () => {
     width: 80px;
     height: 80px;
   }
-}
-
-/* Calendar Custom Styles - Yellow dots on scheduled days */
-:deep(.dp__calendar_day.scheduled-day) {
-  position: relative;
-  color: #FFC125 !important;
-  font-weight: 600 !important;
-}
-
-:deep(.dp__calendar_day.scheduled-day::after) {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #FFC125;
-  border: 1px solid #FFC125;
-}
-
-:deep(.dp__calendar_day.scheduled-day.dp__active_date) {
-  background-color: #FFC125 !important;
-  color: #1e3971 !important;
-}
-
-:deep(.dp__calendar_day.scheduled-day.dp__active_date::after) {
-  background-color: #1e3971;
-  border-color: #1e3971;
-}
-
-:deep(.dp__calendar_day.scheduled-day.dp__active_date:hover) {
-  background-color: #ffd54f !important;
-}
-
-:deep(.dp__calendar_day.scheduled-day:hover) {
-  background-color: rgba(255, 193, 37, 0.2);
-}
-
-:deep(.dp__calendar_day.scheduled-day.dp__date_disabled) {
-  color: #666 !important;
-}
-
-:deep(.dp__calendar_day.scheduled-day.dp__date_disabled::after) {
-  background-color: #666;
-  border-color: #666;
+  
+  .custom-calendar {
+    padding: 8px;
+  }
+  
+  .calendar-day {
+    padding: 6px 2px;
+    font-size: 12px;
+  }
 }
 </style>

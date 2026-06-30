@@ -1643,7 +1643,7 @@ onMounted(async () => {
   }
   
   .calendar-spacer {
-    height: 350px;
+    height: 250px;
   }
 }
 </style>

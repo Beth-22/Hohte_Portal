@@ -111,29 +111,31 @@
           <div v-if="durationType === 'specific'" class="single-date-input">
             <p class="date-hint">{{ t('requestStatus.singleDateHint') }}</p>
             <div class="date-input-wrapper">
-              <VueDatePicker
-                v-model="formData.specificDate"
-                :min-date="minDate"
-                :max-date="maxStartDate"
-                :enable-time-picker="false"
-                :auto-apply="true"
-                :clearable="false"
-                :format="dateFormat"
-                :day-cell-class="getDayCellClass"
-                @update:model-value="validateSpecificDate"
-                @open="showDateTooltip = false"
-              >
-                <template #trigger>
-                  <input
-                    type="text"
-                    :value="formData.specificDate ? formatDateForDisplay(formData.specificDate) : ''"
-                    placeholder="Select date"
-                    class="date-input"
-                    :class="{ error: errors.specificDate }"
-                    readonly
-                  />
-                </template>
-              </VueDatePicker>
+              <ClientOnly>
+                <VueDatePicker
+                  v-model="formData.specificDate"
+                  :min-date="minDate"
+                  :max-date="maxStartDate"
+                  :enable-time-picker="false"
+                  :auto-apply="true"
+                  :clearable="false"
+                  :format="dateFormat"
+                  :day-cell-class="getDayCellClass"
+                  @update:model-value="validateSpecificDate"
+                  @open="showDateTooltip = false"
+                >
+                  <template #trigger>
+                    <input
+                      type="text"
+                      :value="formData.specificDate ? formatDateForDisplay(formData.specificDate) : ''"
+                      placeholder="Select date"
+                      class="date-input"
+                      :class="{ error: errors.specificDate }"
+                      readonly
+                    />
+                  </template>
+                </VueDatePicker>
+              </ClientOnly>
               <div v-if="showDateTooltip && formData.specificDate > maxStartDate" class="tooltip-message">
                 ⚠️ {{ t('requestStatus.tooltips.dateExceedsLimit', { maxDate: formatDateForDisplay(maxStartDate) }) }}
               </div>
@@ -149,29 +151,31 @@
             <div class="range-inputs">
               <div class="range-field">
                 <div class="date-input-wrapper">
-                  <VueDatePicker
-                    v-model="formData.startDate"
-                    :min-date="minDate"
-                    :max-date="maxStartDate"
-                    :enable-time-picker="false"
-                    :auto-apply="true"
-                    :clearable="false"
-                    :format="dateFormat"
-                    :day-cell-class="getDayCellClass"
-                    @update:model-value="validateStartDate"
-                    @open="showStartDateTooltip = false"
-                  >
-                    <template #trigger>
-                      <input
-                        type="text"
-                        :value="formData.startDate ? formatDateForDisplay(formData.startDate) : ''"
-                        :placeholder="t('requestStatus.startDate')"
-                        class="date-input"
-                        :class="{ error: errors.startDate }"
-                        readonly
-                      />
-                    </template>
-                  </VueDatePicker>
+                  <ClientOnly>
+                    <VueDatePicker
+                      v-model="formData.startDate"
+                      :min-date="minDate"
+                      :max-date="maxStartDate"
+                      :enable-time-picker="false"
+                      :auto-apply="true"
+                      :clearable="false"
+                      :format="dateFormat"
+                      :day-cell-class="getDayCellClass"
+                      @update:model-value="validateStartDate"
+                      @open="showStartDateTooltip = false"
+                    >
+                      <template #trigger>
+                        <input
+                          type="text"
+                          :value="formData.startDate ? formatDateForDisplay(formData.startDate) : ''"
+                          :placeholder="t('requestStatus.startDate')"
+                          class="date-input"
+                          :class="{ error: errors.startDate }"
+                          readonly
+                        />
+                      </template>
+                    </VueDatePicker>
+                  </ClientOnly>
                   <div v-if="showStartDateTooltip && formData.startDate > maxStartDate" class="tooltip-message">
                     ⚠️ {{ t('requestStatus.tooltips.dateExceedsLimit', { maxDate: formatDateForDisplay(maxStartDate) }) }}
                   </div>
@@ -180,29 +184,31 @@
               </div>
               <div class="range-field">
                 <div class="date-input-wrapper">
-                  <VueDatePicker
-                    v-model="formData.endDate"
-                    :min-date="minEndDate"
-                    :max-date="maxEndDate"
-                    :enable-time-picker="false"
-                    :auto-apply="true"
-                    :clearable="false"
-                    :format="dateFormat"
-                    :day-cell-class="getDayCellClass"
-                    @update:model-value="validateEndDate"
-                    @open="showEndDateTooltip = false"
-                  >
-                    <template #trigger>
-                      <input
-                        type="text"
-                        :value="formData.endDate ? formatDateForDisplay(formData.endDate) : ''"
-                        :placeholder="t('requestStatus.endDate')"
-                        class="date-input"
-                        :class="{ error: errors.endDate }"
-                        readonly
-                      />
-                    </template>
-                  </VueDatePicker>
+                  <ClientOnly>
+                    <VueDatePicker
+                      v-model="formData.endDate"
+                      :min-date="minEndDate"
+                      :max-date="maxEndDate"
+                      :enable-time-picker="false"
+                      :auto-apply="true"
+                      :clearable="false"
+                      :format="dateFormat"
+                      :day-cell-class="getDayCellClass"
+                      @update:model-value="validateEndDate"
+                      @open="showEndDateTooltip = false"
+                    >
+                      <template #trigger>
+                        <input
+                          type="text"
+                          :value="formData.endDate ? formatDateForDisplay(formData.endDate) : ''"
+                          :placeholder="t('requestStatus.endDate')"
+                          class="date-input"
+                          :class="{ error: errors.endDate }"
+                          readonly
+                        />
+                      </template>
+                    </VueDatePicker>
+                  </ClientOnly>
                   <div v-if="showEndDateTooltip && formData.endDate && formData.endDate < formData.startDate" class="tooltip-message">
                     ⚠️ {{ t('requestStatus.tooltips.endDateBeforeStart') }}
                   </div>

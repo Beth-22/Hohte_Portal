@@ -2,12 +2,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: [
     "~/assets/css/main.css",
-    "@vuepic/vue-datepicker/dist/main.css"  // Add this line
+    "@vuepic/vue-datepicker/dist/main.css"
   ],
 
   plugins: ["~/plugins/language.client.js"],
 
-  // Add build configuration for transpilation
   build: {
     transpile: ['@vuepic/vue-datepicker']
   },

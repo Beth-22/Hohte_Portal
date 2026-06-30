@@ -94,7 +94,7 @@
         <!-- Schedule Info & Legend -->
         <div v-if="scheduleDays.length > 0" class="schedule-info">
           <div class="schedule-legend">
-            <span class="legend-dot"></span>
+           <!-- <span class="legend-dot"></span>--> 
             <span class="legend-text">{{ t('requestStatus.scheduledClass') }}</span>
           </div>
           <div class="schedule-days">
@@ -913,6 +913,7 @@ onMounted(async () => {
   max-width: 800px;
   position: relative;
   z-index: 1;
+  overflow: visible !important;
 }
 
 .header-section {
@@ -952,6 +953,7 @@ onMounted(async () => {
 
 .form-section {
   margin-bottom: 30px;
+  overflow: visible !important;
 }
 
 .form-row {
@@ -1045,6 +1047,7 @@ onMounted(async () => {
 
 .duration-section {
   margin-bottom: 40px;
+  overflow: visible !important;
 }
 
 .duration-header {
@@ -1151,6 +1154,7 @@ onMounted(async () => {
 
 .date-input-section {
   margin-top: 20px;
+  overflow: visible !important;
 }
 
 .date-hint {
@@ -1181,6 +1185,7 @@ onMounted(async () => {
 /* Date Picker Wrapper */
 .date-picker-wrapper {
   position: relative;
+  overflow: visible !important;
 }
 
 .date-input-container {
@@ -1229,12 +1234,12 @@ onMounted(async () => {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  z-index: 100;
+  z-index: 9999;
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   min-width: 280px;
-  max-height: 800px;
+  max-height: 350px;
   overflow-y: auto;
   width: 100%;
 }

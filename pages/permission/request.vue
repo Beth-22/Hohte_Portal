@@ -1234,7 +1234,7 @@ onMounted(async () => {
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   min-width: 280px;
-  max-height: 400px;
+  max-height: 800px;
   overflow-y: auto;
   width: 100%;
 }

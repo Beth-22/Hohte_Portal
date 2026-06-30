@@ -1,10 +1,16 @@
-
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  css: ["~/assets/css/main.css"],
-
+  css: [
+    "~/assets/css/main.css",
+    "@vuepic/vue-datepicker/dist/main.css"  // Add this line
+  ],
 
   plugins: ["~/plugins/language.client.js"],
+
+  // Add build configuration for transpilation
+  build: {
+    transpile: ['@vuepic/vue-datepicker']
+  },
 
   app: {
     head: {
@@ -26,12 +32,10 @@ export default defineNuxtConfig({
     },
   },
 
-  
   routeRules: {
     "/home/**": { ssr: false },
     "/**": { ssr: false },
   },
 
-  
   components: true,
 });

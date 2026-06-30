@@ -111,30 +111,45 @@
           <div v-if="durationType === 'specific'" class="single-date-input">
             <p class="date-hint">{{ t('requestStatus.singleDateHint') }}</p>
             
-            <!-- Custom Calendar -->
-            <div class="custom-calendar">
-              <div class="calendar-header">
-                <button class="calendar-nav" @click="prevMonth">‹</button>
-                <span class="calendar-month">{{ currentMonthName }} {{ currentYear }}</span>
-                <button class="calendar-nav" @click="nextMonth">›</button>
+            <div class="date-picker-wrapper">
+              <div class="date-input-container" @click="toggleSpecificCalendar">
+                <input
+                  type="text"
+                  :value="formData.specificDate ? formatDateForDisplay(formData.specificDate) : ''"
+                  placeholder="Select date"
+                  class="date-input"
+                  :class="{ error: errors.specificDate }"
+                  readonly
+                />
+                <span class="calendar-icon">📅</span>
               </div>
-              <div class="calendar-grid">
-                <div class="calendar-weekday" v-for="day in weekDays" :key="day">{{ day }}</div>
-                <div
-                  v-for="day in calendarDays"
-                  :key="day.date"
-                  class="calendar-day"
-                  :class="{
-                    'other-month': day.isOtherMonth,
-                    'scheduled': day.isScheduled,
-                    'selected': day.isSelected,
-                    'past': day.isPast,
-                    'disabled': day.isDisabled
-                  }"
-                  @click="selectSpecificDate(day)"
-                >
-                  {{ day.day }}
-                  <span v-if="day.isScheduled" class="scheduled-dot"></span>
+              
+              <!-- Calendar Dropdown -->
+              <div v-if="showSpecificCalendar" class="calendar-dropdown">
+                <div class="custom-calendar">
+                  <div class="calendar-header">
+                    <button class="calendar-nav" @click="prevMonth">‹</button>
+                    <span class="calendar-month">{{ currentMonthName }} {{ currentYear }}</span>
+                    <button class="calendar-nav" @click="nextMonth">›</button>
+                  </div>
+                  <div class="calendar-grid">
+                    <div class="calendar-weekday" v-for="day in weekDays" :key="day">{{ day }}</div>
+                    <div
+                      v-for="day in calendarDays"
+                      :key="day.date"
+                      class="calendar-day"
+                      :class="{
+                        'other-month': day.isOtherMonth,
+                        'scheduled': day.isScheduled,
+                        'selected': day.isSelected,
+                        'past': day.isPast,
+                        'disabled': day.isDisabled
+                      }"
+                      @click="selectSpecificDate(day)"
+                    >
+                      {{ day.day }}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -151,29 +166,44 @@
             <div class="range-calendars">
               <div class="range-field">
                 <label class="range-label">{{ t('requestStatus.startDate') }}</label>
-                <div class="custom-calendar range-calendar">
-                  <div class="calendar-header">
-                    <button class="calendar-nav" @click="prevRangeMonth('start')">‹</button>
-                    <span class="calendar-month">{{ startMonthName }} {{ startYear }}</span>
-                    <button class="calendar-nav" @click="nextRangeMonth('start')">›</button>
+                <div class="date-picker-wrapper">
+                  <div class="date-input-container" @click="toggleStartCalendar">
+                    <input
+                      type="text"
+                      :value="formData.startDate ? formatDateForDisplay(formData.startDate) : ''"
+                      :placeholder="t('requestStatus.startDate')"
+                      class="date-input"
+                      :class="{ error: errors.startDate }"
+                      readonly
+                    />
+                    <span class="calendar-icon">📅</span>
                   </div>
-                  <div class="calendar-grid">
-                    <div class="calendar-weekday" v-for="day in weekDays" :key="day">{{ day }}</div>
-                    <div
-                      v-for="day in startCalendarDays"
-                      :key="day.date"
-                      class="calendar-day"
-                      :class="{
-                        'other-month': day.isOtherMonth,
-                        'scheduled': day.isScheduled,
-                        'selected': day.isSelected,
-                        'past': day.isPast,
-                        'disabled': day.isDisabled
-                      }"
-                      @click="selectStartDate(day)"
-                    >
-                      {{ day.day }}
-                      <span v-if="day.isScheduled" class="scheduled-dot"></span>
+                  
+                  <div v-if="showStartCalendar" class="calendar-dropdown">
+                    <div class="custom-calendar">
+                      <div class="calendar-header">
+                        <button class="calendar-nav" @click="prevRangeMonth('start')">‹</button>
+                        <span class="calendar-month">{{ startMonthName }} {{ startYear }}</span>
+                        <button class="calendar-nav" @click="nextRangeMonth('start')">›</button>
+                      </div>
+                      <div class="calendar-grid">
+                        <div class="calendar-weekday" v-for="day in weekDays" :key="day">{{ day }}</div>
+                        <div
+                          v-for="day in startCalendarDays"
+                          :key="day.date"
+                          class="calendar-day"
+                          :class="{
+                            'other-month': day.isOtherMonth,
+                            'scheduled': day.isScheduled,
+                            'selected': day.isSelected,
+                            'past': day.isPast,
+                            'disabled': day.isDisabled
+                          }"
+                          @click="selectStartDate(day)"
+                        >
+                          {{ day.day }}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -182,29 +212,44 @@
 
               <div class="range-field">
                 <label class="range-label">{{ t('requestStatus.endDate') }}</label>
-                <div class="custom-calendar range-calendar">
-                  <div class="calendar-header">
-                    <button class="calendar-nav" @click="prevRangeMonth('end')">‹</button>
-                    <span class="calendar-month">{{ endMonthName }} {{ endYear }}</span>
-                    <button class="calendar-nav" @click="nextRangeMonth('end')">›</button>
+                <div class="date-picker-wrapper">
+                  <div class="date-input-container" @click="toggleEndCalendar">
+                    <input
+                      type="text"
+                      :value="formData.endDate ? formatDateForDisplay(formData.endDate) : ''"
+                      :placeholder="t('requestStatus.endDate')"
+                      class="date-input"
+                      :class="{ error: errors.endDate }"
+                      readonly
+                    />
+                    <span class="calendar-icon">📅</span>
                   </div>
-                  <div class="calendar-grid">
-                    <div class="calendar-weekday" v-for="day in weekDays" :key="day">{{ day }}</div>
-                    <div
-                      v-for="day in endCalendarDays"
-                      :key="day.date"
-                      class="calendar-day"
-                      :class="{
-                        'other-month': day.isOtherMonth,
-                        'scheduled': day.isScheduled,
-                        'selected': day.isSelected,
-                        'past': day.isPast,
-                        'disabled': day.isDisabled
-                      }"
-                      @click="selectEndDate(day)"
-                    >
-                      {{ day.day }}
-                      <span v-if="day.isScheduled" class="scheduled-dot"></span>
+                  
+                  <div v-if="showEndCalendar" class="calendar-dropdown">
+                    <div class="custom-calendar">
+                      <div class="calendar-header">
+                        <button class="calendar-nav" @click="prevRangeMonth('end')">‹</button>
+                        <span class="calendar-month">{{ endMonthName }} {{ endYear }}</span>
+                        <button class="calendar-nav" @click="nextRangeMonth('end')">›</button>
+                      </div>
+                      <div class="calendar-grid">
+                        <div class="calendar-weekday" v-for="day in weekDays" :key="day">{{ day }}</div>
+                        <div
+                          v-for="day in endCalendarDays"
+                          :key="day.date"
+                          class="calendar-day"
+                          :class="{
+                            'other-month': day.isOtherMonth,
+                            'scheduled': day.isScheduled,
+                            'selected': day.isSelected,
+                            'past': day.isPast,
+                            'disabled': day.isDisabled
+                          }"
+                          @click="selectEndDate(day)"
+                        >
+                          {{ day.day }}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -259,8 +304,10 @@ const { locale, t, setLocale } = useLanguage()
 const { goBack } = useNavigation()
 const { 
   classOptions, 
+  classes,
   submitPermissionRequest,
   fetchClassOptions,
+  fetchClasses,
   isLoading 
 } = useStudentData()
 const { getSchoolLogo, getSchoolName } = useSchool()
@@ -270,6 +317,9 @@ const { toasts, success, error: showError, removeToast } = useToast()
 const durationType = ref('specific')
 const isSubmitting = ref(false)
 const scheduleDays = ref([])
+const showSpecificCalendar = ref(false)
+const showStartCalendar = ref(false)
+const showEndCalendar = ref(false)
 
 const formData = ref({
   course: '',
@@ -476,6 +526,26 @@ const endCalendarDays = computed(() => {
   return getRangeCalendarDays(endMonth.value, formData.value.endDate)
 })
 
+// Toggle calendars
+const toggleSpecificCalendar = () => {
+  showSpecificCalendar.value = !showSpecificCalendar.value
+}
+
+const toggleStartCalendar = () => {
+  showStartCalendar.value = !showStartCalendar.value
+}
+
+const toggleEndCalendar = () => {
+  showEndCalendar.value = !showEndCalendar.value
+}
+
+// Close dropdowns when clicking outside
+const closeDropdowns = () => {
+  showSpecificCalendar.value = false
+  showStartCalendar.value = false
+  showEndCalendar.value = false
+}
+
 // Navigation
 const prevMonth = () => {
   currentMonth.value = subMonths(currentMonth.value, 1)
@@ -505,18 +575,21 @@ const nextRangeMonth = (type) => {
 const selectSpecificDate = (day) => {
   if (day.isDisabled || day.isPast) return
   formData.value.specificDate = day.date
+  showSpecificCalendar.value = false
   validateSpecificDate()
 }
 
 const selectStartDate = (day) => {
   if (day.isDisabled || day.isPast) return
   formData.value.startDate = day.date
+  showStartCalendar.value = false
   validateStartDate()
 }
 
 const selectEndDate = (day) => {
   if (day.isDisabled || day.isPast) return
   formData.value.endDate = day.date
+  showEndCalendar.value = false
   validateEndDate()
 }
 
@@ -544,15 +617,17 @@ const getScheduledDatesInRange = computed(() => {
 // Load schedule for selected class
 const loadClassSchedule = async (classId) => {
   try {
-    const { fetchClasses } = useStudentData()
+    // Fetch classes to get schedule data
     const classesData = await fetchClasses()
     const classData = classesData.find(c => c.id === classId)
     
     if (classData && classData.raw && classData.raw.schedules) {
       const days = classData.raw.schedules.map(s => s.day_of_week).filter(Boolean)
       scheduleDays.value = days
+      console.log('Schedule days loaded:', days)
     } else {
       scheduleDays.value = []
+      console.log('No schedule found for class')
     }
   } catch (err) {
     console.error('Failed to load class schedule:', err)
@@ -770,6 +845,13 @@ onMounted(async () => {
       formData.value.course = classOptions.value[0].id
       await loadClassSchedule(formData.value.course)
     }
+    
+    // Close dropdowns on click outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.date-picker-wrapper')) {
+        closeDropdowns()
+      }
+    })
   } catch (err) {
     console.error('Failed to fetch data:', err)
     showError('Failed to load form data. Please try again.', 4000)
@@ -1097,13 +1179,69 @@ onMounted(async () => {
   font-style: italic;
 }
 
-/* Custom Calendar */
+/* Date Picker Wrapper */
+.date-picker-wrapper {
+  position: relative;
+}
+
+.date-input-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.date-input {
+  width: 100%;
+  padding: 12px 40px 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 15px;
+  color: #333;
+  background: white;
+  outline: none;
+  transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+}
+
+.date-input:focus {
+  border-color: #FFC125;
+  box-shadow: 0 0 0 3px rgba(255, 193, 37, 0.1);
+}
+
+.date-input.error {
+  border-color: #ff3b30;
+}
+
+.date-input::placeholder {
+  color: #aba9a9;
+}
+
+.calendar-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  pointer-events: none;
+}
+
+/* Calendar Dropdown */
+.calendar-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 100;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 280px;
+}
+
 .custom-calendar {
   background: white;
   border-radius: 8px;
   padding: 12px;
-  max-width: 350px;
-  margin: 0 auto;
+  min-width: 250px;
 }
 
 .calendar-header {
@@ -1181,6 +1319,7 @@ onMounted(async () => {
   height: 5px;
   border-radius: 50%;
   background: #FFC125;
+  border: 1px solid #FFC125;
 }
 
 .calendar-day.selected {
@@ -1191,6 +1330,7 @@ onMounted(async () => {
 
 .calendar-day.selected::after {
   background: #1e3971;
+  border-color: #1e3971;
 }
 
 .calendar-day.past {
@@ -1205,12 +1345,10 @@ onMounted(async () => {
 
 .calendar-day.disabled.scheduled::after {
   background: #e0e0e0;
+  border-color: #e0e0e0;
 }
 
-.scheduled-dot {
-  display: none;
-}
-
+/* Range Calendar */
 .range-calendars {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1232,11 +1370,17 @@ onMounted(async () => {
   margin-bottom: 8px;
 }
 
-.range-calendar .custom-calendar {
-  max-width: 100%;
+.range-field .calendar-dropdown {
+  min-width: 250px;
+  left: 0;
+  right: 0;
 }
 
-.range-calendar .calendar-day {
+.range-field .custom-calendar {
+  min-width: 200px;
+}
+
+.range-field .calendar-day {
   padding: 6px 2px;
   font-size: 12px;
 }
@@ -1373,6 +1517,10 @@ onMounted(async () => {
   .calendar-day {
     padding: 6px 2px;
     font-size: 12px;
+  }
+  
+  .calendar-dropdown {
+    min-width: 200px;
   }
 }
 </style>
